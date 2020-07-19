@@ -1,0 +1,48 @@
+cabal-version:       2.4
+name:                webgear-examples
+version:             0.1.0
+description:         Please see the README at <https://github.com/rkaippully/webgear/webgear-examples#readme>
+homepage:            https://github.com/rkaippully/webgear/webgear-examples#readme
+bug-reports:         https://github.com/rkaippully/webgear/issues
+author:              Raghu Kaippully
+maintainer:          rkaippully@gmail.com
+copyright:           2020 Raghu Kaippully
+license:             MPL-2.0
+license-file:        LICENSE
+build-type:          Simple
+extra-source-files:  README.md
+
+
+source-repository head
+  type:      git
+  location:  https://github.com/rkaippully/webgear
+
+
+executable users
+  default-language:   Haskell2010
+  build-depends:      base             ==4.13.*
+                    , mtl              ==2.2.*
+                    , wai              ==3.2.*
+                    , warp             ==3.3.*
+                    , text             ==1.2.*
+                    , bytestring       ==0.10.*
+                    , time             ==1.9.*
+                    , containers       ==0.6.*
+                    , aeson            ==1.4.*
+                    , http-types       ==0.12.*
+                    , tagged           ==0.8.*
+                    , webgear-server
+  ghc-options:        -O2
+                      -threaded
+                      -rtsopts
+                      -with-rtsopts=-N
+                      -fwrite-ide-info
+                      -hiedir=.hie
+                      -Wall
+                      -Wno-unticked-promoted-constructors
+                      -Wincomplete-record-updates
+                      -Wincomplete-uni-patterns
+                      -Wredundant-constraints
+  main-is:            Main.hs
+  other-modules:      Paths_webgear_examples
+  hs-source-dirs:     users

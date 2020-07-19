@@ -1,0 +1,106 @@
+cabal-version:       2.4
+name:                webgear-server
+version:             0.1.0
+description:         Please see the README at <https://github.com/rkaippully/webgear#readme>
+homepage:            https://github.com/rkaippully/webgear#readme
+bug-reports:         https://github.com/rkaippully/webgear/issues
+author:              Raghu Kaippully
+maintainer:          rkaippully@gmail.com
+copyright:           2020 Raghu Kaippully
+license:             MPL-2.0
+license-file:        LICENSE
+build-type:          Simple
+extra-source-files:  README.md
+                     ChangeLog.md
+
+
+source-repository head
+  type:      git
+  location:  https://github.com/rkaippully/webgear
+
+
+common webgear-common
+  default-language:   Haskell2010
+  default-extensions: ApplicativeDo
+                      BangPatterns
+                      ConstraintKinds
+                      DataKinds
+                      DefaultSignatures
+                      DeriveAnyClass
+                      DeriveFoldable
+                      DeriveFunctor
+                      DeriveGeneric
+                      DeriveLift
+                      DeriveTraversable
+                      DerivingStrategies
+                      DerivingVia
+                      EmptyCase
+                      ExistentialQuantification
+                      FlexibleContexts
+                      FlexibleInstances
+                      FunctionalDependencies
+                      GADTs
+                      GeneralizedNewtypeDeriving
+                      InstanceSigs
+                      KindSignatures
+                      LambdaCase
+                      MultiParamTypeClasses
+                      MultiWayIf
+                      NamedFieldPuns
+                      OverloadedStrings
+                      PatternSynonyms
+                      PolyKinds
+                      RankNTypes
+                      RecordWildCards
+                      ScopedTypeVariables
+                      StandaloneDeriving
+                      TemplateHaskell
+                      TupleSections
+                      TypeApplications
+                      TypeFamilies
+                      TypeFamilyDependencies
+                      TypeOperators
+  build-depends:      base-noprelude        ==4.13.*
+                    , relude                ==0.7.*
+                    , mtl                   ==2.2.*
+                    , unordered-containers  ==0.2.*
+                    , wai                   ==3.2.*
+                    , bytestring            ==0.10.*
+                    , http-types            ==0.12.*
+                    , http-api-data         ==0.4.*
+                    , aeson                 ==1.4.*
+                    , template-haskell      ==2.15.*
+                    , tagged                ==0.8.*
+  ghc-options:        -O2
+                      -fwrite-ide-info
+                      -hiedir=.hie
+                      -Wall
+                      -Wno-unticked-promoted-constructors
+                      -Wincomplete-record-updates
+                      -Wincomplete-uni-patterns
+                      -Wredundant-constraints
+
+library
+  import:             webgear-common
+  exposed-modules:    WebGear.Trait
+                    , WebGear.Trait.Method
+                    , WebGear.Trait.Header
+                    , WebGear.Trait.Path
+                    , WebGear.Trait.Body
+                    , WebGear.Types
+                    , WebGear.Middleware
+                    , WebGear.Route
+  other-modules:      Prelude
+                    , Paths_webgear_server
+  hs-source-dirs:     src
+
+test-suite webgear-test
+  import:             webgear-common
+  type:               exitcode-stdio-1.0
+  main-is:            Spec.hs
+  hs-source-dirs:     test
+  default-extensions: NoImplicitPrelude
+  ghc-options:        -threaded
+                      -rtsopts
+                      -with-rtsopts=-N
+  build-depends:      webgear-server
