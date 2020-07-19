@@ -18,11 +18,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        name: Checkout Source Code
+
       - uses: actions/setup-haskell@v1.1
+        name: Setup Haskell Build Environment
         with:
           ghc-version: ${{ matrix.ghc }}
           enable-stack: true
+
       - uses: actions/cache@v1
+        name: Cache dependencies
         with:
           path: ~/.stack
           key: ${{ runner.os }}-${{ matrix.ghc }}-stack
@@ -30,6 +35,7 @@ jobs:
       - name: Build
         run: |
           stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
+
       - name: Test
         run: |
           stack test --system-ghc
