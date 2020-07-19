@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build and Test: ghc-${{ matrix.ghc }} os-${{ matrix.os }}
+    name: Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
     strategy:
