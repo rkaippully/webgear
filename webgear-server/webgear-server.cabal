@@ -88,13 +88,17 @@ library
                     , WebGear.Trait.Path
                     , WebGear.Trait.Body
                     , WebGear.Types
-                    , WebGear.Middleware
                     , WebGear.Route
+                    , WebGear.Middlewares
+                    , WebGear.Middlewares.Body
+                    , WebGear.Middlewares.Header
+                    , WebGear.Middlewares.Method
+                    , WebGear.Middlewares.Path
   other-modules:      Prelude
                     , Paths_webgear_server
   hs-source-dirs:     src
 
-test-suite webgear-test
+test-suite webgear-server-test
   import:             webgear-common
   type:               exitcode-stdio-1.0
   main-is:            Spec.hs

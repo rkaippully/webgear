@@ -9,9 +9,9 @@ cradle:
       config:
         cradle:
           stack:
-            component: "webgear-server:webgear-test"
+            component: "webgear-server:webgear-server-test"
     - path: "./webgear-examples/users"
       config:
         cradle:
           stack:
-            component: "webgear-examples:users"
+            component: "webgear-examples:exe:users"

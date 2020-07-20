@@ -9,9 +9,10 @@ module WebGear.Trait.Method
   , IsStdMethod
   ) where
 
+import WebGear.Trait (Trait (..))
+import WebGear.Types (Request, requestMethod)
+
 import qualified Network.HTTP.Types as HTTP
-import           WebGear.Trait
-import           WebGear.Types
 
 
 -- | A 'Trait' for capturing the HTTP method of a request

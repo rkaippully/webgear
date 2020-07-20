@@ -29,7 +29,9 @@ jobs:
       - uses: actions/cache@v1
         name: Cache dependencies
         with:
-          path: ~/.stack
+          path: |
+            ~/.stack
+            !~/.stack/setup-exe-cache
           key: ${{ runner.os }}-${{ matrix.ghc }}-stack
 
       - name: Build

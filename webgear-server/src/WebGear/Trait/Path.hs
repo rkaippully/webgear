@@ -9,9 +9,10 @@ module WebGear.Trait.Path
   , PathVar
   ) where
 
-import qualified Web.HttpApiData as HTTP
-import           WebGear.Trait
-import           WebGear.Types
+import WebGear.Trait (Trait (..))
+import WebGear.Types (Request, requestPath, setRequestPath)
+
+import Web.HttpApiData (FromHttpApiData (..))
 
 
 data Path (s :: Symbol)
@@ -28,7 +29,7 @@ instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
       Nothing   -> pure Nothing
       Just rest -> pure $ Just (setRequestPath rest r, ())
 
-instance (HTTP.FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m where
+instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m where
   type Val (PathVar tag val) Request = val
 
   check :: Tagged (PathVar tag val) Request -> m (Maybe (Request, val))
@@ -36,6 +37,6 @@ instance (HTTP.FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request 
     case requestPath r of
       []     -> pure Nothing
       (x:xs) ->
-        case HTTP.parseUrlPiece @val x of
+        case parseUrlPiece @val x of
           Left _  -> pure Nothing
           Right h -> pure $ Just (setRequestPath xs r, h)
