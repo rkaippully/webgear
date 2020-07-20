@@ -17,20 +17,20 @@ source-repository head
   type:      git
   location:  https://github.com/rkaippully/webgear
 
-
 executable users
   default-language:   Haskell2010
-  build-depends:      base             ==4.13.*
-                    , mtl              ==2.2.*
-                    , wai              ==3.2.*
-                    , warp             ==3.3.*
-                    , text             ==1.2.*
-                    , bytestring       ==0.10.*
-                    , time             ==1.9.*
-                    , containers       ==0.6.*
-                    , aeson            ==1.4.*
-                    , http-types       ==0.12.*
-                    , tagged           ==0.8.*
+  build-depends:      base                  ==4.13.*
+                    , mtl                   ==2.2.*
+                    , wai                   ==3.2.*
+                    , warp                  ==3.3.*
+                    , text                  ==1.2.*
+                    , bytestring            ==0.10.*
+                    , time                  ==1.9.*
+                    , unordered-containers  ==0.2.*
+                    , hashable              ==1.3.*
+                    , aeson                 ==1.4.*
+                    , http-types            ==0.12.*
+                    , tagged                ==0.8.*
                     , webgear-server
   ghc-options:        -O2
                       -threaded
@@ -44,5 +44,4 @@ executable users
                       -Wincomplete-uni-patterns
                       -Wredundant-constraints
   main-is:            Main.hs
-  other-modules:      Paths_webgear_examples
   hs-source-dirs:     users

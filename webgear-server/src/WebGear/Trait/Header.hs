@@ -11,9 +11,10 @@ module WebGear.Trait.Header
   , HasContentType
   ) where
 
-import Web.HttpApiData
-import WebGear.Trait
-import WebGear.Types
+import Web.HttpApiData (FromHttpApiData (..))
+
+import WebGear.Trait (Trait (..))
+import WebGear.Types (Request, requestHeader)
 
 
 -- | A 'Trait' for capturing a header name 's' in a request or

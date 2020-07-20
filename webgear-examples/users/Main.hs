@@ -8,30 +8,31 @@
 
 module Main where
 
-import Control.Applicative
-import Control.Arrow
-import Control.Monad.IO.Class
-import Control.Monad.Reader
+import Control.Applicative (Alternative (..))
+import Control.Arrow (Kleisli (..))
+import Control.Monad.IO.Class (MonadIO (..))
+import Control.Monad.Reader (MonadReader (..), runReaderT)
 import Data.Aeson (FromJSON, ToJSON)
-import Data.IORef
-import Data.Map (Map)
+import Data.ByteString.Lazy (ByteString)
+import Data.Hashable (Hashable)
+import Data.IORef (IORef, modifyIORef, newIORef, readIORef)
 import Data.Maybe (isJust)
 import Data.Tagged (untag)
 import Data.Text (Text)
-import GHC.Generics
+import Data.Time.Calendar (Day)
+import GHC.Generics (Generic)
+import Network.HTTP.Types (StdMethod (..))
+import Network.Wai (Application)
 
-import WebGear.Middleware
-import WebGear.Route
-import WebGear.Trait
-import WebGear.Trait.Body
-import WebGear.Trait.Path
-import WebGear.Types
+import WebGear.Middlewares (jsonRequestBody, jsonResponseBody, match, method, noContent, notFound,
+                            ok, requestContentType)
+import WebGear.Route (MonadRouter, runRoute)
+import WebGear.Trait (Has (..))
+import WebGear.Trait.Body (JSONRequestBody)
+import WebGear.Trait.Path (PathVar)
+import WebGear.Types (Handler)
 
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Map as Map
-import qualified Data.Time.Calendar as Time
-import qualified Network.HTTP.Types as HTTP
-import qualified Network.Wai as Wai
+import qualified Data.HashMap.Strict as HM
 import qualified Network.Wai.Handler.Warp as Warp
 
 
@@ -41,15 +42,14 @@ import qualified Network.Wai.Handler.Warp as Warp
 data User = User
   { userId       :: UserId
   , userName     :: Text
-  , dateOfBirth  :: Time.Day
+  , dateOfBirth  :: Day
   , gender       :: Gender
   , emailAddress :: Text
   }
   deriving (Generic, FromJSON, ToJSON)
 
 newtype UserId = UserId Int
-  deriving (Eq, Ord)
-  deriving (FromJSON, ToJSON) via Int
+  deriving (Eq, FromJSON, ToJSON, Hashable) via Int
 
 data Gender = Male | Female | OtherGender
   deriving (Generic, FromJSON, ToJSON)
@@ -58,18 +58,18 @@ data Gender = Male | Female | OtherGender
 --------------------------------------------------------------------------------
 -- | An in-memory store for users
 --------------------------------------------------------------------------------
-type UserStore = IORef (Map UserId User)
+newtype UserStore = UserStore (IORef (HM.HashMap UserId User))
 
 addUser :: MonadIO m => UserStore -> User -> m ()
-addUser store user = liftIO $ modifyIORef store (Map.insert (userId user) user)
+addUser (UserStore ref) user = liftIO $ modifyIORef ref (HM.insert (userId user) user)
 
 lookupUser :: MonadIO m => UserStore -> UserId -> m (Maybe User)
-lookupUser store uid = liftIO (Map.lookup uid <$> readIORef store)
+lookupUser (UserStore ref) uid = liftIO (HM.lookup uid <$> readIORef ref)
 
 removeUser :: MonadIO m => UserStore -> UserId -> m Bool
-removeUser store uid = liftIO $ do
+removeUser store@(UserStore ref) uid = liftIO $ do
   u <- lookupUser store uid
-  modifyIORef store (Map.delete uid)
+  modifyIORef ref (HM.delete uid)
   pure $ isJust u
 
 
@@ -78,27 +78,27 @@ removeUser store uid = liftIO $ do
 --------------------------------------------------------------------------------
 type IntUserId = PathVar "userId" Int
 
-userRoutes :: (MonadRouter m, MonadReader UserStore m, MonadIO m) => Handler m '[] '[] LBS.ByteString
+userRoutes :: (MonadRouter m, MonadReader UserStore m, MonadIO m) => Handler m '[] '[] ByteString
 userRoutes = [match| v1/users/userId:Int |] -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
              $ getUser <|> putUser <|> deleteUser
 
 getUser :: (MonadRouter m, Has IntUserId req, MonadReader UserStore m, MonadIO m)
-        => Handler m req '[] LBS.ByteString
-getUser = method @HTTP.GET
+        => Handler m req '[] ByteString
+getUser = method @GET
           $ jsonResponseBody @User
           $ getUserHandler
 
 putUser :: (MonadRouter m, Has IntUserId req, MonadReader UserStore m, MonadIO m)
-        => Handler m req '[] LBS.ByteString
-putUser = method @HTTP.PUT
+        => Handler m req '[] ByteString
+putUser = method @PUT
           $ requestContentType @"application/json"
           $ jsonRequestBody @User
           $ jsonResponseBody @User
           $ putUserHandler
 
 deleteUser :: (MonadRouter m, Has IntUserId req, MonadReader UserStore m, MonadIO m)
-           => Handler m req '[] LBS.ByteString
-deleteUser = method @HTTP.DELETE
+           => Handler m req '[] ByteString
+deleteUser = method @DELETE
              $ deleteUserHandler
 
 getUserHandler :: (MonadReader UserStore m, MonadIO m, Has IntUserId req)
@@ -120,7 +120,7 @@ putUserHandler = Kleisli $ \request -> do
   ok user'
 
 deleteUserHandler :: (MonadReader UserStore m, MonadIO m, Has IntUserId req)
-                  => Handler m req '[] LBS.ByteString
+                  => Handler m req '[] ByteString
 deleteUserHandler = Kleisli $ \request -> do
   let uid = untag $ traitValue @IntUserId request
   store <- ask
@@ -131,10 +131,10 @@ deleteUserHandler = Kleisli $ \request -> do
 --------------------------------------------------------------------------------
 -- | The application server
 --------------------------------------------------------------------------------
-application :: UserStore -> Wai.Application
-application store req respond = respond =<< runReaderT (unRoute userRoutes req) store
+application :: UserStore -> Application
+application store req respond = respond =<< runReaderT (runRoute userRoutes req) store
 
 main :: IO ()
 main = do
-  store <- newIORef Map.empty
-  Warp.run 3000 (application store)
+  store <- newIORef HM.empty
+  Warp.run 3000 (application $ UserStore store)
