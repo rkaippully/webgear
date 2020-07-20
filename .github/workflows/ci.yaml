@@ -26,11 +26,13 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           enable-stack: true
 
-      #- uses: actions/cache@v1
-      #  name: Cache dependencies
-      #  with:
-      #    path: ~/.stack
-      #    key: ${{ runner.os }}-${{ matrix.ghc }}-stack
+      - uses: actions/cache@v1
+        name: Cache dependencies
+        with:
+          path: |
+            ~/.stack
+            !~/.stack/setup-exe-cache
+          key: ${{ runner.os }}-${{ matrix.ghc }}-stack
 
       - name: Build
         run: |
