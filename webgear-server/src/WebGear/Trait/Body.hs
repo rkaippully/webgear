@@ -15,7 +15,7 @@ data JSONRequestBody (t :: Type)
 instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
   type Val (JSONRequestBody t) Request = t
 
-  check :: Tagged (JSONRequestBody t) Request -> m (Maybe (Request, t))
-  check (Tagged r) = do
+  check :: Request -> m (Maybe (Tagged (JSONRequestBody t) Request, t))
+  check r = do
     chunks <- takeWhileM (/= mempty) $ repeat $ liftIO $ requestBodyNextChunk r
-    pure $ (,) r <$> decode (fromChunks chunks)
+    pure $ (,) (Tagged r) <$> decode (fromChunks chunks)

@@ -36,8 +36,13 @@ import qualified Data.HashMap.Strict as HM
 import qualified Network.Wai.Handler.Warp as Warp
 
 
+{-
+  An example program that uses webgear to build a simple HTTP API to
+  perform CRUD operations on users.
+-}
+
 --------------------------------------------------------------------------------
--- | Model for users
+-- Model for users
 --------------------------------------------------------------------------------
 data User = User
   { userId       :: UserId
@@ -56,7 +61,8 @@ data Gender = Male | Female | OtherGender
 
 
 --------------------------------------------------------------------------------
--- | An in-memory store for users
+-- An in-memory store for users. In a real program this would be stored in some
+-- sort of a database.
 --------------------------------------------------------------------------------
 newtype UserStore = UserStore (IORef (HM.HashMap UserId User))
 
@@ -74,7 +80,7 @@ removeUser store@(UserStore ref) uid = liftIO $ do
 
 
 --------------------------------------------------------------------------------
--- | Routes of the API
+-- Routes of the API
 --------------------------------------------------------------------------------
 type IntUserId = PathVar "userId" Int
 
@@ -132,7 +138,7 @@ deleteUserHandler = Kleisli $ \request -> do
 -- | The application server
 --------------------------------------------------------------------------------
 application :: UserStore -> Application
-application store req respond = respond =<< runReaderT (runRoute userRoutes req) store
+application store req respond = runReaderT (runRoute userRoutes req) store >>= respond
 
 main :: IO ()
 main = do

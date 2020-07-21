@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -ddump-splices #-}
 {-|
 Description      : Common types used in WebGear
 Copyright        : (c) Raghu Kaippully, 2020

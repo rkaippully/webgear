@@ -21,13 +21,13 @@ data Method (t :: HTTP.StdMethod)
 instance (Monad m, IsStdMethod t) => Trait (Method t) Request m where
   type Val (Method t) Request = HTTP.Method
 
-  check :: Tagged (Method t) Request -> m (Maybe (Request, HTTP.Method))
-  check (Tagged r) =
+  check :: Request -> m (Maybe (Tagged (Method t) Request, HTTP.Method))
+  check r =
     let
       expected = HTTP.renderStdMethod $ toStdMethod $ Proxy @t
       actual = requestMethod r
     in
-      pure $ if expected == actual then Just (r, actual) else Nothing
+      pure $ if expected == actual then Just (Tagged r, actual) else Nothing
 
 
 class IsStdMethod t where

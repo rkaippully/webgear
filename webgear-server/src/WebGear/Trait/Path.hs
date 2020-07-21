@@ -21,22 +21,22 @@ data PathVar tag (val :: Type)
 instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
   type Val (Path s) Request = ()
 
-  check :: Tagged (Path s) Request -> m (Maybe (Request, ()))
-  check (Tagged r) = do
+  check :: Request -> m (Maybe (Tagged (Path s) Request, ()))
+  check r = do
     let expected = map toText $ toList $ splitOn '/' $ symbolVal $ Proxy @s
         actual = requestPath r
     case stripPrefix expected actual of
       Nothing   -> pure Nothing
-      Just rest -> pure $ Just (setRequestPath rest r, ())
+      Just rest -> pure $ Just (Tagged (setRequestPath rest r), ())
 
 instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m where
   type Val (PathVar tag val) Request = val
 
-  check :: Tagged (PathVar tag val) Request -> m (Maybe (Request, val))
-  check (Tagged r) =
+  check :: Request -> m (Maybe (Tagged (PathVar tag val) Request, val))
+  check r =
     case requestPath r of
       []     -> pure Nothing
       (x:xs) ->
         case parseUrlPiece @val x of
           Left _  -> pure Nothing
-          Right h -> pure $ Just (setRequestPath xs r, h)
+          Right h -> pure $ Just (Tagged (setRequestPath xs r), h)

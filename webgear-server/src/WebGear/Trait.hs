@@ -44,35 +44,34 @@ class Monad m => Trait t a m where
   type Val t a
 
   -- | Checks the presence of the associated attribute.
-  check :: Tagged t a              -- ^ The value to check tagged with
-                                   -- the trait
-        -> m (Maybe (a, Val t a))  -- ^ Returns 'Nothing' if the trait
-                                   -- is not present, a 'Just' value
-                                   -- otherwise. Checking presence of
-                                   -- a trait can optionally update
-                                   -- the value as well
+  check :: a                                -- ^ The value to check
+        -> m (Maybe (Tagged t a, Val t a))  -- ^ Returns 'Nothing' if the trait
+                                            -- is not present, a 'Just' value
+                                            -- otherwise. Checking presence of
+                                            -- a trait can optionally update
+                                            -- the value as well
 
 -- | A trivial trait that is always present and whose attribute does not carry
 -- any meaningful information.
 instance Monad m => Trait '[] a m where
   type Val '[] a = ()
 
-  check :: Tagged '[] a -> m (Maybe (a, ()))
-  check a = pure $ Just (untag a, ())
+  check :: a -> m (Maybe (Tagged '[] a, ()))
+  check a = pure $ Just (Tagged a, ())
 
 -- | Combination of many traits all of which are present for a value.
-instance (Trait t a m, Trait ts a m) => Trait (t : ts :: [k]) a m where
+instance (Trait t a m, Trait ts a m) => Trait (t:ts) a m where
   type Val (t : ts) a = (Val t a, Val ts a)
 
-  check :: Tagged (t : ts) a -> m (Maybe (a, Val (t:ts) a))
-  check (Tagged a) = check (Tagged @t a) >>= \case
-    Nothing      -> pure Nothing
-    Just (a', l) -> check (Tagged @ts a') >>= \case
-      Nothing       -> pure Nothing
-      Just (a'', r) -> pure $ Just (a'', (l, r))
+  check :: a -> m (Maybe (Tagged (t:ts) a, Val (t:ts) a))
+  check a = check @t a >>= \case
+    Nothing             -> pure Nothing
+    Just (Tagged a', l) -> check @ts a' >>= \case
+      Nothing              -> pure Nothing
+      Just (Tagged a'', r) -> pure $ Just (Tagged a'', (l, r))
 
 -- | Constraint for functions that use multiple traits
-type family Traits (ts :: [k]) a m :: Constraint where
+type family Traits ts a m :: Constraint where
   Traits '[]    a m = ()
   Traits (t:ts) a m = (Trait t a m, Traits ts a m)
 
@@ -81,7 +80,7 @@ type family Traits (ts :: [k]) a m :: Constraint where
 -- | A value linked with a trait attribute
 data Linked ts a = Linked
     { linkVal :: !(Val ts a)
-    , unlink  :: a            -- ^ Retrive the value from a linked value
+    , unlink  :: !a           -- ^ Retrive the value from a linked value
     }
 
 -- | Link a value with the trivial trait
@@ -94,15 +93,12 @@ linkone = linkplus . linkzero
 
 -- | Attempt to link an additional trait with an already linked value
 linkplus :: Trait t a m => Linked ts a -> m (Maybe (Linked (t:ts) a))
-linkplus l = fix $ \result -> do
-  v <- check (toTagged result (unlink l))
+linkplus l = do
+  v <- check (unlink l)
   pure $ mkLinked v l
   where
-    toTagged :: m (Maybe (Linked (t:ts) a)) -> a -> Tagged t a
-    toTagged = const Tagged
-
-    mkLinked :: Maybe (a, Val t a) -> Linked ts a -> Maybe (Linked (t:ts) a)
-    mkLinked v lv = (\(a', left) -> Linked (left, linkVal lv) a') <$> v
+    mkLinked :: Maybe (Tagged t a, Val t a) -> Linked ts a -> Maybe (Linked (t:ts) a)
+    mkLinked v lv = (\(Tagged a', left) -> Linked (left, linkVal lv) a') <$> v
 
 -- | Remove the leading trait from the linked value
 linkminus :: Linked (t:ts) a -> Linked ts a

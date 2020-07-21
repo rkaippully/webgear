@@ -24,11 +24,11 @@ data Header (s :: Symbol) (t :: Type)
 instance (KnownSymbol s, FromHttpApiData t, Monad m) => Trait (Header s t) Request m where
   type Val (Header s t) Request = t
 
-  check :: Tagged (Header s t) Request -> m (Maybe (Request, t))
-  check (Tagged r) = pure $ do
+  check :: Request -> m (Maybe (Tagged (Header s t) Request, t))
+  check r = pure $ do
     let s = fromString $ symbolVal (Proxy @s)
     hv <- requestHeader s r
-    (,) r <$> rightToMaybe (parseHeader hv)
+    (,) (Tagged r) <$> rightToMaybe (parseHeader hv)
 
 -- | Trait for Content-Type header
 type ContentType t = Header "Content-Type" t
@@ -40,12 +40,12 @@ data HasHeader (s :: Symbol) (t :: Symbol)
 instance (KnownSymbol s, KnownSymbol t, Monad m) => Trait (HasHeader s t) Request m where
   type Val (HasHeader s t) Request = Text
 
-  check :: Tagged (HasHeader s t) Request -> m (Maybe (Request, Text))
-  check (Tagged r) = pure $ do
+  check :: Request -> m (Maybe (Tagged (HasHeader s t) Request, Text))
+  check r = pure $ do
     let s = fromString $ symbolVal (Proxy @s)
         t = fromString $ symbolVal (Proxy @t)
     hv <- rightToMaybe . parseHeader @Text <$> requestHeader s r
-    if hv == Just t then Just (r, t) else Nothing
+    if hv == Just t then Just (Tagged r, t) else Nothing
 
 -- | Trait for checking a Content-Type header
 type HasContentType t = HasHeader "Content-Type" t
