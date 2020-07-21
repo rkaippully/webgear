@@ -5,6 +5,10 @@ module WebGear.Middlewares.Path
   ) where
 
 import Control.Arrow (Kleisli (..))
+import Control.Monad ((>=>))
+import Data.Function ((&))
+import Data.List.NonEmpty (NonEmpty (..), toList)
+import GHC.TypeLits (KnownSymbol)
 import Language.Haskell.TH.Quote (QuasiQuoter (..))
 import Language.Haskell.TH.Syntax (Exp (..), Q, TyLit (..), Type (..), mkName)
 import Web.HttpApiData (FromHttpApiData)
@@ -14,6 +18,7 @@ import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (Trait, linkplus)
 import WebGear.Trait.Path (Path, PathVar)
 import WebGear.Types (Request, RequestMiddleware)
+import WebGear.Util (splitOn)
 
 import qualified Data.List as List
 
@@ -44,10 +49,10 @@ match = QuasiQuoter
       [m, p] -> do
         let methodExp = AppTypeE (VarE 'method) (ConT $ mkName m)
         pathExps <- toPathExps p
-        pure $ List.foldr1 compose $ methodExp :| toList pathExps
+        pure $ List.foldr1 compose $ methodExp :| pathExps
       [p]    -> do
         pathExps <- toPathExps p
-        pure $ List.foldr1 compose $ toList pathExps
+        pure $ List.foldr1 compose pathExps
       _      -> fail "match expects an HTTP method and a path or just a path"
 
     toPathExps :: String -> Q [Exp]
@@ -59,13 +64,13 @@ match = QuasiQuoter
 
     joinPath :: NonEmpty String -> [NonEmpty String] -> [NonEmpty String]
     joinPath s []                    = [s]
-    joinPath (s:|[]) ((s':|[]) : xs) = one (s <> "/" <> s') : xs
+    joinPath (s:|[]) ((s':|[]) : xs) = ((s <> "/" <> s') :| []) : xs
     joinPath y (x:xs)                = y:x:xs
 
     toPathExp :: NonEmpty String -> Q Exp
     toPathExp (p :| [])  = pure $ AppTypeE (VarE 'path) (LitT $ StrTyLit p)
     toPathExp (v :| [t]) = pure $ AppTypeE (AppTypeE (VarE 'pathVar) (LitT $ StrTyLit v)) (ConT $ mkName t)
-    toPathExp xs         = fail $ "Invalid path component: " <> intercalate ":" (toList xs)
+    toPathExp xs         = fail $ "Invalid path component: " <> List.intercalate ":" (toList xs)
 
     compose :: Exp -> Exp -> Exp
     compose l = UInfixE l (VarE $ mkName ".")

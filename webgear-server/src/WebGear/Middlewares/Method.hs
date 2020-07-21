@@ -3,6 +3,7 @@ module WebGear.Middlewares.Method
   ) where
 
 import Control.Arrow (Kleisli (..))
+import Control.Monad ((>=>))
 
 import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (linkplus)

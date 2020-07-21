@@ -12,6 +12,8 @@ module WebGear.Middlewares
   , module WebGear.Middlewares.Body
   ) where
 
+import Data.String (IsString)
+
 import WebGear.Middlewares.Body
 import WebGear.Middlewares.Header
 import WebGear.Middlewares.Method

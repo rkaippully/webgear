@@ -23,10 +23,16 @@ module WebGear.Types
   ) where
 
 import Control.Arrow (Kleisli)
+import Data.ByteString (ByteString)
+import Data.Kind (Type)
+import Data.List (find)
+import Data.Maybe (fromMaybe)
+import Data.Text (Text)
 import Network.HTTP.Types (Header, HeaderName, Method, Status)
 
 import WebGear.Trait (Linked)
 
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.HashMap.Strict as HM
 import qualified Network.Wai as Wai
 
@@ -54,11 +60,11 @@ setRequestPath p r = r { waiRequest = (waiRequest r) { Wai.pathInfo = p } }
 -- | An HTTP response sent from the server
 data Response a = Response
     { respStatus  :: Status
-    , respHeaders :: HashMap HeaderName ByteString
+    , respHeaders :: HM.HashMap HeaderName ByteString
     , respBody    :: Maybe a
     }
 
-waiResponse :: Response LByteString -> Wai.Response
+waiResponse :: Response LBS.ByteString -> Wai.Response
 waiResponse Response{..} = Wai.responseLBS respStatus (HM.toList respHeaders) (fromMaybe "" respBody)
 
 addResponseHeader :: Header -> Response a -> Response a

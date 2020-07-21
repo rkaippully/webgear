@@ -9,6 +9,9 @@ module WebGear.Trait.Method
   , IsStdMethod
   ) where
 
+import Data.Proxy (Proxy (..))
+import Data.Tagged (Tagged (..))
+
 import WebGear.Trait (Trait (..))
 import WebGear.Types (Request, requestMethod)
 

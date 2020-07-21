@@ -9,10 +9,18 @@ module WebGear.Trait.Path
   , PathVar
   ) where
 
+import Data.Kind (Type)
+import Data.List (stripPrefix)
+import Data.List.NonEmpty (toList)
+import Data.Proxy (Proxy (..))
+import Data.Tagged (Tagged (..))
+import Data.Text (pack)
+import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
+import Web.HttpApiData (FromHttpApiData (..))
+
 import WebGear.Trait (Trait (..))
 import WebGear.Types (Request, requestPath, setRequestPath)
-
-import Web.HttpApiData (FromHttpApiData (..))
+import WebGear.Util (splitOn)
 
 
 data Path (s :: Symbol)
@@ -23,7 +31,7 @@ instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
 
   check :: Request -> m (Maybe (Tagged (Path s) Request, ()))
   check r = do
-    let expected = map toText $ toList $ splitOn '/' $ symbolVal $ Proxy @s
+    let expected = map pack $ toList $ splitOn '/' $ symbolVal $ Proxy @s
         actual = requestPath r
     case stripPrefix expected actual of
       Nothing   -> pure Nothing

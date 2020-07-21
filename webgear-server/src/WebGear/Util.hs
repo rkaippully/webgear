@@ -1,18 +1,10 @@
-module Prelude
-  ( module Relude
-  , module Data.Semigroup
-  , module GHC.TypeLits
-  , module Data.List
-  , module Data.Tagged
-  , takeWhileM
+module WebGear.Util
+  ( takeWhileM
   , splitOn
+  , rightToMaybe
   ) where
 
-import Data.List (groupBy, stripPrefix)
-import Data.Semigroup (First (..))
-import Data.Tagged
-import GHC.TypeLits hiding (natVal, someNatVal)
-import Relude hiding (First (..))
+import Data.List.NonEmpty (NonEmpty (..), toList)
 
 
 takeWhileM :: Monad m => (a -> Bool) -> [m a] -> m [a]
@@ -28,3 +20,6 @@ splitOn sep = foldr f ([] :| [])
   where
     f x acc       | x == sep = [] :| toList acc
     f x (y :| ys) = (x:y) :| ys
+
+rightToMaybe :: Either l r -> Maybe r
+rightToMaybe = either (const Nothing) Just

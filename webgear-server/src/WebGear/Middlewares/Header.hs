@@ -3,6 +3,10 @@ module WebGear.Middlewares.Header
   ) where
 
 import Control.Arrow (Kleisli (..))
+import Control.Monad ((>=>))
+import Data.ByteString.Lazy (ByteString)
+import Data.HashMap.Strict (fromList)
+import GHC.TypeLits (KnownSymbol)
 import Network.HTTP.Types (badRequest400)
 
 import WebGear.Route (MonadRouter (..))
@@ -15,7 +19,7 @@ requestContentType :: forall c m req res a. (KnownSymbol c, MonadRouter m)
                    => RequestMiddleware m req (HasContentType c:req) res a
 requestContentType handler = Kleisli $ linkplus @(HasContentType c) >=> maybe (failHandler err) (runKleisli handler)
   where
-    err :: Response LByteString
+    err :: Response ByteString
     err = Response
           { respStatus  = badRequest400
           , respHeaders = fromList []

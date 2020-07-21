@@ -11,10 +11,17 @@ module WebGear.Trait.Header
   , HasContentType
   ) where
 
+import Data.Kind (Type)
+import Data.Proxy (Proxy (..))
+import Data.String (fromString)
+import Data.Tagged (Tagged (..))
+import Data.Text (Text)
+import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import Web.HttpApiData (FromHttpApiData (..))
 
 import WebGear.Trait (Trait (..))
 import WebGear.Types (Request, requestHeader)
+import WebGear.Util (rightToMaybe)
 
 
 -- | A 'Trait' for capturing a header name 's' in a request or
