@@ -1,5 +1,4 @@
 {-|
-Description      : Traits associated with values
 Copyright        : (c) Raghu Kaippully, 2020
 License          : MPL-2.0
 Maintainer       : rkaippully@gmail.com
@@ -20,6 +19,7 @@ module WebGear.Trait
   ( -- * Core Types
     Trait (..)
   , Traits
+  , CheckResult (..)
   , Linked
 
     -- * Linking values with traits
@@ -34,45 +34,52 @@ module WebGear.Trait
   , Have
   ) where
 
-import Data.Kind (Constraint)
+import Data.Kind (Constraint, Type)
 import Data.Tagged (Tagged (..))
 
 
 {- | A 'Trait' is an optional attribute @t@ associated with a value @a@.
 
-The 'check' function validates the presence of the trait for a given value.
+The 'check' function validates the presence of the trait for a given
+value. Checking the presence of the trait can optionally modify the
+value as well.
 -}
 class Monad m => Trait t a m where
   -- | Type of the associated attribute
   type Val t a
 
+  -- | Type of check failures
+  type Fail t a
+
   -- | Checks the presence of the associated attribute.
-  check :: a                                -- ^ The value to check
-        -> m (Maybe (Tagged t a, Val t a))  -- ^ Returns 'Nothing' if the trait
-                                            -- is not present, a 'Just' value
-                                            -- otherwise. Checking presence of
-                                            -- a trait can optionally update
-                                            -- the value as well
+  check :: a -> m (CheckResult t a)
+
+-- | Result of a 'check' operation
+data CheckResult t a = CheckSuccess a (Val t a)
+                     | CheckFail (Fail t a)
+
 
 {- | A trivial trait that is always present and whose attribute does not carry
 any meaningful information.
 -}
 instance Monad m => Trait '[] a m where
   type Val '[] a = ()
+  type Fail '[] a = ()
 
-  check :: a -> m (Maybe (Tagged '[] a, ()))
-  check a = pure $ Just (Tagged a, ())
+  check :: a -> m (CheckResult '[] a)
+  check a = pure $ CheckSuccess a ()
 
 -- | Combination of many traits all of which are present for a value.
 instance (Trait t a m, Trait ts a m) => Trait (t:ts) a m where
-  type Val (t : ts) a = (Val t a, Val ts a)
+  type Val (t:ts) a = (Val t a, Val ts a)
+  type Fail (t:ts) a = Either (CheckResult t a) (CheckResult ts a)
 
-  check :: a -> m (Maybe (Tagged (t:ts) a, Val (t:ts) a))
+  check :: a -> m (CheckResult (t:ts) a)
   check a = check @t a >>= \case
-    Nothing             -> pure Nothing
-    Just (Tagged a', l) -> check @ts a' >>= \case
-      Nothing              -> pure Nothing
-      Just (Tagged a'', r) -> pure $ Just (Tagged a'', (l, r))
+    e@(CheckFail _)   -> pure $ CheckFail $ Left e
+    CheckSuccess a' l -> check @ts a' >>= \case
+      e@(CheckFail _)    -> pure $ CheckFail $ Right e
+      CheckSuccess a'' r -> pure $ CheckSuccess a'' (l, r)
 
 -- | Constraint for functions that use multiple traits
 type family Traits ts a m :: Constraint where
@@ -81,7 +88,7 @@ type family Traits ts a m :: Constraint where
 
 
 -- | A value linked with a trait attribute
-data Linked ts a = Linked
+data Linked (ts :: [Type]) a = Linked
     { linkVal :: !(Val ts a)
     , unlink  :: !a           -- ^ Retrive the value from a linked value
     }
@@ -91,17 +98,18 @@ linkzero :: a -> Linked '[] a
 linkzero = Linked ()
 
 -- | Attempt to link a value with a single trait
-linkone :: Trait t a m => a -> m (Maybe (Linked '[t] a))
+linkone :: Trait t a m => a -> m (Either (Fail t a) (Linked '[t] a))
 linkone = linkplus . linkzero
 
 -- | Attempt to link an additional trait with an already linked value
-linkplus :: Trait t a m => Linked ts a -> m (Maybe (Linked (t:ts) a))
+linkplus :: Trait t a m => Linked ts a -> m (Either (Fail t a) (Linked (t:ts) a))
 linkplus l = do
   v <- check (unlink l)
   pure $ mkLinked v l
   where
-    mkLinked :: Maybe (Tagged t a, Val t a) -> Linked ts a -> Maybe (Linked (t:ts) a)
-    mkLinked v lv = (\(Tagged a', left) -> Linked (left, linkVal lv) a') <$> v
+    mkLinked :: CheckResult t a -> Linked ts a -> Either (Fail t a) (Linked (t:ts) a)
+    mkLinked (CheckSuccess a left) lv = Right $ Linked (left, linkVal lv) a
+    mkLinked (CheckFail e) _          = Left e
 
 -- | Remove the leading trait from the linked value
 linkminus :: Linked (t:ts) a -> Linked ts a

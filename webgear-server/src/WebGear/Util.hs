@@ -1,7 +1,13 @@
+{-|
+Copyright        : (c) Raghu Kaippully, 2020
+License          : MPL-2.0
+Maintainer       : rkaippully@gmail.com
+
+Common utility functions.
+-}
 module WebGear.Util
   ( takeWhileM
   , splitOn
-  , rightToMaybe
   ) where
 
 import Data.List.NonEmpty (NonEmpty (..), toList)
@@ -20,6 +26,3 @@ splitOn sep = foldr f ([] :| [])
   where
     f x acc       | x == sep = [] :| toList acc
     f x (y :| ys) = (x:y) :| ys
-
-rightToMaybe :: Either l r -> Maybe r
-rightToMaybe = either (const Nothing) Just

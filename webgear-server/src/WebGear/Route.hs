@@ -1,3 +1,10 @@
+{-|
+Copyright        : (c) Raghu Kaippully, 2020
+License          : MPL-2.0
+Maintainer       : rkaippully@gmail.com
+
+Types and functions to route HTTP requests.
+-}
 module WebGear.Route
   ( RouterT
   , MonadRouter (..)
@@ -6,7 +13,7 @@ module WebGear.Route
 
 import Control.Applicative (Alternative)
 import Control.Arrow (Kleisli (..))
-import Control.Monad (MonadPlus (..), (>=>))
+import Control.Monad (MonadPlus (..))
 import Control.Monad.Except (ExceptT, MonadError (..), runExceptT)
 import Data.ByteString.Lazy (ByteString)
 import Data.HashMap.Strict (fromList)
@@ -17,14 +24,22 @@ import Network.HTTP.Types (Header, hServer, notFound404)
 
 import Paths_webgear_server (version)
 import WebGear.Trait (linkzero, unlink)
-import WebGear.Types (Handler, Request (..), Response (..), ResponseMiddleware, addResponseHeader,
-                      waiResponse)
+import WebGear.Types (Handler, Response (..), waiResponse)
 
 import qualified Network.Wai as Wai
 
 
+{- | The monad transformer stack for routing.
+
+The 'ExceptT' provides short-circuiting behaviour for 'rejectRoute'
+and 'failHandler'. In case of 'rejectRoute', a 'Nothing' value is
+returned and in case of 'failHandler', a @Response ByteString@ is
+returned. The 'First' wrapper is provided to get instances of
+'Alternative' and 'MonadPlus' for 'RouterT'.
+-}
 type RouterT m = ExceptT (Maybe (First (Response ByteString))) m
 
+-- | Provide HTTP request routing with short circuiting behavior.
 class (Alternative m, MonadPlus m) => MonadRouter m where
   -- | Mark the current route as rejected, alternatives can be tried
   rejectRoute :: m a
@@ -39,25 +54,27 @@ instance Monad m => MonadRouter (RouterT m) where
   failHandler :: Response ByteString -> RouterT m a
   failHandler = throwError . Just . First
 
+{- | Convert a WebGear routable handler into a plain function.
+
+This function is typically used to convert WebGear routes to a
+'Wai.Application'.
+-}
 runRoute :: Monad m
          => Handler (RouterT m) '[] res ByteString
          -> (Wai.Request -> m Wai.Response)
-runRoute route req = waiResponse . either (maybe notFoundResponse getFirst) id <$> runExceptT f
+runRoute route req = waiResponse . addServerHeader . either (maybe notFoundResponse getFirst) id <$> runExceptT f
   where
-    f = do
-      res <- runKleisli (addServerHeader route) (linkzero $ Request req)
-      pure $ unlink res
+    f = unlink <$> runKleisli route (linkzero req)
 
-notFoundResponse :: Response ByteString
-notFoundResponse = Response
-  { respStatus  = notFound404
-  , respHeaders = fromList [serverHeader]
-  , respBody    = Just "Not Found"
-  }
+    notFoundResponse :: Response ByteString
+    notFoundResponse = Response
+      { respStatus  = notFound404
+      , respHeaders = fromList []
+      , respBody    = Just "Not Found"
+      }
 
-addServerHeader :: Monad m => ResponseMiddleware m '[] res '[] a
-addServerHeader handler = Kleisli $
-  runKleisli handler >=> pure . linkzero . addResponseHeader serverHeader . unlink
+    addServerHeader :: Response ByteString -> Response ByteString
+    addServerHeader r = r { respHeaders = respHeaders r <> fromList [serverHeader] }
 
-serverHeader :: Header
-serverHeader = (hServer, fromString $ "WebGear/" ++ showVersion version)
+    serverHeader :: Header
+    serverHeader = (hServer, fromString $ "WebGear/" ++ showVersion version)

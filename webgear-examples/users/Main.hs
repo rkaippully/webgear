@@ -24,13 +24,7 @@ import GHC.Generics (Generic)
 import Network.HTTP.Types (StdMethod (..))
 import Network.Wai (Application)
 
-import WebGear.Middlewares (jsonRequestBody, jsonResponseBody, match, method, noContent, notFound,
-                            ok, requestContentType)
-import WebGear.Route (MonadRouter, runRoute)
-import WebGear.Trait (Has (..))
-import WebGear.Trait.Body (JSONRequestBody)
-import WebGear.Trait.Path (PathVar)
-import WebGear.Types (Handler)
+import WebGear
 
 import qualified Data.HashMap.Strict as HM
 import qualified Network.Wai.Handler.Warp as Warp

@@ -82,7 +82,8 @@ common webgear-common
 
 library
   import:             webgear-common
-  exposed-modules:    WebGear.Trait
+  exposed-modules:    WebGear
+                    , WebGear.Trait
                     , WebGear.Trait.Method
                     , WebGear.Trait.Header
                     , WebGear.Trait.Path
