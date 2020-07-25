@@ -26,11 +26,10 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           enable-stack: true
 
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         name: Cache dependencies
         with:
-          path: |
-            ~/.stack
+          path: ~/.stack
           key: ${{ runner.os }}-${{ matrix.ghc }}-stack-${{ hashFiles('stack.yaml') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.ghc }}-stack-
@@ -80,12 +79,12 @@ jobs:
       - name: Generate freeze file
         run: cabal freeze $CONFIG
 
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         name: Cache dependencies
         with:
-          path: |
-            ~/.cabal/store
-            dist-newstyle
+          path:
+            - ~/.cabal/store
+            - dist-newstyle
           key: ${{ runner.os }}-${{ matrix.ghc }}-cabal-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.ghc }}-cabal-
