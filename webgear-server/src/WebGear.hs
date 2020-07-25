@@ -37,6 +37,9 @@ import WebGear.Types
 --
 -- > server :: Monad m => Request -> m Response
 --
+-- Most APIs will require extracting some information from the
+-- request, processing it and then producing a response.
+--
 -- As an example, let us say we want the API to retrieve user data via
 -- a GET request to the URL containing user ID such as .
 --
