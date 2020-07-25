@@ -1,1 +1,3 @@
-{-# OPTIONS_GHC -F -pgmF hspec-discover #-}
+
+main :: IO ()
+main = putStrLn "No tests implemented"
