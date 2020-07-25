@@ -7,8 +7,8 @@ on:
     branches: [master]
 
 jobs:
-  build:
-    name: Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
+  stack-build:
+    name: Stack Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -26,18 +26,77 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           enable-stack: true
 
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
+        name: Cache dependencies
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-${{ matrix.ghc }}-stack-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-stack-
+
+      - name: Build
+        run: stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
+
+      - name: Test
+        run: stack test --system-ghc
+
+      - name: Haddock
+        run: stack haddock --system-ghc
+
+      - name : Prepare sdist
+        run: stack sdist --system-ghc
+
+  cabal-build:
+    name: Cabal Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        ghc:
+          - 8.8.3
+          - 8.10.1
+        exclude:
+          - os: macos-latest
+            ghc: 8.8.3
+
+    env:
+      CONFIG: "--enable-tests --enable-benchmarks"
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout Source Code
+
+      - uses: actions/setup-haskell@v1.1
+        name: Setup Haskell Build Environment
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          enable-stack: false
+
+      - name: Update package index
+        run: cabal update $CONFIG
+
+      - name: Generate freeze file
+        run: cabal freeze $CONFIG
+
+      - uses: actions/cache@v2
         name: Cache dependencies
         with:
           path: |
-            ~/.stack
-            !~/.stack/setup-exe-cache
-          key: ${{ runner.os }}-${{ matrix.ghc }}-stack
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-cabal-${{ hashFiles('cabal.project.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-cabal-
 
       - name: Build
-        run: |
-          stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
+        run: cabal build all $CONFIG
 
       - name: Test
-        run: |
-          stack test --system-ghc
+        run: cabal test all $CONFIG
+
+      - name: Haddock
+        run: cabal haddock all $CONFIG
+
+      - name: Prepare sdist
+        run: cabal sdist all

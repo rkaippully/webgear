@@ -1,15 +1,19 @@
 {-|
-Description      : Trait capturing the HTTP method in a request
 Copyright        : (c) Raghu Kaippully, 2020
 License          : MPL-2.0
 Maintainer       : rkaippully@gmail.com
+
+Trait capturing the HTTP method in a request.
 -}
 module WebGear.Trait.Method
   ( Method
-  , IsStdMethod
+  , IsStdMethod (..)
+  , MethodMismatch (..)
   ) where
 
-import WebGear.Trait (Trait (..))
+import Data.Proxy (Proxy (..))
+
+import WebGear.Trait (CheckResult (..), Trait (..))
 import WebGear.Types (Request, requestMethod)
 
 import qualified Network.HTTP.Types as HTTP
@@ -18,19 +22,31 @@ import qualified Network.HTTP.Types as HTTP
 -- | A 'Trait' for capturing the HTTP method of a request
 data Method (t :: HTTP.StdMethod)
 
+-- | Failure to match method against an expected value
+data MethodMismatch = MethodMismatch
+  { expectedMethod :: HTTP.Method
+  , actualMethod   :: HTTP.Method
+  }
+
 instance (Monad m, IsStdMethod t) => Trait (Method t) Request m where
   type Val (Method t) Request = HTTP.Method
+  type Fail (Method t) Request = MethodMismatch
 
-  check :: Tagged (Method t) Request -> m (Maybe (Request, HTTP.Method))
-  check (Tagged r) =
+  check :: Request -> m (CheckResult (Method t) Request)
+  check r =
     let
       expected = HTTP.renderStdMethod $ toStdMethod $ Proxy @t
       actual = requestMethod r
     in
-      pure $ if expected == actual then Just (r, actual) else Nothing
+      pure $ if expected == actual
+             then CheckSuccess r actual
+             else CheckFail $ MethodMismatch expected actual
 
 
+-- | A typeclass implemented by all 'HTTP.StdMethod's to convert them
+-- from type level to term level.
 class IsStdMethod t where
+  -- | Convert @t@ to term level.
   toStdMethod :: Proxy t -> HTTP.StdMethod
 
 instance IsStdMethod HTTP.GET where

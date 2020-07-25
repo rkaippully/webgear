@@ -1,4 +1,9 @@
-{- | Middlewares in mtl style.
+{-|
+Copyright        : (c) Raghu Kaippully, 2020
+License          : MPL-2.0
+Maintainer       : rkaippully@gmail.com
+
+Middlewares provided by WebGear.
 -}
 module WebGear.Middlewares
   ( ok
@@ -11,6 +16,8 @@ module WebGear.Middlewares
   , module WebGear.Middlewares.Header
   , module WebGear.Middlewares.Body
   ) where
+
+import Data.String (IsString)
 
 import WebGear.Middlewares.Body
 import WebGear.Middlewares.Header
@@ -34,5 +41,6 @@ badRequest = pure $ linkzero $ Response HTTP.badRequest400 mempty Nothing
 notFound :: Monad m => m (Linked '[] (Response a))
 notFound = pure $ linkzero $ Response HTTP.notFound404 mempty Nothing
 
+-- | Respond with a 204 NoContent
 noContent :: (Monad m, IsString s) => m (Linked '[] (Response s))
 noContent = pure $ linkzero $ Response HTTP.noContent204 mempty $ Just ""

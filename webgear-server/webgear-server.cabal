@@ -60,16 +60,16 @@ common webgear-common
                       TypeFamilies
                       TypeFamilyDependencies
                       TypeOperators
-  build-depends:      base-noprelude        ==4.13.*
-                    , relude                ==0.7.*
+  build-depends:      base                  >=4.13.0.0 && <5
+                    , template-haskell      >=2.15.0.0 && <3
                     , mtl                   ==2.2.*
                     , unordered-containers  ==0.2.*
                     , wai                   ==3.2.*
                     , bytestring            ==0.10.*
+                    , text                  ==1.2.*
                     , http-types            ==0.12.*
                     , http-api-data         ==0.4.*
                     , aeson                 ==1.4.*
-                    , template-haskell      ==2.15.*
                     , tagged                ==0.8.*
   ghc-options:        -O2
                       -fwrite-ide-info
@@ -82,7 +82,8 @@ common webgear-common
 
 library
   import:             webgear-common
-  exposed-modules:    WebGear.Trait
+  exposed-modules:    WebGear
+                    , WebGear.Trait
                     , WebGear.Trait.Method
                     , WebGear.Trait.Header
                     , WebGear.Trait.Path
@@ -94,8 +95,9 @@ library
                     , WebGear.Middlewares.Header
                     , WebGear.Middlewares.Method
                     , WebGear.Middlewares.Path
-  other-modules:      Prelude
-                    , Paths_webgear_server
+  other-modules:      Paths_webgear_server
+                    , WebGear.Util
+  autogen-modules:    Paths_webgear_server
   hs-source-dirs:     src
 
 test-suite webgear-server-test
@@ -103,8 +105,9 @@ test-suite webgear-server-test
   type:               exitcode-stdio-1.0
   main-is:            Spec.hs
   hs-source-dirs:     test
-  default-extensions: NoImplicitPrelude
   ghc-options:        -threaded
                       -rtsopts
                       -with-rtsopts=-N
-  build-depends:      webgear-server
+  build-depends:      hspec            ==2.7.*
+                    , hspec-discover   ==2.7.*
+                    , webgear-server

@@ -1,18 +1,16 @@
-module Prelude
-  ( module Relude
-  , module Data.Semigroup
-  , module GHC.TypeLits
-  , module Data.List
-  , module Data.Tagged
-  , takeWhileM
+{-|
+Copyright        : (c) Raghu Kaippully, 2020
+License          : MPL-2.0
+Maintainer       : rkaippully@gmail.com
+
+Common utility functions.
+-}
+module WebGear.Util
+  ( takeWhileM
   , splitOn
   ) where
 
-import Data.List (groupBy, stripPrefix)
-import Data.Semigroup (First (..))
-import Data.Tagged
-import GHC.TypeLits hiding (natVal, someNatVal)
-import Relude hiding (First (..))
+import Data.List.NonEmpty (NonEmpty (..), toList)
 
 
 takeWhileM :: Monad m => (a -> Bool) -> [m a] -> m [a]
