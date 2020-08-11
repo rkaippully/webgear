@@ -6,7 +6,7 @@ import Data.Functor.Identity (runIdentity)
 import Data.String (fromString)
 import Data.Text.Encoding (encodeUtf8)
 import Network.Wai (defaultRequest, requestHeaders)
-import Test.QuickCheck (Property, allProperties, counterexample, property, (===))
+import Test.QuickCheck (Property, allProperties, counterexample, property, (.&&.), (=/=), (===))
 import Test.QuickCheck.Instances ()
 import Test.Tasty (TestTree)
 import Test.Tasty.QuickCheck (testProperties)
@@ -36,6 +36,16 @@ prop_headerParseSuccess = property $ \(n :: Int) ->
       CheckFail e       ->
         counterexample ("Unexpected result: " <> show e) (property False)
       CheckSuccess _ n' -> n === n'
+
+prop_headerMatchSuccess :: Property
+prop_headerMatchSuccess = property $ \v ->
+  let
+    req = defaultRequest { requestHeaders = [("foo", v)] }
+  in
+    case runIdentity (check @(HeaderMatch "foo" "bar") req) of
+      CheckFail e       ->
+        expectedHeader e === "bar" .&&. actualHeader e =/= Nothing .&&. actualHeader e =/= Just "bar"
+      CheckSuccess _ v' -> v === "bar" .&&. v === v'
 
 
 -- Hack for TH splicing
