@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 {-|
 Copyright        : (c) Raghu Kaippully, 2020
 License          : MPL-2.0
@@ -57,6 +58,10 @@ class Monad m => Trait t a m where
 -- | Result of a 'check' operation
 data CheckResult t a = CheckSuccess a (Val t a)
                      | CheckFail (Fail t a)
+
+deriving instance (Eq a, Eq (Val t a), Eq (Fail t a)) => Eq (CheckResult t a)
+deriving instance (Show a, Show (Val t a), Show (Fail t a)) => Show (CheckResult t a)
+deriving instance (Read a, Read (Val t a), Read (Fail t a)) => Read (CheckResult t a)
 
 
 {- | A trivial trait that is always present and whose attribute does not carry

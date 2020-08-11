@@ -52,6 +52,7 @@ data HeaderMismatch = HeaderMismatch
   { expectedHeader :: ByteString
   , actualHeader   :: Maybe ByteString
   }
+  deriving stock (Eq, Read, Show)
 
 instance (KnownSymbol s, KnownSymbol t, Monad m) => Trait (HeaderMatch s t) Request m where
   type Val (HeaderMatch s t) Request = ByteString
