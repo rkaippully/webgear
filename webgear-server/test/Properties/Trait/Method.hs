@@ -14,11 +14,14 @@ import WebGear.Trait
 import WebGear.Trait.Method
 
 
-instance Arbitrary StdMethod where
-  arbitrary = elements [minBound..maxBound]
+newtype MethodWrapper = MethodWrapper StdMethod
+  deriving stock (Show)
+
+instance Arbitrary MethodWrapper where
+  arbitrary = elements $ MethodWrapper <$> [minBound..maxBound]
 
 prop_methodMatch :: Property
-prop_methodMatch = property $ \v ->
+prop_methodMatch = property $ \(MethodWrapper v) ->
   let
     req = defaultRequest { requestMethod = renderStdMethod v }
   in
