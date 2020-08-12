@@ -11,9 +11,11 @@ import Test.Tasty (TestTree, testGroup)
 
 import qualified Properties.Trait.Body as Body
 import qualified Properties.Trait.Header as Header
+import qualified Properties.Trait.Method as Method
 
 
 propertyTests :: TestTree
 propertyTests = testGroup "Property Tests" [ Body.tests
                                            , Header.tests
+                                           , Method.tests
                                            ]

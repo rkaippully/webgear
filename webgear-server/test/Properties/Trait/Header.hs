@@ -37,8 +37,8 @@ prop_headerParseSuccess = property $ \(n :: Int) ->
         counterexample ("Unexpected result: " <> show e) (property False)
       CheckSuccess _ n' -> n === n'
 
-prop_headerMatchSuccess :: Property
-prop_headerMatchSuccess = property $ \v ->
+prop_headerMatch :: Property
+prop_headerMatch = property $ \v ->
   let
     req = defaultRequest { requestHeaders = [("foo", v)] }
   in

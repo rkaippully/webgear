@@ -109,6 +109,7 @@ test-suite webgear-server-test
                     , Properties
                     , Properties.Trait.Body
                     , Properties.Trait.Header
+                    , Properties.Trait.Method
   hs-source-dirs:     test
   ghc-options:        -threaded
                       -rtsopts
