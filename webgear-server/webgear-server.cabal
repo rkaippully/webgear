@@ -103,11 +103,22 @@ library
 test-suite webgear-server-test
   import:             webgear-common
   type:               exitcode-stdio-1.0
-  main-is:            Spec.hs
+  main-is:            Main.hs
+  other-modules:      Unit
+                    , Unit.Trait.Header
+                    , Unit.Trait.Path
+                    , Properties
+                    , Properties.Trait.Body
+                    , Properties.Trait.Header
+                    , Properties.Trait.Method
+                    , Properties.Trait.Path
   hs-source-dirs:     test
   ghc-options:        -threaded
                       -rtsopts
                       -with-rtsopts=-N
-  build-depends:      hspec            ==2.7.*
-                    , hspec-discover   ==2.7.*
+  build-depends:      tasty                 ==1.2.*
+                    , tasty-quickcheck      ==0.10.*
+                    , tasty-hunit           ==0.10.*
+                    , QuickCheck            ==2.13.*
+                    , quickcheck-instances  ==0.3.*
                     , webgear-server

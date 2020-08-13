@@ -24,12 +24,13 @@ import WebGear.Trait (CheckResult (..), Trait (..))
 import WebGear.Types (Request, requestHeader)
 
 
--- | A 'Trait' for capturing a header name @s@ in a request or response
--- and convert it to some type @t@ via 'FromHttpApiData'.
+-- | A 'Trait' for capturing a header with name @s@ in a request or
+-- response and convert it to some type @t@ via 'FromHttpApiData'.
 data Header (s :: Symbol) (t :: Type)
 
 -- | Failure in extracting a header value
 data HeaderFail = HeaderNotFound | HeaderParseError Text
+  deriving stock (Read, Show, Eq)
 
 instance (KnownSymbol s, FromHttpApiData t, Monad m) => Trait (Header s t) Request m where
   type Val (Header s t) Request = t
@@ -51,6 +52,7 @@ data HeaderMismatch = HeaderMismatch
   { expectedHeader :: ByteString
   , actualHeader   :: Maybe ByteString
   }
+  deriving stock (Eq, Read, Show)
 
 instance (KnownSymbol s, KnownSymbol t, Monad m) => Trait (HeaderMatch s t) Request m where
   type Val (HeaderMatch s t) Request = ByteString
