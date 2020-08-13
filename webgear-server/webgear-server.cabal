@@ -106,10 +106,12 @@ test-suite webgear-server-test
   main-is:            Main.hs
   other-modules:      Unit
                     , Unit.Trait.Header
+                    , Unit.Trait.Path
                     , Properties
                     , Properties.Trait.Body
                     , Properties.Trait.Header
                     , Properties.Trait.Method
+                    , Properties.Trait.Path
   hs-source-dirs:     test
   ghc-options:        -threaded
                       -rtsopts

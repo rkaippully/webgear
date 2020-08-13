@@ -10,7 +10,10 @@ module Unit
 import Test.Tasty (TestTree, testGroup)
 
 import qualified Unit.Trait.Header as Header
+import qualified Unit.Trait.Path as Path
 
 
 unitTests :: TestTree
-unitTests = testGroup "Unit Tests" [ Header.tests ]
+unitTests = testGroup "Unit Tests" [ Header.tests
+                                   , Path.tests
+                                   ]

@@ -51,6 +51,7 @@ data PathVar tag (val :: Type)
 
 -- | Failure to extract a 'PathVar'
 data PathVarFail = PathVarNotFound | PathVarParseError Text
+  deriving (Eq, Show, Read)
 
 instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m where
   type Val (PathVar tag val) Request = val

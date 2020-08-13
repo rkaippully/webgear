@@ -26,9 +26,9 @@ prop_methodMatch = property $ \(MethodWrapper v) ->
     req = defaultRequest { requestMethod = renderStdMethod v }
   in
     case runIdentity (check @(Method GET) req) of
+      CheckSuccess _ v' -> v === GET .&&. v' === methodGet
       CheckFail e       ->
         expectedMethod e === methodGet .&&. actualMethod e =/= methodGet
-      CheckSuccess _ v' -> v === GET .&&. v' === methodGet
 
 
 -- Hack for TH splicing
