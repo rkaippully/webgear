@@ -25,11 +25,16 @@ module WebGear
 
     -- * Routing
     -- $routing
+
+    -- * Running the Server
+    -- $running
   ) where
 
 import Control.Applicative (Alternative (..))
-import Control.Arrow (Kleisli)
+import Control.Arrow (Kleisli (..))
 import Web.HttpApiData (FromHttpApiData)
+
+import qualified Network.Wai as Wai
 
 import WebGear.Middlewares
 import WebGear.Route
@@ -96,8 +101,8 @@ import WebGear.Types
 -- request value with this trait using:
 --
 -- @
--- linkedRequest :: Monad m => Request -> m (Either MethodMismatch (Linked '[Method GET] Request))
--- linkedRequest = linkplus @(Method GET) . linkzero
+-- linkedRequest :: Monad m => 'Request' -> m (Either 'MethodMismatch' ('Linked' '['Method' GET] 'Request'))
+-- linkedRequest = 'linkplus' @('Method' GET) . 'linkzero'
 -- @
 --
 -- Let us modify the type signature of our handler to use linked
@@ -141,8 +146,10 @@ import WebGear.Types
 --
 -- For example, here is the definition of the 'method' middleware:
 --
--- > method :: (IsStdMethod t, MonadRouter m) => Handler m (Method t:req) res a -> Handler m req res a
--- > method handler = Kleisli $ linkplus @(Method t) >=> either (const rejectRoute) (runKleisli handler)
+-- @
+-- method :: ('IsStdMethod' t, 'MonadRouter' m) => 'Handler' m ('Method' t:req) res a -> 'Handler' m req res a
+-- method handler = 'Kleisli' $ 'linkplus' \@('Method' t) >=> 'either' ('const' 'rejectRoute') ('runKleisli' handler)
+-- @
 --
 -- The @linkplus \@(Method t)@ function is used to prove the presence
 -- of the method @t@ in the request and the @handler@ is invoked only
@@ -163,9 +170,9 @@ import WebGear.Types
 --
 -- $routing
 --
--- Typically a server will have many routes and we would like to pick
--- one based on the URL path, HTTP method etc. We need two two things
--- to achieve this.
+-- A typical server will have many routes and we would like to pick
+-- one based on the URL path, HTTP method etc. We need a couple of
+-- things to achieve this.
 --
 -- First, we need a way to indicate that a handler cannot handle a
 -- request, possibly because the path or method did not match with
@@ -180,11 +187,57 @@ import WebGear.Types
 -- The 'failHandler' can be used in cases where we find a matching
 -- route but the request handling is aborted for some reason. For
 -- example, if a route requires the request Content-type header to
--- have a particular type but the actual request had a different
--- Content-type, 'failHandler' can be used to abort the handler and
--- return an error response.
+-- have a particular value but the actual request had a different
+-- Content-type, 'failHandler' can be used to abort and return an
+-- error response.
 --
--- Since 'MonadRouter' is an 'Alternative', we can use '<|>' to
--- combine many routes. When a request arrives, a match will be
--- attempted against each route sequentially and the first matching
--- route handler will process the request.
+-- Second, we need a mechanism to try an alternate route when one
+-- route is rejected. Since 'MonadRouter' is an 'Alternative', we can
+-- use '<|>' to combine many routes. When a request arrives, a match
+-- will be attempted against each route sequentially and the first
+-- matching route handler will process the request. Here is an
+-- example:
+--
+-- @
+-- allRoutes :: 'MonadRouter' m => 'Handler' m '[] '[] ByteString
+-- allRoutes = ['match'| v1\/users\/userId:Int |]    -- non-TH version: 'path' \@"v1/users" . 'pathVar' \@"userId" \@Int
+--             $ getUser \<|\> putUser \<|\> deleteUser
+--
+-- type IntUserId = 'PathVar' "userId" Int
+--
+-- getUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req '[] ByteString
+-- getUser = 'method' \@GET getUserHandler
+--
+-- putUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req '[] ByteString
+-- putUser = 'method' \@PUT
+--           $ 'requestContentType' \@"application/json"
+--           $ 'jsonRequestBody' \@User
+--           $ putUserHandler
+--
+-- deleteUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req '[] ByteString
+-- deleteUser = 'method' \@DELETE deleteUserHandler
+-- @
+--
+--
+-- $running
+--
+-- Routable handlers can be converted to a regular function using
+-- 'runRoute':
+--
+-- @
+-- runRoute :: Monad m => 'Handler' (RouterT m) '[] res ByteString -> ('Wai.Request' -> m 'Wai.Response')
+-- @
+--
+-- This function converts a WebGear handler to a function from
+-- 'Wai.Request' to 'Wai.Response' in a monadic context @m@. Then it
+-- is trivial to convert that to a WAI 'Wai.Application' and run it as a
+-- warp server:
+--
+-- @
+-- application :: 'Wai.Application'
+-- application req respond = 'runRoute' allRoutes req >>= respond
+--
+-- main :: IO ()
+-- main = Warp.run 3000 application
+-- @
+--
