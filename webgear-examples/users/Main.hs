@@ -17,23 +17,29 @@ import Data.ByteString.Lazy (ByteString)
 import Data.Hashable (Hashable)
 import Data.IORef (IORef, modifyIORef, newIORef, readIORef)
 import Data.Maybe (isJust)
-import Data.Tagged (untag)
+import Data.Tagged (Tagged (..))
 import Data.Text (Text)
 import Data.Time.Calendar (Day)
 import GHC.Generics (Generic)
 import Network.HTTP.Types (StdMethod (..))
 import Network.Wai (Application)
 
-import WebGear
+import WebGear.Middlewares
+import WebGear.Route
+import WebGear.Trait
+import WebGear.Trait.Body
+import WebGear.Trait.Path
+import WebGear.Types
 
 import qualified Data.HashMap.Strict as HM
 import qualified Network.Wai.Handler.Warp as Warp
 
 
-{-
-  An example program that uses webgear to build a simple HTTP API to
-  perform CRUD operations on users.
--}
+--------------------------------------------------------------------------------
+-- An example program that uses WebGear to build a simple HTTP API to
+-- perform CRUD operations on user records.
+--------------------------------------------------------------------------------
+
 
 --------------------------------------------------------------------------------
 -- Model for users
@@ -55,8 +61,7 @@ data Gender = Male | Female | OtherGender
 
 
 --------------------------------------------------------------------------------
--- An in-memory store for users. In a real program this would be stored in some
--- sort of a database.
+-- An in-memory store and associated operations for users
 --------------------------------------------------------------------------------
 newtype UserStore = UserStore (IORef (HM.HashMap UserId User))
 
@@ -78,17 +83,29 @@ removeUser store@(UserStore ref) uid = liftIO $ do
 --------------------------------------------------------------------------------
 type IntUserId = PathVar "userId" Int
 
-userRoutes :: (MonadRouter m, MonadReader UserStore m, MonadIO m) => Handler m '[] '[] ByteString
-userRoutes = [match| v1/users/userId:Int |] -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
+userRoutes :: ( MonadRouter m
+              , MonadReader UserStore m
+              , MonadIO m
+              )
+           => Handler m '[] '[] ByteString
+userRoutes = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
              $ getUser <|> putUser <|> deleteUser
 
-getUser :: (MonadRouter m, Has IntUserId req, MonadReader UserStore m, MonadIO m)
+getUser :: ( MonadRouter m
+           , Has IntUserId req
+           , MonadReader UserStore m
+           , MonadIO m
+           )
         => Handler m req '[] ByteString
 getUser = method @GET
           $ jsonResponseBody @User
           $ getUserHandler
 
-putUser :: (MonadRouter m, Has IntUserId req, MonadReader UserStore m, MonadIO m)
+putUser :: ( MonadRouter m
+           , Has IntUserId req
+           , MonadReader UserStore m
+           , MonadIO m
+           )
         => Handler m req '[] ByteString
 putUser = method @PUT
           $ requestContentType @"application/json"
@@ -96,33 +113,47 @@ putUser = method @PUT
           $ jsonResponseBody @User
           $ putUserHandler
 
-deleteUser :: (MonadRouter m, Has IntUserId req, MonadReader UserStore m, MonadIO m)
+deleteUser :: ( MonadRouter m
+              , Has IntUserId req
+              , MonadReader UserStore m
+              , MonadIO m
+              )
            => Handler m req '[] ByteString
 deleteUser = method @DELETE
              $ deleteUserHandler
 
-getUserHandler :: (MonadReader UserStore m, MonadIO m, Has IntUserId req)
+getUserHandler :: ( MonadReader UserStore m
+                  , MonadIO m
+                  , Has IntUserId req
+                  )
                => Handler m req '[] User
 getUserHandler = Kleisli $ \request -> do
-  let uid = untag $ traitValue @IntUserId request
+  let Tagged uid = traitValue @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
   maybe notFound ok user
 
-putUserHandler :: (MonadReader UserStore m, MonadIO m, Has IntUserId req, Has (JSONRequestBody User) req)
+putUserHandler :: ( MonadReader UserStore m
+                  , MonadIO m
+                  , Has IntUserId req
+                  , Has (JSONRequestBody User) req
+                  )
                => Handler m req '[] User
 putUserHandler = Kleisli $ \request -> do
-  let uid   = untag $ traitValue @IntUserId request
-      user  = untag $ traitValue @(JSONRequestBody User) request
-      user' = user { userId = UserId uid }
+  let Tagged uid  = traitValue @IntUserId request
+      Tagged user = traitValue @(JSONRequestBody User) request
+      user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
   ok user'
 
-deleteUserHandler :: (MonadReader UserStore m, MonadIO m, Has IntUserId req)
+deleteUserHandler :: ( MonadReader UserStore m
+                     , MonadIO m
+                     , Has IntUserId req
+                     )
                   => Handler m req '[] ByteString
 deleteUserHandler = Kleisli $ \request -> do
-  let uid = untag $ traitValue @IntUserId request
+  let Tagged uid = traitValue @IntUserId request
   store <- ask
   found <- removeUser store (UserId uid)
   if found then noContent else notFound
