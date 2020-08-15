@@ -45,7 +45,7 @@ import WebGear.Types
 -- $serving
 --
 -- An HTTP API server handler can be thought of as a function that
--- takes an request as input and produces a response as output in a
+-- takes a request as input and produces a response as output in a
 -- monadic context.
 --
 -- @
@@ -71,16 +71,18 @@ import WebGear.Types
 -- For example, the 'Header' trait has an instance of the 'Trait'
 -- typeclass. The 'check' function evaluates to a 'CheckSuccess' value
 -- if the header exists and can be converted to an attribute via the
--- 'FromHttpApiData' typeclass. Otherwise, it will evaluate to a
+-- 'FromHttpApiData' typeclass. Otherwise, it evaluates to a
 -- 'CheckFail' value.
 --
--- WebGear provides type-safety of handlers by linking traits to the
--- request or response at type level. The 'Linked' data type
--- associates a value such as 'Request' or 'Response' with a list of
--- traits. These functions help to link traits with values:
+-- WebGear provides type-safety by linking traits to the request or
+-- response at type level. The 'Linked' data type associates a
+-- 'Request' or 'Response' with a list of traits. This linking
+-- guarantees that the Request or Response has the specified trait.
+--
+-- These functions work with traits and linked values:
 --
 --   * 'linkzero': Establish a link between a value and an empty list
---     of traits.
+--     of traits. This always succeeds.
 --   * 'linkplus': Attempts to establish a link between a linked value
 --     with an additional trait.
 --   * 'linkminus': Removes a trait from the list of linked traits.
@@ -89,7 +91,16 @@ import WebGear.Types
 --   * 'traitValue': Extract a 'Val' associated with a trait from a
 --     linked value.
 --
--- We could modify the type signature of our handler to use linked
+-- For example, we make use of the @'Method' \@GET@ trait to ensure
+-- that our handler is called only for GET requests. We can link a
+-- request value with this trait using:
+--
+-- @
+-- linkedRequest :: Monad m => Request -> m (Either MethodMismatch (Linked '[Method GET] Request))
+-- linkedRequest = linkplus @(Method GET) . linkzero
+-- @
+--
+-- Let us modify the type signature of our handler to use linked
 -- values instead of regular values:
 --
 -- > handler :: Monad m => Linked req Request -> m (Linked res Response)
@@ -104,8 +115,8 @@ import WebGear.Types
 --
 -- $handlers
 --
--- Handlers in WebGear are defined with a type very similar (but
--- slightly different) to the above.
+-- Handlers in WebGear are defined with a type very similar to the
+-- above.
 --
 -- @
 -- type 'Handler' m req res a = 'Kleisli' m ('Linked' req 'Request') ('Linked' res ('Response' a))
