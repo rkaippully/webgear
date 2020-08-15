@@ -15,6 +15,7 @@ maintainer:          rkaippully@gmail.com
 copyright:           2020 Raghu Kaippully
 license:             MPL-2.0
 license-file:        LICENSE
+category:            Web
 build-type:          Simple
 extra-source-files:  README.md
                      ChangeLog.md

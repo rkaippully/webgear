@@ -1,4 +1,5 @@
 .stack-work/
 .hie/
 dist-newstyle/
+cabal.project.freeze
 *~
