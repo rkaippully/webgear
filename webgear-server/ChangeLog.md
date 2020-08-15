@@ -6,3 +6,4 @@
 
 - Support basic traits and middlewares
 - Automated tests
+- Documentation

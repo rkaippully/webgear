@@ -30,14 +30,18 @@ import qualified Network.Wai as Wai
 
 -- | The monad transformer stack for routing.
 --
--- The 'ExceptT' provides short-circuiting behaviour for 'rejectRoute'
--- and 'failHandler'. In case of 'rejectRoute', a 'Nothing' value is
--- returned and in case of 'failHandler', a @Response ByteString@ is
--- returned. The 'First' wrapper is provided to get instances of
--- 'Alternative' and 'MonadPlus' for 'RouterT'.
+-- * The 'ExceptT' provides short-circuiting behaviour for
+--   'rejectRoute' and 'failHandler'.
+--
+-- * In case of 'rejectRoute', a 'Nothing' value is returned and in
+--   case of 'failHandler', a @Response ByteString@ is returned.
+--
+-- * The 'First' wrapper is provided to get instances of 'Alternative'
+--   and 'MonadPlus' for 'RouterT'.
+--
 type RouterT m = ExceptT (Maybe (First (Response ByteString))) m
 
--- | Provide HTTP request routing with short circuiting behavior.
+-- | HTTP request routing with short circuiting behavior.
 class (Alternative m, MonadPlus m) => MonadRouter m where
   -- | Mark the current route as rejected, alternatives can be tried
   rejectRoute :: m a
