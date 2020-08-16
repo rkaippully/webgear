@@ -3,3 +3,4 @@ resolver: lts-16.6
 packages:
 - ./webgear-server
 - ./webgear-examples
+- ./webgear-benchmarks
