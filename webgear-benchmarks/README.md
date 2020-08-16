@@ -27,7 +27,7 @@ stack build; stack exec bench-users -- <library>   # library is one of webgear, 
 ab -k -c 3 -n 50000 -T application/json -u user.json http://localhost:3000/v1/users/1
 ```
 
-Results are available [here](results/bench-ab-users.md)
+Results are available [here](results/bench-ab-users.txt)
 
 ## Test environment
 
