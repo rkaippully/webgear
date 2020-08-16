@@ -32,8 +32,8 @@ executable bench-users
                     , http-types            ==0.12.*
                     , tagged                ==0.8.*
                     , criterion             ==1.5.*
-                    , servant               ==0.16.*
-                    , servant-server        ==0.16.*
+                    , servant               >=0.16
+                    , servant-server        >=0.16
                     , scotty                ==0.11.*
                     , webgear-server
   ghc-options:        -O2
