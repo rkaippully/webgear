@@ -1,2 +1,3 @@
 packages: webgear-server/
           webgear-examples/
+          webgear-benchmarks/
