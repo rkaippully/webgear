@@ -17,7 +17,7 @@ import Model
 
 type UserAPI = "v1" :> "users" :> Capture "userId" Int :> Get '[JSON] User
                :<|> "v1" :> "users" :> Capture "userId" Int :> ReqBody '[JSON] User :> Put '[JSON] User
-               :<|> "v1" :> "users" :> Capture "userId" Int :> DeleteNoContent '[JSON] NoContent
+               :<|> "v1" :> "users" :> Capture "userId" Int :> Verb DELETE 204 '[JSON] NoContent
 
 application :: UserStore -> Application
 application store = serve userAPI $ hoistServer userAPI toHandler server

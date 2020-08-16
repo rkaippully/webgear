@@ -32,9 +32,9 @@ executable bench-users
                     , http-types            ==0.12.*
                     , tagged                ==0.8.*
                     , criterion             ==1.5.*
-                    , servant               >=0.16
-                    , servant-server        >=0.16
-                    , scotty                ==0.11.*
+                    , servant               >=0.16 && <0.19
+                    , servant-server        >=0.16 && <0.19
+                    , scotty                >=0.11.6 && <0.13
                     , webgear-server
   ghc-options:        -O2
                       -threaded
