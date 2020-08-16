@@ -78,8 +78,7 @@ common webgear-common
                     , http-api-data         ==0.4.*
                     , aeson                 ==1.4.*
                     , tagged                ==0.8.*
-  ghc-options:        -O2
-                      -fwrite-ide-info
+  ghc-options:        -fwrite-ide-info
                       -hiedir=.hie
                       -Wall
                       -Wno-unticked-promoted-constructors
