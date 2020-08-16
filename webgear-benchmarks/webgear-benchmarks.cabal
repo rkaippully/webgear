@@ -36,8 +36,7 @@ executable bench-users
                     , servant-server        >=0.16 && <0.19
                     , scotty                >=0.11.6 && <0.13
                     , webgear-server
-  ghc-options:        -O2
-                      -threaded
+  ghc-options:        -threaded
                       -rtsopts
                       -with-rtsopts=-N
                       -fwrite-ide-info

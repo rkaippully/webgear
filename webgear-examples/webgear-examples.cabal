@@ -32,8 +32,7 @@ executable users
                     , http-types            ==0.12.*
                     , tagged                ==0.8.*
                     , webgear-server
-  ghc-options:        -O2
-                      -threaded
+  ghc-options:        -threaded
                       -rtsopts
                       -with-rtsopts=-N
                       -fwrite-ide-info
