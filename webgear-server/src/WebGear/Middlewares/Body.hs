@@ -1,10 +1,9 @@
-{-|
-Copyright        : (c) Raghu Kaippully, 2020
-License          : MPL-2.0
-Maintainer       : rkaippully@gmail.com
-
-Middlewares related to HTTP body.
--}
+-- |
+-- Copyright        : (c) Raghu Kaippully, 2020
+-- License          : MPL-2.0
+-- Maintainer       : rkaippully@gmail.com
+--
+-- Middlewares related to HTTP body.
 module WebGear.Middlewares.Body
   ( jsonRequestBody
   , jsonResponseBody

@@ -92,13 +92,13 @@ jobs:
             ${{ runner.os }}-${{ matrix.ghc }}-cabal-
 
       - name: Build
-        run: cabal build all $CONFIG
+        run: cabal build all --enable-documentation $CONFIG
 
       - name: Test
-        run: cabal test all $CONFIG
+        run: cabal test all --test-show-details=always $CONFIG
 
       - name: Haddock
-        run: cabal haddock all $CONFIG
+        run: cabal haddock all --enable-documentation $CONFIG
 
       - name: Prepare sdist
         run: cabal sdist all

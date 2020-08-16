@@ -1,10 +1,9 @@
-{-|
-Copyright        : (c) Raghu Kaippully, 2020
-License          : MPL-2.0
-Maintainer       : rkaippully@gmail.com
-
-Middlewares related to HTTP methods.
--}
+-- |
+-- Copyright        : (c) Raghu Kaippully, 2020
+-- License          : MPL-2.0
+-- Maintainer       : rkaippully@gmail.com
+--
+-- Middlewares related to HTTP methods.
 module WebGear.Middlewares.Method
   ( method
   ) where

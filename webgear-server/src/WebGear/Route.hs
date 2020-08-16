@@ -1,10 +1,9 @@
-{-|
-Copyright        : (c) Raghu Kaippully, 2020
-License          : MPL-2.0
-Maintainer       : rkaippully@gmail.com
-
-Types and functions to route HTTP requests.
--}
+-- |
+-- Copyright        : (c) Raghu Kaippully, 2020
+-- License          : MPL-2.0
+-- Maintainer       : rkaippully@gmail.com
+--
+-- Types and functions to route HTTP requests.
 module WebGear.Route
   ( RouterT
   , MonadRouter (..)
@@ -29,17 +28,20 @@ import WebGear.Types (Handler, Response (..), waiResponse)
 import qualified Network.Wai as Wai
 
 
-{- | The monad transformer stack for routing.
-
-The 'ExceptT' provides short-circuiting behaviour for 'rejectRoute'
-and 'failHandler'. In case of 'rejectRoute', a 'Nothing' value is
-returned and in case of 'failHandler', a @Response ByteString@ is
-returned. The 'First' wrapper is provided to get instances of
-'Alternative' and 'MonadPlus' for 'RouterT'.
--}
+-- | The monad transformer stack for routing.
+--
+-- * The 'ExceptT' provides short-circuiting behaviour for
+--   'rejectRoute' and 'failHandler'.
+--
+-- * In case of 'rejectRoute', a 'Nothing' value is returned and in
+--   case of 'failHandler', a @Response ByteString@ is returned.
+--
+-- * The 'First' wrapper is provided to get instances of 'Alternative'
+--   and 'MonadPlus' for 'RouterT'.
+--
 type RouterT m = ExceptT (Maybe (First (Response ByteString))) m
 
--- | Provide HTTP request routing with short circuiting behavior.
+-- | HTTP request routing with short circuiting behavior.
 class (Alternative m, MonadPlus m) => MonadRouter m where
   -- | Mark the current route as rejected, alternatives can be tried
   rejectRoute :: m a
@@ -54,11 +56,10 @@ instance Monad m => MonadRouter (RouterT m) where
   failHandler :: Response ByteString -> RouterT m a
   failHandler = throwError . Just . First
 
-{- | Convert a WebGear routable handler into a plain function.
-
-This function is typically used to convert WebGear routes to a
-'Wai.Application'.
--}
+-- | Convert a routable handler into a plain function.
+--
+-- This function is typically used to convert WebGear routes to a
+-- 'Wai.Application'.
 runRoute :: Monad m
          => Handler (RouterT m) '[] res ByteString
          -> (Wai.Request -> m Wai.Response)

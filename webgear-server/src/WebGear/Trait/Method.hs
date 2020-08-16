@@ -1,10 +1,9 @@
-{-|
-Copyright        : (c) Raghu Kaippully, 2020
-License          : MPL-2.0
-Maintainer       : rkaippully@gmail.com
-
-Trait capturing the HTTP method in a request.
--}
+-- |
+-- Copyright        : (c) Raghu Kaippully, 2020
+-- License          : MPL-2.0
+-- Maintainer       : rkaippully@gmail.com
+--
+-- Trait capturing the HTTP method in a request.
 module WebGear.Trait.Method
   ( Method
   , IsStdMethod (..)

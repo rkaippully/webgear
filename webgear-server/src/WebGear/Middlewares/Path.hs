@@ -1,10 +1,9 @@
-{-|
-Copyright        : (c) Raghu Kaippully, 2020
-License          : MPL-2.0
-Maintainer       : rkaippully@gmail.com
-
-Middlewares related to route paths.
--}
+-- |
+-- Copyright        : (c) Raghu Kaippully, 2020
+-- License          : MPL-2.0
+-- Maintainer       : rkaippully@gmail.com
+--
+-- Middlewares related to route paths.
 module WebGear.Middlewares.Path
   ( path
   , pathVar
@@ -68,13 +67,13 @@ pathVar handler = Kleisli $
 --
 -- This quasiquoter can be used in several ways:
 --
--- * @[match|a\/b\/c]@ is equivalent to @path \@\"a\/b\/c\"@
+-- * @[match|a\/b\/c]@ is equivalent to @'path' \@\"a\/b\/c\"@
 -- * @[match|a\/b\/objId:Int\/d]@ is equivalent to
---   @path \@\"a\/b\" . pathVar \@\"objId\" \@Int . path @\"d\"@
+--   @'path' \@\"a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' @\"d\"@
 -- * @[match|GET a\/b\/c]@ is equivalent to
---   @method \@GET $ path \@\"a\/b\/c\"@
+--   @'method' \@GET $ 'path' \@\"a\/b\/c\"@
 -- * @[match|GET a\/b\/objId:Int\/d]@ is equivalent to
---   @method \@GET . path \@\"a\/b\" . pathVar \@\"objId\" \@Int . path \@\"d\"@
+--   @'method' \@GET . 'path' \@\"a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' \@\"d\"@
 --
 match :: QuasiQuoter
 match = QuasiQuoter

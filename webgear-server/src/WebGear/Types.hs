@@ -1,16 +1,14 @@
-{-|
-Copyright        : (c) Raghu Kaippully, 2020
-License          : MPL-2.0
-Maintainer       : rkaippully@gmail.com
-
-This module contains some types and functions used throughout WebGear.
--}
+-- |
+-- Copyright        : (c) Raghu Kaippully, 2020
+-- License          : MPL-2.0
+-- Maintainer       : rkaippully@gmail.com
+--
+-- Common types and functions used throughout WebGear.
 module WebGear.Types
   ( -- * WebGear Request
-    {- | WebGear requests are WAI requests. This module reexports a number
-      of useful functions that operate on requests from "Network.Wai"
-      module.
-    -}
+    -- | WebGear requests are WAI requests. This module reexports a number
+    -- of useful functions that operate on requests from "Network.Wai"
+    -- module.
     Request
   , remoteHost
   , httpVersion
@@ -59,11 +57,10 @@ requestHeader h r = snd <$> find ((== h) . fst) (requestHeaders r)
 setPathInfo :: [Text] -> Request -> Request
 setPathInfo p r = r { pathInfo = p }
 
-{- | A response sent from the server to the client.
-
-The response contains a status, optional headers and an optional body
-of type @a@.
--}
+-- | A response sent from the server to the client.
+--
+-- The response contains a status, optional headers and an optional
+-- body of type @a@.
 data Response a = Response
     { respStatus  :: Status                            -- ^ Response status code
     , respHeaders :: HM.HashMap HeaderName ByteString  -- ^ Response headers
@@ -80,33 +77,31 @@ addResponseHeader (name, val) resp = resp { respHeaders = HM.insertWith f name v
   where
     f = flip const
 
-{- | A handler is a function from a request to response in a monadic
-   context. Both the request and the response can have linked traits.
-
-   The type level list @req@ contains all the traits expected to be
-   present in the request. The handler will produce a response that
-   satisfies all the traits in the type level list @res@.
--}
+-- | A handler is a function from a request to response in a monadic
+-- context. Both the request and the response can have linked traits.
+--
+-- The type level list @req@ contains all the traits expected to be
+-- present in the request. The handler will produce a response that
+-- satisfies all the traits in the type level list @res@.
 type Handler m req res a = Kleisli m (Linked req Request) (Linked res (Response a))
 
-{- | A middleware takes a handler as input and produces another handler
-   that usually adds some functionality.
-
-   The middleware can do a number of things with the request
-   handling. It can change the request traits before invoking the
-   handler. It can also change the response traits before passing it
-   back to its caller. It can make use of the linked value of any of
-   the request or response traits. It can also change the response
-   body.
--}
+-- | A middleware takes a handler as input and produces another
+-- handler that usually adds some functionality.
+--
+-- A middleware can do a number of things with the request
+-- handling such as:
+--
+--   * Change the request traits before invoking the handler.
+--   * Change the response traits before passing it back to its caller.
+--   * Use the linked value of any of the request or response traits.
+--   * Change the response body.
+--
 type Middleware m req req' res' res a' a = Handler m req' res' a' -> Handler m req res a
 
-{- | A middleware that manipulates only the request traits and leaves
-   the response unchanged.
--}
+-- | A middleware that manipulates only the request traits and leaves
+-- the response unchanged.
 type RequestMiddleware m req req' res a = Middleware m req req' res res a a
 
-{- | A middleware that manipulates only the response traits and leaves
-   the request unchanged.
--}
+-- | A middleware that manipulates only the response traits and leaves
+-- the request unchanged.
 type ResponseMiddleware m req res' res a = Middleware m req req res' res a a

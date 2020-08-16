@@ -6,4 +6,4 @@
 WebGear is a Haskell library for building composable, type-safe HTTP API servers. It focuses on good documentation and
 usability.
 
-See the documentation of WebGear module to get started.
+The library is located in the webgear-server package. Some examples are given in the webgear-examples package.

@@ -1,7 +1,13 @@
 cabal-version:       2.4
 name:                webgear-server
 version:             0.1.0
-description:         Please see the README at <https://github.com/rkaippully/webgear#readme>
+synopsis:            Composable, type-safe library to build HTTP API servers
+description:
+        WebGear is a library to for building composable, type-safe HTTP API servers.
+
+        WebGear focuses on good documentation and usability.
+
+        See the documentation of WebGear module to get started.
 homepage:            https://github.com/rkaippully/webgear#readme
 bug-reports:         https://github.com/rkaippully/webgear/issues
 author:              Raghu Kaippully
@@ -9,6 +15,7 @@ maintainer:          rkaippully@gmail.com
 copyright:           2020 Raghu Kaippully
 license:             MPL-2.0
 license-file:        LICENSE
+category:            Web
 build-type:          Simple
 extra-source-files:  README.md
                      ChangeLog.md
