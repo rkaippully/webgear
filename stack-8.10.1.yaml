@@ -4,3 +4,6 @@ packages:
 - ./webgear-server
 - ./webgear-examples
 - ./webgear-benchmarks
+
+extra-deps:
+- servant-server-0.18
