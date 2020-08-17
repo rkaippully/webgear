@@ -1,0 +1,6 @@
+resolver: lts-14.27
+
+packages:
+- ./webgear-server
+- ./webgear-examples
+- ./webgear-benchmarks

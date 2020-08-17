@@ -67,8 +67,8 @@ common webgear-common
                       TypeFamilies
                       TypeFamilyDependencies
                       TypeOperators
-  build-depends:      base                  >=4.13.0.0 && <5
-                    , template-haskell      >=2.15.0.0 && <3
+  build-depends:      base                  >=4.12.0.0 && <5
+                    , template-haskell      >=2.14.0.0 && <3
                     , mtl                   ==2.2.*
                     , unordered-containers  ==0.2.*
                     , wai                   ==3.2.*
@@ -76,16 +76,18 @@ common webgear-common
                     , text                  ==1.2.*
                     , http-types            ==0.12.*
                     , http-api-data         ==0.4.*
-                    , aeson                 ==1.4.*
+                    , aeson                 >=1.4 && <1.6
                     , tagged                ==0.8.*
-  ghc-options:        -fwrite-ide-info
-                      -hiedir=.hie
-                      -Wall
+  ghc-options:        -Wall
                       -Wno-unticked-promoted-constructors
                       -Wincomplete-record-updates
                       -Wincomplete-uni-patterns
                       -Wredundant-constraints
 
+  if impl(ghc >= 8.8.1)
+    ghc-options:      -fwrite-ide-info
+                      -hiedir=.hie
+                      
 library
   import:             webgear-common
   exposed-modules:    WebGear
@@ -122,9 +124,9 @@ test-suite webgear-server-test
   ghc-options:        -threaded
                       -rtsopts
                       -with-rtsopts=-N
-  build-depends:      tasty                 ==1.2.*
+  build-depends:      tasty                 >=1.2 && <1.4
                     , tasty-quickcheck      ==0.10.*
                     , tasty-hunit           ==0.10.*
-                    , QuickCheck            ==2.13.*
+                    , QuickCheck            >=2.13 && <2.15
                     , quickcheck-instances  ==0.3.*
                     , webgear-server

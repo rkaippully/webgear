@@ -8,13 +8,26 @@ on:
 
 jobs:
   stack-build:
-    name: Stack Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
+    name: Stack - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        ghc: [8.8.3]
+        os:
+          - ubuntu-latest
+          - macos-latest
+        ghc:
+          - 8.10.1
+          - 8.8.3
+          - 8.6.5
+        exclude:
+          - os: macos-latest
+            ghc: 8.8.3
+          - os: macos-latest
+            ghc: 8.6.5
+
+    env:
+      STACK_YAML: stack-${{ matrix.ghc }}.yaml
 
     steps:
       - uses: actions/checkout@v2
@@ -49,18 +62,21 @@ jobs:
         run: stack sdist --system-ghc
 
   cabal-build:
-    name: Cabal Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
+    name: Cabal - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
         ghc:
-          - 8.8.3
           - 8.10.1
+          - 8.8.3
+          - 8.6.5
         exclude:
           - os: macos-latest
             ghc: 8.8.3
+          - os: macos-latest
+            ghc: 8.6.5
 
     env:
       CONFIG: "--enable-tests --enable-benchmarks"
