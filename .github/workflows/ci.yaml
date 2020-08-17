@@ -8,7 +8,7 @@ on:
 
 jobs:
   stack-build:
-    name: Stack Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
+    name: Stack - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -62,7 +62,7 @@ jobs:
         run: stack sdist --system-ghc
 
   cabal-build:
-    name: Cabal Build and Test - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
+    name: Cabal - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
     strategy:

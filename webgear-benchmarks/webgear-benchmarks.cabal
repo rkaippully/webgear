@@ -25,16 +25,16 @@ executable bench-users
                     , warp                  ==3.3.*
                     , text                  ==1.2.*
                     , bytestring            ==0.10.*
-                    , time                  ==1.9.*
+                    , time                  >=1.8.0.2 && <1.10
                     , unordered-containers  ==0.2.*
-                    , hashable              ==1.3.*
+                    , hashable              >=1.2.7.0 && <1.4
                     , aeson                 >=1.4 && <1.6
                     , http-types            ==0.12.*
                     , tagged                ==0.8.*
                     , criterion             ==1.5.*
                     , servant               >=0.16 && <0.19
                     , servant-server        >=0.16 && <0.19
-                    , scotty                >=0.11.6 && <0.13
+                    , scotty                >=0.11.5 && <0.13
                     , webgear-server
   ghc-options:        -threaded
                       -rtsopts

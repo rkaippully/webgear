@@ -21,7 +21,7 @@ getUser store = do
   uid <- param "userId"
   lookupUser store (UserId uid) >>= \case
     Just user -> json user
-    Nothing   -> raiseStatus notFound404 "Not found"
+    Nothing   -> respondNotFound
 
 putUser :: UserStore -> ActionM ()
 putUser store = do
@@ -37,4 +37,10 @@ deleteUser store = do
   found <- removeUser store (UserId uid)
   if found
     then status noContent204 >> raw ""
-    else raiseStatus notFound404 "Not found"
+    else respondNotFound
+
+respondNotFound :: ActionM ()
+respondNotFound = do
+  status notFound404
+  text "Not found"
+  finish
