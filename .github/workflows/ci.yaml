@@ -44,6 +44,7 @@ jobs:
         with:
           path: |
             ~/.stack
+            !~/.stack/setup-exe-src
             !~/.stack/setup-exe-cache
           key: ${{ runner.os }}-${{ matrix.ghc }}-stack-${{ hashFiles('stack.yaml') }}
           restore-keys: |
