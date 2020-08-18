@@ -92,10 +92,6 @@ library
   import:             webgear-common
   exposed-modules:    WebGear
                     , WebGear.Trait
-                    , WebGear.Trait.Method
-                    , WebGear.Trait.Header
-                    , WebGear.Trait.Path
-                    , WebGear.Trait.Body
                     , WebGear.Types
                     , WebGear.Route
                     , WebGear.Middlewares

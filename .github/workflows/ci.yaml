@@ -44,10 +44,9 @@ jobs:
         with:
           path: |
             ~/.stack
+            !~/.stack/setup-exe-src
             !~/.stack/setup-exe-cache
-          key: ${{ runner.os }}-${{ matrix.ghc }}-stack-${{ hashFiles('stack.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.ghc }}-stack-
+          key: ${{ runner.os }}-${{ matrix.ghc }}-stack-${{ hashFiles(env.STACK_YAML) }}
 
       - name: Build
         run: stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks

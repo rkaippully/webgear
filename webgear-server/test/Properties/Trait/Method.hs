@@ -10,8 +10,8 @@ import Test.QuickCheck (Arbitrary (arbitrary), Property, allProperties, elements
 import Test.Tasty (TestTree)
 import Test.Tasty.QuickCheck (testProperties)
 
+import WebGear.Middlewares.Method
 import WebGear.Trait
-import WebGear.Trait.Method
 
 
 newtype MethodWrapper = MethodWrapper StdMethod
@@ -25,9 +25,9 @@ prop_methodMatch = property $ \(MethodWrapper v) ->
   let
     req = defaultRequest { requestMethod = renderStdMethod v }
   in
-    case runIdentity (check @(Method GET) req) of
-      CheckSuccess _ v' -> v === GET .&&. v' === methodGet
-      CheckFail e       ->
+    case runIdentity (prove @(Method GET) req) of
+      Proof _ v'   -> v === GET .&&. v' === methodGet
+      Refutation e ->
         expectedMethod e === methodGet .&&. actualMethod e =/= methodGet
 
 

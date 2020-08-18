@@ -39,10 +39,6 @@ import qualified Network.Wai as Wai
 import WebGear.Middlewares
 import WebGear.Route
 import WebGear.Trait
-import WebGear.Trait.Body
-import WebGear.Trait.Header
-import WebGear.Trait.Method
-import WebGear.Trait.Path
 import WebGear.Types
 
 
@@ -69,15 +65,16 @@ import WebGear.Types
 -- A trait is an attribute associated with a value. For example, a
 -- @Request@ might have a header that we are interested in; the
 -- 'Header' trait represents that. All traits have instances of
--- 'Trait' typeclass. This typeclass helps to 'check' the presence of
--- the trait. It also has two associated types - 'Val' and 'Fail' - to
--- represent the result of 'check'ing the presence of a trait.
+-- 'Trait' typeclass. This typeclass helps to 'prove' the presence of
+-- the trait. It also has two associated types - 'Attribute' and
+-- 'Absence' - to represent the result of proving the presence of a
+-- trait.
 --
 -- For example, the 'Header' trait has an instance of the 'Trait'
--- typeclass. The 'check' function evaluates to a 'CheckSuccess' value
+-- typeclass. The 'prove' function evaluates to a 'Proof' value
 -- if the header exists and can be converted to an attribute via the
 -- 'FromHttpApiData' typeclass. Otherwise, it evaluates to a
--- 'CheckFail' value.
+-- 'Refutation' value.
 --
 -- WebGear provides type-safety by linking traits to the request or
 -- response at type level. The 'Linked' data type associates a
@@ -93,7 +90,7 @@ import WebGear.Types
 --   * 'linkminus': Removes a trait from the list of linked traits.
 --   * 'unlink': Convert a linked value to a regular value without any
 --     type-level traits.
---   * 'traitValue': Extract a 'Val' associated with a trait from a
+--   * 'trait': Extract an 'Attribute' associated with a trait from a
 --     linked value.
 --
 -- For example, we make use of the @'Method' \@GET@ trait to ensure
@@ -133,8 +130,8 @@ import WebGear.Types
 -- body.
 --
 -- A handler can extract some trait attribute of a request with the
--- 'traitValue' function. It can also use 'linkplus' function to prove
--- the presence of traits in the response before returning it.
+-- 'trait' function. It can also use 'linkplus' function to prove the
+-- presence of traits in the response before returning it.
 --
 --
 -- $middlewares
