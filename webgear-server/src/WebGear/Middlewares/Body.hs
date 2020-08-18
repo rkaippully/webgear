@@ -5,25 +5,40 @@
 --
 -- Middlewares related to HTTP body.
 module WebGear.Middlewares.Body
-  ( jsonRequestBody
+  ( JSONRequestBody
+  , jsonRequestBody
   , jsonResponseBody
   ) where
 
 import Control.Arrow (Kleisli (..))
 import Control.Monad ((>=>))
-import Control.Monad.IO.Class (MonadIO)
-import Data.Aeson (FromJSON, ToJSON, encode)
-import Data.ByteString.Lazy (ByteString, fromStrict)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
+import Data.ByteString.Lazy (ByteString, fromChunks, fromStrict)
 import Data.HashMap.Strict (fromList, insert)
-import Data.Text (Text)
+import Data.Kind (Type)
+import Data.Text (Text, pack)
 import Data.Text.Encoding (encodeUtf8)
 import Network.HTTP.Types (badRequest400, hContentType)
 
 import WebGear.Route (MonadRouter (..))
-import WebGear.Trait (linkplus, linkzero, unlink)
-import WebGear.Trait.Body (JSONRequestBody)
-import WebGear.Types (Middleware, RequestMiddleware, Response (..))
+import WebGear.Trait (Result (..), Trait (..), linkplus, linkzero, unlink)
+import WebGear.Types (Middleware, Request, RequestMiddleware, Response (..), getRequestBodyChunk)
+import WebGear.Util (takeWhileM)
 
+-- | A 'Trait' for converting a JSON request body into a value.
+data JSONRequestBody (t :: Type)
+
+instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
+  type Attribute (JSONRequestBody t) Request = t
+  type Absence (JSONRequestBody t) Request = Text
+
+  prove :: Request -> m (Result (JSONRequestBody t) Request)
+  prove r = do
+    chunks <- takeWhileM (/= mempty) $ repeat $ liftIO $ getRequestBodyChunk r
+    pure $ case eitherDecode' (fromChunks chunks) of
+             Left e  -> Refutation (pack e)
+             Right t -> Proof r t
 
 -- | A middleware to parse the request body as JSON and convert it to
 -- a value via a 'FromJSON' instance.

@@ -27,8 +27,6 @@ import Network.Wai (Application)
 import WebGear.Middlewares
 import WebGear.Route
 import WebGear.Trait
-import WebGear.Trait.Body
-import WebGear.Trait.Path
 import WebGear.Types
 
 import qualified Data.HashMap.Strict as HM
@@ -128,7 +126,7 @@ getUserHandler :: ( MonadReader UserStore m
                   )
                => Handler m req '[] User
 getUserHandler = Kleisli $ \request -> do
-  let Tagged uid = traitValue @IntUserId request
+  let Tagged uid = trait @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
   maybe notFound ok user
@@ -140,8 +138,8 @@ putUserHandler :: ( MonadReader UserStore m
                   )
                => Handler m req '[] User
 putUserHandler = Kleisli $ \request -> do
-  let Tagged uid  = traitValue @IntUserId request
-      Tagged user = traitValue @(JSONRequestBody User) request
+  let Tagged uid  = trait @IntUserId request
+      Tagged user = trait @(JSONRequestBody User) request
       user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
@@ -153,7 +151,7 @@ deleteUserHandler :: ( MonadReader UserStore m
                      )
                   => Handler m req '[] ByteString
 deleteUserHandler = Kleisli $ \request -> do
-  let Tagged uid = traitValue @IntUserId request
+  let Tagged uid = trait @IntUserId request
   store <- ask
   found <- removeUser store (UserId uid)
   if found then noContent else notFound

@@ -14,8 +14,8 @@ import Test.QuickCheck.Monadic (assert, monadicIO, monitor)
 import Test.Tasty (TestTree)
 import Test.Tasty.QuickCheck (testProperties)
 
+import WebGear.Middlewares.Body
 import WebGear.Trait
-import WebGear.Trait.Body
 
 
 bodyToRequest :: (MonadIO m, Show a) => a -> m Request
@@ -27,23 +27,23 @@ bodyToRequest x = do
 prop_emptyRequestBodyFails :: Property
 prop_emptyRequestBodyFails = monadicIO $ do
   req <- bodyToRequest ("" :: String)
-  check @(JSONRequestBody Int) req >>= \case
-    CheckSuccess _ _ -> monitor (counterexample "Unexpected success") >> assert False
-    CheckFail _      -> assert True
+  prove @(JSONRequestBody Int) req >>= \case
+    Proof _ _    -> monitor (counterexample "Unexpected success") >> assert False
+    Refutation _ -> assert True
 
 prop_validBodyParses :: Property
 prop_validBodyParses = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
-  check @(JSONRequestBody Integer) req >>= \case
-    CheckSuccess _ n' -> assert (n == n')
-    CheckFail _       -> assert False
+  prove @(JSONRequestBody Integer) req >>= \case
+    Proof _ n'   -> assert (n == n')
+    Refutation _ -> assert False
 
 prop_invalidBodyFails :: Property
 prop_invalidBodyFails = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
-  check @(JSONRequestBody String) req >>= \case
-    CheckSuccess _ _ -> assert False
-    CheckFail _      -> assert True
+  prove @(JSONRequestBody String) req >>= \case
+    Proof _ _    -> assert False
+    Refutation _ -> assert True
 
 
 -- Hack for TH splicing

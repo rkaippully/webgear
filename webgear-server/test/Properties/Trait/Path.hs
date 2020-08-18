@@ -10,8 +10,8 @@ import Test.QuickCheck.Instances ()
 import Test.Tasty (TestTree)
 import Test.Tasty.QuickCheck (testProperties)
 
+import WebGear.Middlewares.Path
 import WebGear.Trait
-import WebGear.Trait.Path
 
 
 prop_pathMatch :: Property
@@ -20,9 +20,9 @@ prop_pathMatch = property $ \h ->
     rest = ["foo", "bar"]
     req = defaultRequest { pathInfo = h:rest }
   in
-    case runIdentity (check @(Path "a") req) of
-      CheckSuccess req' _ -> h === "a" .&&. pathInfo req' === rest
-      CheckFail _         -> h =/= "a"
+    case runIdentity (prove @(Path "a") req) of
+      Proof req' _ -> h === "a" .&&. pathInfo req' === rest
+      Refutation _ -> h =/= "a"
 
 prop_pathVarMatch :: Property
 prop_pathVarMatch = property $ \(n :: Int) ->
@@ -30,9 +30,9 @@ prop_pathVarMatch = property $ \(n :: Int) ->
     rest = ["foo", "bar"]
     req = defaultRequest { pathInfo = fromString (show n):rest }
   in
-    case runIdentity (check @(PathVar "tag" Int) req) of
-      CheckSuccess req' n' -> n' === n .&&. pathInfo req' === rest
-      CheckFail _          -> property False
+    case runIdentity (prove @(PathVar "tag" Int) req) of
+      Proof req' n' -> n' === n .&&. pathInfo req' === rest
+      Refutation _  -> property False
 
 prop_pathVarParseError :: Property
 prop_pathVarParseError = property $ \(p, ps) ->
@@ -40,9 +40,9 @@ prop_pathVarParseError = property $ \(p, ps) ->
     p' = "test-" <> p
     req = defaultRequest { pathInfo = p':ps }
   in
-    case runIdentity (check @(PathVar "tag" Int) req) of
-      CheckSuccess _ _ -> property False
-      CheckFail e      -> e === PathVarParseError ("could not parse: `" <> p' <> "' (input does not start with a digit)")
+    case runIdentity (prove @(PathVar "tag" Int) req) of
+      Proof _ _    -> property False
+      Refutation e -> e === PathVarParseError ("could not parse: `" <> p' <> "' (input does not start with a digit)")
 
 
 -- Hack for TH splicing

@@ -5,7 +5,10 @@
 --
 -- Middlewares related to route paths.
 module WebGear.Middlewares.Path
-  ( path
+  ( Path
+  , PathVar
+  , PathVarError (..)
+  , path
   , pathVar
   , match
   ) where
@@ -14,20 +17,62 @@ import Control.Arrow (Kleisli (..))
 import Control.Monad ((>=>))
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty (..), toList)
-import GHC.TypeLits (KnownSymbol)
+import Data.Proxy (Proxy (..))
+import Data.Text (Text, pack)
+import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import Language.Haskell.TH.Quote (QuasiQuoter (..))
 import Language.Haskell.TH.Syntax (Exp (..), Q, TyLit (..), Type (..), mkName)
-import Web.HttpApiData (FromHttpApiData)
+import Web.HttpApiData (FromHttpApiData (..))
 
 import WebGear.Middlewares.Method (method)
 import WebGear.Route (MonadRouter (..))
-import WebGear.Trait (linkplus)
-import WebGear.Trait.Path (Path, PathVar)
-import WebGear.Types (RequestMiddleware)
+import WebGear.Trait (Result (..), Trait (..), linkplus)
+import WebGear.Types (Request, RequestMiddleware, pathInfo, setPathInfo)
 import WebGear.Util (splitOn)
 
 import qualified Data.List as List
 
+
+-- | A path component which is literally matched against the request
+-- but discarded after that.
+data Path (s :: Symbol)
+
+instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
+  type Attribute (Path s) Request = ()
+
+  type Absence (Path s) Request = ()
+
+  prove :: Request -> m (Result (Path s) Request)
+  prove r = pure $
+    let expected = map pack $ toList $ splitOn '/' $ symbolVal $ Proxy @s
+        actual = pathInfo r
+    in
+      case List.stripPrefix expected actual of
+        Nothing   -> Refutation ()
+        Just rest -> Proof (setPathInfo rest r) ()
+
+
+-- | A path variable that is extracted and converted to a value of
+-- type @val@. The @tag@ is usually a type-level symbol (string) to
+-- uniquely identify this variable.
+data PathVar tag val
+
+-- | Failure to extract a 'PathVar'
+data PathVarError = PathVarNotFound | PathVarParseError Text
+  deriving (Eq, Show, Read)
+
+instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m where
+  type Attribute (PathVar tag val) Request = val
+  type Absence (PathVar tag val) Request = PathVarError
+
+  prove :: Request -> m (Result (PathVar tag val) Request)
+  prove r = pure $
+    case pathInfo r of
+      []     -> Refutation PathVarNotFound
+      (x:xs) ->
+        case parseUrlPiece @val x of
+          Left e  -> Refutation $ PathVarParseError e
+          Right h -> Proof (setPathInfo xs r) h
 
 -- | A middleware that literally matches path @s@.
 --

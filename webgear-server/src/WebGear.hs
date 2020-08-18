@@ -39,10 +39,6 @@ import qualified Network.Wai as Wai
 import WebGear.Middlewares
 import WebGear.Route
 import WebGear.Trait
-import WebGear.Trait.Body
-import WebGear.Trait.Header
-import WebGear.Trait.Method
-import WebGear.Trait.Path
 import WebGear.Types
 
 

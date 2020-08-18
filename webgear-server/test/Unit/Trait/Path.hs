@@ -11,16 +11,16 @@ import Network.Wai (defaultRequest, pathInfo)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase, (@?=))
 
+import WebGear.Middlewares.Path
 import WebGear.Trait
-import WebGear.Trait.Path
 
 
 testMissingPathVar :: TestTree
 testMissingPathVar = testCase "PathVar match: missing variable" $ do
   let req = defaultRequest { pathInfo = [] }
-  check @(PathVar "tag" Int) req >>= \case
-    CheckSuccess _ _ -> assertFailure "unexpected success"
-    CheckFail e      -> e @?= PathVarNotFound
+  prove @(PathVar "tag" Int) req >>= \case
+    Proof _ _    -> assertFailure "unexpected success"
+    Refutation e -> e @?= PathVarNotFound
 
 tests :: TestTree
 tests = testGroup "Trait.Path" [ testMissingPathVar ]
