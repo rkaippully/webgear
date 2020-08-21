@@ -4,12 +4,14 @@
 -- Maintainer       : rkaippully@gmail.com
 --
 -- Middlewares related to HTTP headers.
+--
 module WebGear.Middlewares.Header
   ( Header
   , HeaderError (..)
   , HeaderMatch
   , HeaderMismatch (..)
   , requestContentType
+  , addResponseHeader
   ) where
 
 import Control.Arrow (Kleisli (..))
@@ -19,17 +21,20 @@ import Data.HashMap.Strict (fromList)
 import Data.Kind (Type)
 import Data.Proxy (Proxy (..))
 import Data.String (fromString)
+import Data.Tagged (Tagged (..))
 import Data.Text (Text)
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import Network.HTTP.Types (badRequest400)
 import Text.Printf (printf)
-import Web.HttpApiData (FromHttpApiData (..))
+import Web.HttpApiData (FromHttpApiData (..), ToHttpApiData (..))
 
 import WebGear.Route (MonadRouter (..))
-import WebGear.Trait (Result (..), Trait (..), linkplus)
-import WebGear.Types (Request, RequestMiddleware, Response (..), requestHeader)
+import WebGear.Trait (Attachable (..), Result (..), Trait (..), connect, probe)
+import WebGear.Types (Request, RequestMiddleware, Response (..), ResponseMiddleware, requestHeader,
+                      requestHeaders, responseHeader)
 
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.HashMap.Strict as HM
 
 
 -- | A 'Trait' for capturing a header with name @s@ in a request or
@@ -44,13 +49,37 @@ instance (KnownSymbol s, FromHttpApiData t, Monad m) => Trait (Header s t) Reque
   type Attribute (Header s t) Request = t
   type Absence (Header s t) Request = HeaderError
 
-  prove :: Request -> m (Result (Header s t) Request)
-  prove r = pure $
+  derive :: Request -> m (Result (Header s t) Request)
+  derive r = pure $
     let s = fromString $ symbolVal (Proxy @s)
     in case parseHeader <$> requestHeader s r of
          Nothing        -> Refutation HeaderNotFound
          Just (Left e)  -> Refutation $ HeaderParseError e
          Just (Right x) -> Proof r x
+
+instance (KnownSymbol s, FromHttpApiData t, ToHttpApiData t, Monad m) => Attachable (Header s t) Request m where
+  attach :: t -> Request -> m (Tagged (Header s t) Request)
+  attach x r = pure $
+    let s = fromString $ symbolVal (Proxy @s)
+    in Tagged r { requestHeaders = (s, toHeader x) : requestHeaders r }
+
+instance (KnownSymbol s, FromHttpApiData t, Monad m) => Trait (Header s t) (Response a) m where
+  type Attribute (Header s t) (Response a) = t
+  type Absence (Header s t) (Response a) = HeaderError
+
+  derive :: Response a -> m (Result (Header s t) (Response a))
+  derive r = pure $
+    let s = fromString $ symbolVal (Proxy @s)
+    in case parseHeader <$> responseHeader s r of
+         Nothing        -> Refutation HeaderNotFound
+         Just (Left e)  -> Refutation $ HeaderParseError e
+         Just (Right x) -> Proof r x
+
+instance (KnownSymbol s, FromHttpApiData t, ToHttpApiData t, Monad m) => Attachable (Header s t) (Response a) m where
+  attach :: t -> Response a -> m (Tagged (Header s t) (Response a))
+  attach x r = pure $
+    let s = fromString $ symbolVal (Proxy @s)
+    in Tagged r { responseHeaders = HM.insert s (toHeader x) (responseHeaders r) }
 
 -- | A 'Trait' for ensuring that a header named @s@ has value @t@.
 data HeaderMatch (s :: Symbol) (t :: Symbol)
@@ -66,8 +95,8 @@ instance (KnownSymbol s, KnownSymbol t, Monad m) => Trait (HeaderMatch s t) Requ
   type Attribute (HeaderMatch s t) Request = ByteString
   type Absence (HeaderMatch s t) Request = HeaderMismatch
 
-  prove :: Request -> m (Result (HeaderMatch s t) Request)
-  prove r = pure $
+  derive :: Request -> m (Result (HeaderMatch s t) Request)
+  derive r = pure $
     let
       name = fromString $ symbolVal (Proxy @s)
       expected = fromString $ symbolVal (Proxy @t)
@@ -81,21 +110,32 @@ instance (KnownSymbol s, KnownSymbol t, Monad m) => Trait (HeaderMatch s t) Requ
 -- has a specific value. It will fail the handler if the header did
 -- not match.
 --
--- Typical usage:
+-- Example usage:
 --
 -- > requestContentType @"application/json" handler
 --
 requestContentType :: forall c m req res a. (KnownSymbol c, MonadRouter m)
                    => RequestMiddleware m req (HeaderMatch "Content-Type" c:req) res a
 requestContentType handler = Kleisli $
-  linkplus @(HeaderMatch "Content-Type" c) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(HeaderMatch "Content-Type" c) >=> either (failHandler . mkError) (runKleisli handler)
   where
     mkError :: HeaderMismatch -> Response LBS.ByteString
     mkError err = Response
-                  { respStatus  = badRequest400
-                  , respHeaders = fromList []
-                  , respBody    = Just $ fromString $
-                    case (expectedHeader err, actualHeader err) of
-                      (ex, Nothing) -> printf "Expected Content-Type header %s but not found" (show ex)
-                      (ex, Just h)  -> printf "Expected Content-Type header %s but found %s" (show ex) (show h)
+                  { responseStatus  = badRequest400
+                  , responseHeaders = fromList []
+                  , responseBody    = Just $ fromString $
+                      case (expectedHeader err, actualHeader err) of
+                        (ex, Nothing) -> printf "Expected Content-Type header %s but not found" (show ex)
+                        (ex, Just h)  -> printf "Expected Content-Type header %s but found %s" (show ex) (show h)
                   }
+
+-- | A middleware to create or update a response header.
+--
+-- Example usage:
+--
+-- > addResponseHeader @"Content-type" "application/json" handler
+--
+addResponseHeader :: forall h t m req res a.
+                     (KnownSymbol h, FromHttpApiData t, ToHttpApiData t, Monad m)
+                  => t -> ResponseMiddleware m req res (Header h t : res) a
+addResponseHeader val handler = Kleisli $ runKleisli handler >=> connect @(Header h t) val

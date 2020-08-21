@@ -22,7 +22,7 @@ import Data.Version (showVersion)
 import Network.HTTP.Types (Header, hServer, notFound404)
 
 import Paths_webgear_server (version)
-import WebGear.Trait (linkzero, unlink)
+import WebGear.Trait (link, unlink)
 import WebGear.Types (Handler, Response (..), waiResponse)
 
 import qualified Network.Wai as Wai
@@ -65,17 +65,17 @@ runRoute :: Monad m
          -> (Wai.Request -> m Wai.Response)
 runRoute route req = waiResponse . addServerHeader . either (maybe notFoundResponse getFirst) id <$> runExceptT f
   where
-    f = unlink <$> runKleisli route (linkzero req)
+    f = unlink <$> runKleisli route (link req)
 
     notFoundResponse :: Response ByteString
     notFoundResponse = Response
-      { respStatus  = notFound404
-      , respHeaders = fromList []
-      , respBody    = Just "Not Found"
+      { responseStatus  = notFound404
+      , responseHeaders = fromList []
+      , responseBody    = Just "Not Found"
       }
 
     addServerHeader :: Response ByteString -> Response ByteString
-    addServerHeader r = r { respHeaders = respHeaders r <> fromList [serverHeader] }
+    addServerHeader r = r { responseHeaders = responseHeaders r <> fromList [serverHeader] }
 
     serverHeader :: Header
     serverHeader = (hServer, fromString $ "WebGear/" ++ showVersion version)

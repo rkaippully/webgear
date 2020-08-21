@@ -65,16 +65,22 @@ import WebGear.Types
 -- A trait is an attribute associated with a value. For example, a
 -- @Request@ might have a header that we are interested in; the
 -- 'Header' trait represents that. All traits have instances of
--- 'Trait' typeclass. This typeclass helps to 'prove' the presence of
+-- 'Trait' typeclass. The 'derive' function helps to check presence of
 -- the trait. It also has two associated types - 'Attribute' and
 -- 'Absence' - to represent the result of proving the presence of a
 -- trait.
 --
 -- For example, the 'Header' trait has an instance of the 'Trait'
--- typeclass. The 'prove' function evaluates to a 'Proof' value
+-- typeclass. The 'derive' function evaluates to a 'Proof' value
 -- if the header exists and can be converted to an attribute via the
 -- 'FromHttpApiData' typeclass. Otherwise, it evaluates to a
 -- 'Refutation' value.
+--
+-- Some traits also can be explicitly attached to a value instead of
+-- just deriving it. For example, header values can be set on a
+-- request or response value. Such traits are instances of
+-- 'Attachable' typeclass and the 'attach' function is used to
+-- associate a trait attribute with a value.
 --
 -- WebGear provides type-safety by linking traits to the request or
 -- response at type level. The 'Linked' data type associates a
@@ -83,14 +89,22 @@ import WebGear.Types
 --
 -- These functions work with traits and linked values:
 --
---   * 'linkzero': Establish a link between a value and an empty list
---     of traits. This always succeeds.
---   * 'linkplus': Attempts to establish a link between a linked value
---     with an additional trait.
---   * 'linkminus': Removes a trait from the list of linked traits.
+--   * 'link': Establish a link between a value and an empty list of
+--     traits. This always succeeds.
+--
 --   * 'unlink': Convert a linked value to a regular value without any
 --     type-level traits.
---   * 'trait': Extract an 'Attribute' associated with a trait from a
+--
+--   * 'probe': Attempts to establish a link between a linked value
+--     with an additional trait using 'derive'.
+--
+--   * 'connect': Associates a trait attribute with a linked value to
+--     form a new linked value that has this trait. This uses the
+--     'attach' operation.
+--
+--   * 'remove': Removes a trait from the list of linked traits.
+--
+--   * 'get': Extract an 'Attribute' associated with a trait from a
 --     linked value.
 --
 -- For example, we make use of the @'Method' \@GET@ trait to ensure
@@ -99,7 +113,7 @@ import WebGear.Types
 --
 -- @
 -- linkedRequest :: Monad m => 'Request' -> m (Either 'MethodMismatch' ('Linked' '['Method' GET] 'Request'))
--- linkedRequest = 'linkplus' @('Method' GET) . 'linkzero'
+-- linkedRequest = 'probe' @('Method' GET) . 'link'
 -- @
 --
 -- Let us modify the type signature of our handler to use linked
@@ -130,7 +144,7 @@ import WebGear.Types
 -- body.
 --
 -- A handler can extract some trait attribute of a request with the
--- 'trait' function. It can also use 'linkplus' function to prove the
+-- 'get' function. It can also use 'probe' function to prove the
 -- presence of traits in the response before returning it.
 --
 --
@@ -145,13 +159,12 @@ import WebGear.Types
 --
 -- @
 -- method :: ('IsStdMethod' t, 'MonadRouter' m) => 'Handler' m ('Method' t:req) res a -> 'Handler' m req res a
--- method handler = 'Kleisli' $ 'linkplus' \@('Method' t) >=> 'either' ('const' 'rejectRoute') ('runKleisli' handler)
+-- method handler = 'Kleisli' $ 'probe' \@('Method' t) >=> 'either' ('const' 'rejectRoute') ('runKleisli' handler)
 -- @
 --
--- The @linkplus \@(Method t)@ function is used to prove the presence
--- of the method @t@ in the request and the @handler@ is invoked only
--- if the method matches. In case of a mismatch, this route is
--- rejected by calling 'rejectRoute'.
+-- The @probe \@(Method t)@ function is used to ensure that the
+-- request has method @t@ before invoking the @handler@. In case of a
+-- mismatch, this route is rejected by calling 'rejectRoute'.
 --
 -- Many middlewares can be composed to form complex request handling
 -- logic.

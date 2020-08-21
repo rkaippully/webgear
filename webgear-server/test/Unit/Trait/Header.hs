@@ -18,21 +18,21 @@ import WebGear.Trait
 testMissingHeaderFails :: TestTree
 testMissingHeaderFails = testCase "Missing header fails Header trait" $ do
   let req = defaultRequest { requestHeaders = [] }
-  prove @(Header "foo" Int) req >>= \case
+  derive @(Header "foo" Int) req >>= \case
     Proof _ _    -> assertFailure "unexpected success"
     Refutation e -> e @?= HeaderNotFound
 
 testHeaderMatchPositive :: TestTree
 testHeaderMatchPositive = testCase "Header match: positive" $ do
   let req = defaultRequest { requestHeaders = [("foo", "bar")] }
-  prove @(HeaderMatch "foo" "bar") req >>= \case
+  derive @(HeaderMatch "foo" "bar") req >>= \case
     Proof _ v    -> v @?= "bar"
     Refutation e -> assertFailure $ "Unexpected result: " <> show e
 
 testHeaderMatchMissingHeader :: TestTree
 testHeaderMatchMissingHeader = testCase "Header match: missing header" $ do
   let req = defaultRequest { requestHeaders = [] }
-  prove @(HeaderMatch "foo" "bar") req >>= \case
+  derive @(HeaderMatch "foo" "bar") req >>= \case
     Proof _ _    -> assertFailure "unexpected success"
     Refutation e -> e @?= HeaderMismatch { expectedHeader = "bar"
                                          , actualHeader = Nothing

@@ -1,10 +1,11 @@
-{-# LANGUAGE DataKinds        #-}
-{-# LANGUAGE DeriveAnyClass   #-}
-{-# LANGUAGE DeriveGeneric    #-}
-{-# LANGUAGE DerivingVia      #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE QuasiQuotes      #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DerivingVia       #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TypeApplications  #-}
 
 module Main where
 
@@ -87,7 +88,31 @@ userRoutes :: ( MonadRouter m
               )
            => Handler m '[] '[] ByteString
 userRoutes = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
-             $ getUser <|> putUser <|> deleteUser
+             (publicRoutes <|> protectedRoutes)
+
+-- | Routes accessible without any authentication
+publicRoutes :: ( MonadRouter m
+                , Has IntUserId req
+                , MonadReader UserStore m
+                , MonadIO m
+                )
+             => Handler m req '[] ByteString
+publicRoutes = getUser
+
+-- | Routes that require HTTP basic authentication
+protectedRoutes :: ( MonadRouter m
+                   , Has IntUserId req
+                   , MonadReader UserStore m
+                   , MonadIO m
+                   )
+                => Handler m req '[] ByteString
+protectedRoutes = basicAuth "Wakanda" isValidCreds
+                  $ putUser <|> deleteUser
+
+isValidCreds :: Monad m => Credentials -> m Bool
+isValidCreds creds = pure $
+  credentialsUsername creds == "panther"
+  && credentialsPassword creds == "forever"
 
 getUser :: ( MonadRouter m
            , Has IntUserId req
@@ -101,6 +126,7 @@ getUser = method @GET
 
 putUser :: ( MonadRouter m
            , Has IntUserId req
+           , Has BasicAuth req
            , MonadReader UserStore m
            , MonadIO m
            )
@@ -113,6 +139,7 @@ putUser = method @PUT
 
 deleteUser :: ( MonadRouter m
               , Has IntUserId req
+              , Has BasicAuth req
               , MonadReader UserStore m
               , MonadIO m
               )
@@ -126,42 +153,52 @@ getUserHandler :: ( MonadReader UserStore m
                   )
                => Handler m req '[] User
 getUserHandler = Kleisli $ \request -> do
-  let Tagged uid = trait @IntUserId request
+  let Tagged uid = get @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
-  maybe notFound ok user
+  maybe notFound404 ok200 user
+
+logActivity :: (MonadIO m, Has BasicAuth req) => Linked req Request -> String -> m ()
+logActivity request msg = do
+  let Tagged name = credentialsUsername <$> get @BasicAuth request
+  liftIO $ putStrLn $ msg <> ": by " <> show name
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
                   , Has IntUserId req
                   , Has (JSONRequestBody User) req
+                  , Has BasicAuth req
                   )
                => Handler m req '[] User
 putUserHandler = Kleisli $ \request -> do
-  let Tagged uid  = trait @IntUserId request
-      Tagged user = trait @(JSONRequestBody User) request
+  let Tagged uid  = get @IntUserId request
+      Tagged user = get @(JSONRequestBody User) request
       user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
-  ok user'
+  logActivity request "updated"
+  ok200 user'
 
 deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
                      , Has IntUserId req
+                     , Has BasicAuth req
                      )
                   => Handler m req '[] ByteString
 deleteUserHandler = Kleisli $ \request -> do
-  let Tagged uid = trait @IntUserId request
+  let Tagged uid = get @IntUserId request
   store <- ask
   found <- removeUser store (UserId uid)
-  if found then noContent else notFound
+  if found
+    then logActivity request "deleted" >> noContent204
+    else notFound404
 
 
 --------------------------------------------------------------------------------
 -- | The application server
 --------------------------------------------------------------------------------
 application :: UserStore -> Application
-application store req respond = runReaderT (runRoute userRoutes req) store >>= respond
+application store req cont = runReaderT (runRoute userRoutes req) store >>= cont
 
 main :: IO ()
 main = do

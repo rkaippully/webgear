@@ -7,6 +7,7 @@
 module WebGear.Util
   ( takeWhileM
   , splitOn
+  , maybeToRight
   ) where
 
 import Data.List.NonEmpty (NonEmpty (..), toList)
@@ -25,3 +26,7 @@ splitOn sep = foldr f ([] :| [])
   where
     f x acc       | x == sep = [] :| toList acc
     f x (y :| ys) = (x:y) :| ys
+
+maybeToRight :: a -> Maybe b -> Either a b
+maybeToRight _ (Just x) = Right x
+maybeToRight y Nothing  = Left y

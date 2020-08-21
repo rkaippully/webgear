@@ -27,21 +27,21 @@ bodyToRequest x = do
 prop_emptyRequestBodyFails :: Property
 prop_emptyRequestBodyFails = monadicIO $ do
   req <- bodyToRequest ("" :: String)
-  prove @(JSONRequestBody Int) req >>= \case
+  derive @(JSONRequestBody Int) req >>= \case
     Proof _ _    -> monitor (counterexample "Unexpected success") >> assert False
     Refutation _ -> assert True
 
 prop_validBodyParses :: Property
 prop_validBodyParses = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
-  prove @(JSONRequestBody Integer) req >>= \case
+  derive @(JSONRequestBody Integer) req >>= \case
     Proof _ n'   -> assert (n == n')
     Refutation _ -> assert False
 
 prop_invalidBodyFails :: Property
 prop_invalidBodyFails = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
-  prove @(JSONRequestBody String) req >>= \case
+  derive @(JSONRequestBody String) req >>= \case
     Proof _ _    -> assert False
     Refutation _ -> assert True
 

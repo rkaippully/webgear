@@ -22,7 +22,7 @@ import Data.Text.Encoding (encodeUtf8)
 import Network.HTTP.Types (badRequest400, hContentType)
 
 import WebGear.Route (MonadRouter (..))
-import WebGear.Trait (Result (..), Trait (..), linkplus, linkzero, unlink)
+import WebGear.Trait (Result (..), Trait (..), link, probe, unlink)
 import WebGear.Types (Middleware, Request, RequestMiddleware, Response (..), getRequestBodyChunk)
 import WebGear.Util (takeWhileM)
 
@@ -33,8 +33,8 @@ instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
   type Attribute (JSONRequestBody t) Request = t
   type Absence (JSONRequestBody t) Request = Text
 
-  prove :: Request -> m (Result (JSONRequestBody t) Request)
-  prove r = do
+  derive :: Request -> m (Result (JSONRequestBody t) Request)
+  derive r = do
     chunks <- takeWhileM (/= mempty) $ repeat $ liftIO $ getRequestBodyChunk r
     pure $ case eitherDecode' (fromChunks chunks) of
              Left e  -> Refutation (pack e)
@@ -50,13 +50,13 @@ instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
 jsonRequestBody :: forall t m req res a. (FromJSON t, MonadRouter m, MonadIO m)
                 => RequestMiddleware m req (JSONRequestBody t:req) res a
 jsonRequestBody handler = Kleisli $
-  linkplus @(JSONRequestBody t) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(JSONRequestBody t) >=> either (failHandler . mkError) (runKleisli handler)
   where
     mkError :: Text -> Response ByteString
     mkError e = Response
-          { respStatus  = badRequest400
-          , respHeaders = fromList []
-          , respBody    = Just $ fromStrict $ encodeUtf8 $ "Error parsing request body: " <> e
+          { responseStatus  = badRequest400
+          , responseHeaders = fromList []
+          , responseBody    = Just $ fromStrict $ encodeUtf8 $ "Error parsing request body: " <> e
           }
 
 -- | A middleware that converts the response that has a 'ToJSON'
@@ -72,8 +72,8 @@ jsonRequestBody handler = Kleisli $
 jsonResponseBody :: (ToJSON t, Monad m) => Middleware m req req res '[] t ByteString
 jsonResponseBody handler = Kleisli $ \req -> do
   x <- unlink <$> runKleisli handler req
-  pure $ linkzero $ Response
-    { respStatus  = respStatus x
-    , respHeaders = insert hContentType "application/json" $ respHeaders x
-    , respBody    = encode <$> respBody x
+  pure $ link $ Response
+    { responseStatus  = responseStatus x
+    , responseHeaders = insert hContentType "application/json" $ responseHeaders x
+    , responseBody    = encode <$> responseBody x
     }
