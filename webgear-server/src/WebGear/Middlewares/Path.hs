@@ -26,7 +26,7 @@ import Web.HttpApiData (FromHttpApiData (..))
 
 import WebGear.Middlewares.Method (method)
 import WebGear.Route (MonadRouter (..))
-import WebGear.Trait (Result (..), Trait (..), linkplus)
+import WebGear.Trait (Result (..), Trait (..), probe)
 import WebGear.Types (Request, RequestMiddleware, pathInfo, setPathInfo)
 import WebGear.Util (splitOn)
 
@@ -42,8 +42,8 @@ instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
 
   type Absence (Path s) Request = ()
 
-  prove :: Request -> m (Result (Path s) Request)
-  prove r = pure $
+  derive :: Request -> m (Result (Path s) Request)
+  derive r = pure $
     let expected = map pack $ toList $ splitOn '/' $ symbolVal $ Proxy @s
         actual = pathInfo r
     in
@@ -65,8 +65,8 @@ instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m whe
   type Attribute (PathVar tag val) Request = val
   type Absence (PathVar tag val) Request = PathVarError
 
-  prove :: Request -> m (Result (PathVar tag val) Request)
-  prove r = pure $
+  derive :: Request -> m (Result (PathVar tag val) Request)
+  derive r = pure $
     case pathInfo r of
       []     -> Refutation PathVarNotFound
       (x:xs) ->
@@ -88,7 +88,7 @@ instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m whe
 path :: forall s ts res m a. (KnownSymbol s, MonadRouter m)
      => RequestMiddleware m ts (Path s:ts) res a
 path handler = Kleisli $
-  linkplus @(Path s) >=> either (const rejectRoute) (runKleisli handler)
+  probe @(Path s) >=> either (const rejectRoute) (runKleisli handler)
 
 -- | A middleware that captures a path variable from a single path
 -- component.
@@ -106,7 +106,7 @@ path handler = Kleisli $
 pathVar :: forall tag val ts res m a. (FromHttpApiData val, MonadRouter m)
         => RequestMiddleware m ts (PathVar tag val:ts) res a
 pathVar handler = Kleisli $
-  linkplus @(PathVar tag val) >=> either (const rejectRoute) (runKleisli handler)
+  probe @(PathVar tag val) >=> either (const rejectRoute) (runKleisli handler)
 
 -- | Produces middleware(s) to match an optional HTTP method and path.
 --

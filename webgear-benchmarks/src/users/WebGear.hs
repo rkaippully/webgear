@@ -74,10 +74,10 @@ getUserHandler :: ( MonadReader UserStore m
                   )
                => Handler m req '[] User
 getUserHandler = Kleisli $ \request -> do
-  let Tagged uid = trait @IntUserId request
+  let Tagged uid = get @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
-  maybe notFound ok user
+  maybe notFound404 ok200 user
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
@@ -86,12 +86,12 @@ putUserHandler :: ( MonadReader UserStore m
                   )
                => Handler m req '[] User
 putUserHandler = Kleisli $ \request -> do
-  let Tagged uid  = trait @IntUserId request
-      Tagged user = trait @(JSONRequestBody User) request
+  let Tagged uid  = get @IntUserId request
+      Tagged user = get @(JSONRequestBody User) request
       user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
-  ok user'
+  ok200 user'
 
 deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
@@ -99,14 +99,14 @@ deleteUserHandler :: ( MonadReader UserStore m
                      )
                   => Handler m req '[] ByteString
 deleteUserHandler = Kleisli $ \request -> do
-  let Tagged uid = trait @IntUserId request
+  let Tagged uid = get @IntUserId request
   store <- ask
   found <- removeUser store (UserId uid)
-  if found then noContent else notFound
+  if found then noContent204 else notFound404
 
 
 --------------------------------------------------------------------------------
 -- | The application server
 --------------------------------------------------------------------------------
 application :: UserStore -> Application
-application store req respond = runReaderT (runRoute userRoutes req) store >>= respond
+application store req cont = runReaderT (runRoute userRoutes req) store >>= cont

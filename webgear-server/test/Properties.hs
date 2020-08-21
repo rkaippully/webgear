@@ -9,6 +9,7 @@ module Properties
 
 import Test.Tasty (TestTree, testGroup)
 
+import qualified Properties.Trait.Auth.Basic as Basic
 import qualified Properties.Trait.Body as Body
 import qualified Properties.Trait.Header as Header
 import qualified Properties.Trait.Method as Method
@@ -20,4 +21,5 @@ propertyTests = testGroup "Property Tests" [ Body.tests
                                            , Header.tests
                                            , Method.tests
                                            , Path.tests
+                                           , Basic.tests
                                            ]
