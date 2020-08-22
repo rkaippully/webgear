@@ -52,7 +52,7 @@ jobs:
         run: stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
 
       - name: Test
-        run: stack test --system-ghc --ta '--quickcheck-tests 1000000'
+        run: stack test --system-ghc --ta '--quickcheck-tests 100000'
 
       - name: Haddock
         run: stack haddock --system-ghc
@@ -110,7 +110,7 @@ jobs:
         run: cabal build all --enable-documentation $CONFIG
 
       - name: Test
-        run: cabal test all --test-show-details=always --test-options='--quickcheck-tests 10000' $CONFIG
+        run: cabal test all --test-show-details=always --test-options='--quickcheck-tests 100000' $CONFIG
 
       - name: Haddock
         run: cabal haddock all --enable-documentation $CONFIG
