@@ -7,12 +7,8 @@
 -- Traits are optional attributes associated with a value. For
 -- example, a list containing totally ordered values might have a
 -- @Maximum@ trait where the associated attribute is the maximum
--- value. This trait exists only if the list is non-empty.
---
--- It is also possible for some traits to be explicitly attached with
--- a value. For example, we can have a @Head@ trait for a list which
--- can be established by the @cons@ operation. Not all traits will
--- support this 'attach' operation.
+-- value. This trait exists only if the list is non-empty. The 'Trait'
+-- typeclass provides an interface to extract such trait attributes.
 --
 -- Traits help to link attributes with values in a type-safe manner.
 --
@@ -25,14 +21,12 @@ module WebGear.Trait
   ( -- * Core Types
     Trait (..)
   , Result (..)
-  , Attachable (..)
   , Linked
 
     -- * Linking values with attributes
   , link
   , unlink
   , probe
-  , connect
   , remove
 
     -- * Retrive trait attributes from linked values
@@ -41,34 +35,30 @@ module WebGear.Trait
   ) where
 
 import Data.Kind (Constraint, Type)
-import Data.Tagged (Tagged (..), untag)
+import Data.Tagged (Tagged (..))
 
 
 -- | A trait is an optional attribute @t@ associated with a value
--- @a@. Its presence can be deduced via the 'derive' function.
+-- @a@.
 class Monad m => Trait t a m where
   -- | Type of the associated attribute when the trait holds for a
   -- value
-  type Attribute t a
+  type Attribute t a :: Type
 
   -- | Type that indicates that the trait does not exist for a
   -- value. This could be an error message, parse error etc.
-  type Absence t a
+  type Absence t a :: Type
 
-  -- | Attempt to deduce the trait attribute from the value @a@.
-  derive :: a -> m (Result t a)
+  -- | Attempt to deduce the trait attribute from the value @a@. It is
+  -- possible that deducing a trait's presence can alter the value,
+  -- hence this function returns a possibly updated value along with
+  -- the trait attribute on success.
+  toAttribute :: a -> m (Result t a)
 
--- | The result of 'derive' - either a successful deduction of an
+-- | The result of 'toAttribute' - either a successful deduction of an
 -- attribute with a potentially updated value, or an error.
 data Result t a = Refutation (Absence t a)
                 | Proof a (Attribute t a)
-
-
--- | A trait that allows explicitly attaching the trait attribute with
--- a value.
-class Trait t a m => Attachable t a m where
-  -- | Associate a trait attribute with a value.
-  attach :: Attribute t a -> a -> m (Tagged t a)
 
 
 -- | A trivial derivable trait that is always present and whose
@@ -77,30 +67,21 @@ instance Monad m => Trait '[] a m where
   type Attribute '[] a = ()
   type Absence '[] a = ()
 
-  derive :: a -> m (Result '[] a)
-  derive a = pure $ Proof a ()
-
-instance Monad m => Attachable '[] a m where
-  attach :: () -> a -> m (Tagged '[] a)
-  attach _ = pure . Tagged
+  toAttribute :: a -> m (Result '[] a)
+  toAttribute a = pure $ Proof a ()
 
 -- | Combination of many derivable traits all of which are present for
 -- a value.
-instance (Trait t a m, Trait ts a m) => Trait (t:ts) a m where
+instance (Trait t a m, Trait ts a m, Monad m) => Trait (t:ts) a m where
   type Attribute (t:ts) a = (Attribute t a, Attribute ts a)
   type Absence (t:ts) a = Either (Result t a) (Result ts a)
 
-  derive :: a -> m (Result (t:ts) a)
-  derive a = derive @t a >>= \case
+  toAttribute :: a -> m (Result (t:ts) a)
+  toAttribute a = toAttribute @t a >>= \case
     e@(Refutation _) -> pure $ Refutation $ Left e
-    Proof a' l       -> derive @ts a' >>= \case
+    Proof a' l       -> toAttribute @ts a' >>= \case
       e@(Refutation _) -> pure $ Refutation $ Right e
       Proof a'' r      -> pure $ Proof a'' (l, r)
-
-instance (Attachable t a m, Attachable ts a m) => Attachable (t:ts) a m where
-  attach :: (Attribute t a, Attribute ts a) -> a -> m (Tagged (t:ts) a)
-  attach (attr, attrs) a = attach @ts attrs a >>=
-    \(Tagged a') -> Tagged . untag <$> attach @t attr a'
 
 
 -- | A value linked with a type-level list of traits.
@@ -114,28 +95,18 @@ link :: a -> Linked '[] a
 link = Linked ()
 
 -- | Attempt to link an additional trait with an already linked value
--- via a 'derive' operation. This can fail indicating an 'Absence' of
--- the trait.
-probe :: Trait t a m => Linked ts a -> m (Either (Absence t a) (Linked (t:ts) a))
+-- via the 'toAttribute' operation. This can fail indicating an
+-- 'Absence' of the trait.
+probe :: forall t ts a m. Trait t a m
+      => Linked ts a
+      -> m (Either (Absence t a) (Linked (t:ts) a))
 probe l = do
-  v <- derive (unlink l)
+  v <- toAttribute @t (unlink l)
   pure $ mkLinked v l
   where
     mkLinked :: Result t a -> Linked ts a -> Either (Absence t a) (Linked (t:ts) a)
     mkLinked (Proof a left) lv = Right $ Linked (left, linkAttribute lv) a
     mkLinked (Refutation e) _  = Left e
-
--- | Given a linked value and an attribute value for an attachable
--- trait, connect the trait with the linked value using the 'attach'
--- operation for the trait.
-connect :: forall t ts a m. Attachable t a m
-        => Attribute t a
-        -> Linked ts a
-        -> m (Linked (t:ts) a)
-connect attr l = mkLinked <$> attach @t attr (unlink l)
-  where
-    mkLinked :: Tagged t a -> Linked (t:ts) a
-    mkLinked (Tagged a) = Linked (attr, linkAttribute l) a
 
 -- | Remove the leading trait from the type-level list of traits
 remove :: Linked (t:ts) a -> Linked ts a

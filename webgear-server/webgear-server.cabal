@@ -93,6 +93,7 @@ common webgear-common
 library
   import:             webgear-common
   exposed-modules:    WebGear
+                    , WebGear.Modifiers
                     , WebGear.Trait
                     , WebGear.Types
                     , WebGear.Route

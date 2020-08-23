@@ -15,15 +15,16 @@ import Control.Monad ((>=>))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.ByteString.Lazy (ByteString, fromChunks, fromStrict)
-import Data.HashMap.Strict (fromList, insert)
+import Data.HashMap.Strict (fromList)
 import Data.Kind (Type)
 import Data.Text (Text, pack)
 import Data.Text.Encoding (encodeUtf8)
 import Network.HTTP.Types (badRequest400, hContentType)
 
 import WebGear.Route (MonadRouter (..))
-import WebGear.Trait (Result (..), Trait (..), link, probe, unlink)
-import WebGear.Types (Middleware, Request, RequestMiddleware, Response (..), getRequestBodyChunk)
+import WebGear.Trait (Result (..), Trait (..), probe)
+import WebGear.Types (Request, RequestMiddleware, Response (..), ResponseMiddleware,
+                      getRequestBodyChunk, setResponseHeader)
 import WebGear.Util (takeWhileM)
 
 -- | A 'Trait' for converting a JSON request body into a value.
@@ -33,8 +34,8 @@ instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
   type Attribute (JSONRequestBody t) Request = t
   type Absence (JSONRequestBody t) Request = Text
 
-  derive :: Request -> m (Result (JSONRequestBody t) Request)
-  derive r = do
+  toAttribute :: Request -> m (Result (JSONRequestBody t) Request)
+  toAttribute r = do
     chunks <- takeWhileM (/= mempty) $ repeat $ liftIO $ getRequestBodyChunk r
     pure $ case eitherDecode' (fromChunks chunks) of
              Left e  -> Refutation (pack e)
@@ -47,8 +48,8 @@ instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
 --
 -- > jsonRequestBody @t handler
 --
-jsonRequestBody :: forall t m req res a. (FromJSON t, MonadRouter m, MonadIO m)
-                => RequestMiddleware m req (JSONRequestBody t:req) res a
+jsonRequestBody :: forall t m req a. (FromJSON t, MonadRouter m, MonadIO m)
+                => RequestMiddleware m req (JSONRequestBody t:req) a
 jsonRequestBody handler = Kleisli $
   probe @(JSONRequestBody t) >=> either (failHandler . mkError) (runKleisli handler)
   where
@@ -69,11 +70,7 @@ jsonRequestBody handler = Kleisli $
 --
 -- > jsonResponseBody @t handler
 --
-jsonResponseBody :: (ToJSON t, Monad m) => Middleware m req req res '[] t ByteString
+jsonResponseBody :: (ToJSON t, Monad m) => ResponseMiddleware m req t ByteString
 jsonResponseBody handler = Kleisli $ \req -> do
-  x <- unlink <$> runKleisli handler req
-  pure $ link $ Response
-    { responseStatus  = responseStatus x
-    , responseHeaders = insert hContentType "application/json" $ responseHeaders x
-    , responseBody    = encode <$> responseBody x
-    }
+  x <- runKleisli handler req
+  pure $ setResponseHeader hContentType "application/json" $ encode <$> x

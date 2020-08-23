@@ -27,7 +27,7 @@ prop_basicAuth = property f
             hval = "Basic " <> encode (username <> ":" <> password)
             req = defaultRequest { requestHeaders = [("Authorization", hval)] }
           in
-            case runIdentity (derive @BasicAuth req) of
+            case runIdentity (toAttribute @BasicAuth req) of
               Proof _ creds ->
                 credentialsUsername creds === Username username
                 .&&. credentialsPassword creds === Password password

@@ -22,7 +22,7 @@ import Data.Version (showVersion)
 import Network.HTTP.Types (Header, hServer, notFound404)
 
 import Paths_webgear_server (version)
-import WebGear.Trait (link, unlink)
+import WebGear.Trait (link)
 import WebGear.Types (Handler, Response (..), waiResponse)
 
 import qualified Network.Wai as Wai
@@ -61,11 +61,11 @@ instance Monad m => MonadRouter (RouterT m) where
 -- This function is typically used to convert WebGear routes to a
 -- 'Wai.Application'.
 runRoute :: Monad m
-         => Handler (RouterT m) '[] res ByteString
+         => Handler (RouterT m) '[] ByteString
          -> (Wai.Request -> m Wai.Response)
 runRoute route req = waiResponse . addServerHeader . either (maybe notFoundResponse getFirst) id <$> runExceptT f
   where
-    f = unlink <$> runKleisli route (link req)
+    f = runKleisli route (link req)
 
     notFoundResponse :: Response ByteString
     notFoundResponse = Response

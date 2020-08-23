@@ -64,28 +64,22 @@ import WebGear.Types
 --
 -- A trait is an attribute associated with a value. For example, a
 -- @Request@ might have a header that we are interested in; the
--- 'Header' trait represents that. All traits have instances of
--- 'Trait' typeclass. The 'derive' function helps to check presence of
--- the trait. It also has two associated types - 'Attribute' and
--- 'Absence' - to represent the result of proving the presence of a
--- trait.
+-- 'Header' trait represents that. All traits have instances of the
+-- 'Trait' typeclass. The 'toAttribute' function helps to check
+-- presence of the trait. It also has two associated types -
+-- 'Attribute' and 'Absence' - to represent the result of the
+-- extraction.
 --
 -- For example, the 'Header' trait has an instance of the 'Trait'
--- typeclass. The 'derive' function evaluates to a 'Proof' value
+-- typeclass. The 'toAttribute' function evaluates to a 'Proof' value
 -- if the header exists and can be converted to an attribute via the
 -- 'FromHttpApiData' typeclass. Otherwise, it evaluates to a
 -- 'Refutation' value.
 --
--- Some traits also can be explicitly attached to a value instead of
--- just deriving it. For example, header values can be set on a
--- request or response value. Such traits are instances of
--- 'Attachable' typeclass and the 'attach' function is used to
--- associate a trait attribute with a value.
---
--- WebGear provides type-safety by linking traits to the request or
--- response at type level. The 'Linked' data type associates a
--- 'Request' or 'Response' with a list of traits. This linking
--- guarantees that the Request or Response has the specified trait.
+-- WebGear provides type-safety by linking traits to the request at
+-- type level. The 'Linked' data type associates a 'Request' with a
+-- list of traits. This linking guarantees that the Request has the
+-- specified trait.
 --
 -- These functions work with traits and linked values:
 --
@@ -96,11 +90,7 @@ import WebGear.Types
 --     type-level traits.
 --
 --   * 'probe': Attempts to establish a link between a linked value
---     with an additional trait using 'derive'.
---
---   * 'connect': Associates a trait attribute with a linked value to
---     form a new linked value that has this trait. This uses the
---     'attach' operation.
+--     with an additional trait using 'toAttribute'.
 --
 --   * 'remove': Removes a trait from the list of linked traits.
 --
@@ -119,14 +109,12 @@ import WebGear.Types
 -- Let us modify the type signature of our handler to use linked
 -- values instead of regular values:
 --
--- > handler :: Monad m => Linked req Request -> m (Linked res Response)
+-- > handler :: Monad m => Linked req Request -> m (Response)
 --
 -- Here, @req@ is a type-level list of traits associated with the
--- @Request@ that this handler requires and @res@ is a type-level list
--- of traits associated with the @Response@ that this handler will
--- produce. This implies that this handler can be called only with a
--- request possessing certain traits and it is guaranteed to produce a
--- response having certain traits.
+-- @Request@ that this handler requires. This implies that this
+-- handler can be called only with a request possessing certain
+-- traits.
 --
 --
 -- $handlers
@@ -135,7 +123,7 @@ import WebGear.Types
 -- above.
 --
 -- @
--- type 'Handler' m req res a = 'Kleisli' m ('Linked' req 'Request') ('Linked' res ('Response' a))
+-- type 'Handler' m req a = 'Kleisli' m ('Linked' req 'Request') ('Response' a)
 -- @
 --
 -- It is a 'Kleisli' arrow as described in the above section with
@@ -144,21 +132,20 @@ import WebGear.Types
 -- body.
 --
 -- A handler can extract some trait attribute of a request with the
--- 'get' function. It can also use 'probe' function to prove the
--- presence of traits in the response before returning it.
+-- 'get' function.
 --
 --
 -- $middlewares
 --
 -- A middleware is a higher-order function that takes a handler as
--- input and produces another handler with potentially different lists
--- of request and response traits. Thus middlewares can augment the
+-- input and produces another handler with potentially different
+-- request and response types. Thus middlewares can augment the
 -- functionality of another handler.
 --
 -- For example, here is the definition of the 'method' middleware:
 --
 -- @
--- method :: ('IsStdMethod' t, 'MonadRouter' m) => 'Handler' m ('Method' t:req) res a -> 'Handler' m req res a
+-- method :: ('IsStdMethod' t, 'MonadRouter' m) => 'Handler' m ('Method' t:req) a -> 'Handler' m req a
 -- method handler = 'Kleisli' $ 'probe' \@('Method' t) >=> 'either' ('const' 'rejectRoute') ('runKleisli' handler)
 -- @
 --
@@ -209,22 +196,22 @@ import WebGear.Types
 -- example:
 --
 -- @
--- allRoutes :: 'MonadRouter' m => 'Handler' m '[] '[] ByteString
+-- allRoutes :: 'MonadRouter' m => 'Handler' m '[] ByteString
 -- allRoutes = ['match'| v1\/users\/userId:Int |]    -- non-TH version: 'path' \@"v1/users" . 'pathVar' \@"userId" \@Int
 --             $ getUser \<|\> putUser \<|\> deleteUser
 --
 -- type IntUserId = 'PathVar' "userId" Int
 --
--- getUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req '[] ByteString
+-- getUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req ByteString
 -- getUser = 'method' \@GET getUserHandler
 --
--- putUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req '[] ByteString
+-- putUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req ByteString
 -- putUser = 'method' \@PUT
 --           $ 'requestContentType' \@"application/json"
 --           $ 'jsonRequestBody' \@User
 --           $ putUserHandler
 --
--- deleteUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req '[] ByteString
+-- deleteUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req ByteString
 -- deleteUser = 'method' \@DELETE deleteUserHandler
 -- @
 --
@@ -235,7 +222,7 @@ import WebGear.Types
 -- 'runRoute':
 --
 -- @
--- runRoute :: Monad m => 'Handler' (RouterT m) '[] res ByteString -> ('Wai.Request' -> m 'Wai.Response')
+-- runRoute :: Monad m => 'Handler' (RouterT m) '[] ByteString -> ('Wai.Request' -> m 'Wai.Response')
 -- @
 --
 -- This function converts a WebGear handler to a function from

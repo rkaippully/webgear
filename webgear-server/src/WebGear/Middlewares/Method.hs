@@ -14,10 +14,9 @@ module WebGear.Middlewares.Method
 import Control.Arrow (Kleisli (..))
 import Control.Monad ((>=>))
 import Data.Proxy (Proxy (..))
-import Data.Tagged (Tagged (..))
 
 import WebGear.Route (MonadRouter (..))
-import WebGear.Trait (Attachable (..), Result (..), Trait (..), probe)
+import WebGear.Trait (Result (..), Trait (..), probe)
 import WebGear.Types (Request, RequestMiddleware, requestMethod)
 
 import qualified Network.HTTP.Types as HTTP
@@ -32,12 +31,12 @@ data MethodMismatch = MethodMismatch
   , actualMethod   :: HTTP.Method
   }
 
-instance (Monad m, IsStdMethod t) => Trait (Method t) Request m where
+instance (IsStdMethod t, Monad m) => Trait (Method t) Request m where
   type Attribute (Method t) Request = ()
   type Absence (Method t) Request = MethodMismatch
 
-  derive :: Request -> m (Result (Method t) Request)
-  derive r =
+  toAttribute :: Request -> m (Result (Method t) Request)
+  toAttribute r =
     let
       expected = HTTP.renderStdMethod $ toStdMethod $ Proxy @t
       actual = requestMethod r
@@ -45,12 +44,6 @@ instance (Monad m, IsStdMethod t) => Trait (Method t) Request m where
       pure $ if expected == actual
              then Proof r ()
              else Refutation $ MethodMismatch expected actual
-
-instance (Monad m, IsStdMethod t) => Attachable (Method t) Request m where
-  attach :: () -> Request -> m (Tagged (Method t) Request)
-  attach _ r = pure $
-    let m = HTTP.renderStdMethod (toStdMethod $ Proxy @t)
-    in Tagged r { requestMethod = m }
 
 
 -- | A typeclass to map a 'HTTP.StdMethod' from type level to term
@@ -88,6 +81,6 @@ instance IsStdMethod HTTP.PATCH where
 -- It is also idiomatic to use the template haskell quasiquoter
 -- 'WebGear.Middlewares.Path.match' in cases where both HTTP method
 -- and path needs to be matched.
-method :: forall t m req res a. (IsStdMethod t, MonadRouter m)
-       => RequestMiddleware m req (Method t:req) res a
+method :: forall t m req a. (IsStdMethod t, MonadRouter m)
+       => RequestMiddleware m req (Method t:req) a
 method handler = Kleisli $ probe @(Method t) >=> either (const rejectRoute) (runKleisli handler)
