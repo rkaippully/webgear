@@ -86,7 +86,7 @@ userRoutes :: ( MonadRouter m
               , MonadReader UserStore m
               , MonadIO m
               )
-           => Handler m '[] '[] ByteString
+           => Handler m '[] ByteString
 userRoutes = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
              (publicRoutes <|> protectedRoutes)
 
@@ -96,7 +96,7 @@ publicRoutes :: ( MonadRouter m
                 , MonadReader UserStore m
                 , MonadIO m
                 )
-             => Handler m req '[] ByteString
+             => Handler m req ByteString
 publicRoutes = getUser
 
 -- | Routes that require HTTP basic authentication
@@ -105,7 +105,7 @@ protectedRoutes :: ( MonadRouter m
                    , MonadReader UserStore m
                    , MonadIO m
                    )
-                => Handler m req '[] ByteString
+                => Handler m req ByteString
 protectedRoutes = basicAuth "Wakanda" isValidCreds
                   $ putUser <|> deleteUser
 
@@ -119,7 +119,7 @@ getUser :: ( MonadRouter m
            , MonadReader UserStore m
            , MonadIO m
            )
-        => Handler m req '[] ByteString
+        => Handler m req ByteString
 getUser = method @GET
           $ jsonResponseBody @User
           $ getUserHandler
@@ -130,7 +130,7 @@ putUser :: ( MonadRouter m
            , MonadReader UserStore m
            , MonadIO m
            )
-        => Handler m req '[] ByteString
+        => Handler m req ByteString
 putUser = method @PUT
           $ requestContentType @"application/json"
           $ jsonRequestBody @User
@@ -143,7 +143,7 @@ deleteUser :: ( MonadRouter m
               , MonadReader UserStore m
               , MonadIO m
               )
-           => Handler m req '[] ByteString
+           => Handler m req ByteString
 deleteUser = method @DELETE
              $ deleteUserHandler
 
@@ -151,7 +151,7 @@ getUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
                   , Has IntUserId req
                   )
-               => Handler m req '[] User
+               => Handler m req User
 getUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
@@ -169,7 +169,7 @@ putUserHandler :: ( MonadReader UserStore m
                   , Has (JSONRequestBody User) req
                   , Has BasicAuth req
                   )
-               => Handler m req '[] User
+               => Handler m req User
 putUserHandler = Kleisli $ \request -> do
   let Tagged uid  = get @IntUserId request
       Tagged user = get @(JSONRequestBody User) request
@@ -184,7 +184,7 @@ deleteUserHandler :: ( MonadReader UserStore m
                      , Has IntUserId req
                      , Has BasicAuth req
                      )
-                  => Handler m req '[] ByteString
+                  => Handler m req ByteString
 deleteUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask

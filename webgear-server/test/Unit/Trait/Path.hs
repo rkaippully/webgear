@@ -18,7 +18,7 @@ import WebGear.Trait
 testMissingPathVar :: TestTree
 testMissingPathVar = testCase "PathVar match: missing variable" $ do
   let req = defaultRequest { pathInfo = [] }
-  derive @(PathVar "tag" Int) req >>= \case
+  toAttribute @(PathVar "tag" Int) req >>= \case
     Proof _ _    -> assertFailure "unexpected success"
     Refutation e -> e @?= PathVarNotFound
 

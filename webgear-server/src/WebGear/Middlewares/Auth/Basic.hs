@@ -66,8 +66,8 @@ instance Monad m => Trait BasicAuth Request m where
   type Attribute BasicAuth Request = Credentials
   type Absence BasicAuth Request = BasicAuthError
 
-  derive :: Request -> m (Result BasicAuth Request)
-  derive r = pure $ either Refutation (Proof r) $ do
+  toAttribute :: Request -> m (Result BasicAuth Request)
+  toAttribute r = pure $ either Refutation (Proof r) $ do
     h <- getAuthHeader r
     (scheme, creds) <- parseAuthHeader h
     when (scheme /= "Basic") $
@@ -102,14 +102,14 @@ parseCreds enc =
 -- in the request. It returns a 403 response if credentials are
 -- present but isValidCredentials returns False.
 --
-basicAuth :: forall m req res a. MonadRouter m
+basicAuth :: forall m req a. MonadRouter m
           => Realm
           -> (Credentials -> m Bool)
-          -> RequestMiddleware m req (BasicAuth : req) res a
+          -> RequestMiddleware m req (BasicAuth : req) a
 basicAuth (Realm realm) credCheck handler = Kleisli $
   probe @BasicAuth >=> either unauthorized (validateCredentials >=> runKleisli handler)
   where
-    unauthorized :: BasicAuthError -> m (Linked res (Response a))
+    unauthorized :: BasicAuthError -> m (Response a)
     unauthorized = const $ failHandler $ Response
       { responseStatus  = HTTP.unauthorized401
       , responseHeaders = HM.singleton "WWW-Authenticate" ("Basic realm=\"" <> realm <> "\"")

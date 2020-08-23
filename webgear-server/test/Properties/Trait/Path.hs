@@ -20,7 +20,7 @@ prop_pathMatch = property $ \h ->
     rest = ["foo", "bar"]
     req = defaultRequest { pathInfo = h:rest }
   in
-    case runIdentity (derive @(Path "a") req) of
+    case runIdentity (toAttribute @(Path "a") req) of
       Proof req' _ -> h === "a" .&&. pathInfo req' === rest
       Refutation _ -> h =/= "a"
 
@@ -30,7 +30,7 @@ prop_pathVarMatch = property $ \(n :: Int) ->
     rest = ["foo", "bar"]
     req = defaultRequest { pathInfo = fromString (show n):rest }
   in
-    case runIdentity (derive @(PathVar "tag" Int) req) of
+    case runIdentity (toAttribute @(PathVar "tag" Int) req) of
       Proof req' n' -> n' === n .&&. pathInfo req' === rest
       Refutation _  -> property False
 
@@ -40,7 +40,7 @@ prop_pathVarParseError = property $ \(p, ps) ->
     p' = "test-" <> p
     req = defaultRequest { pathInfo = p':ps }
   in
-    case runIdentity (derive @(PathVar "tag" Int) req) of
+    case runIdentity (toAttribute @(PathVar "tag" Int) req) of
       Proof _ _    -> property False
       Refutation e -> e === PathVarParseError ("could not parse: `" <> p' <> "' (input does not start with a digit)")
 

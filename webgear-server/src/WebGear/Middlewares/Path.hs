@@ -39,11 +39,10 @@ data Path (s :: Symbol)
 
 instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
   type Attribute (Path s) Request = ()
-
   type Absence (Path s) Request = ()
 
-  derive :: Request -> m (Result (Path s) Request)
-  derive r = pure $
+  toAttribute :: Request -> m (Result (Path s) Request)
+  toAttribute r = pure $
     let expected = map pack $ toList $ splitOn '/' $ symbolVal $ Proxy @s
         actual = pathInfo r
     in
@@ -55,7 +54,7 @@ instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
 -- | A path variable that is extracted and converted to a value of
 -- type @val@. The @tag@ is usually a type-level symbol (string) to
 -- uniquely identify this variable.
-data PathVar tag val
+data PathVar tag (val :: *)
 
 -- | Failure to extract a 'PathVar'
 data PathVarError = PathVarNotFound | PathVarParseError Text
@@ -65,8 +64,8 @@ instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m whe
   type Attribute (PathVar tag val) Request = val
   type Absence (PathVar tag val) Request = PathVarError
 
-  derive :: Request -> m (Result (PathVar tag val) Request)
-  derive r = pure $
+  toAttribute :: Request -> m (Result (PathVar tag val) Request)
+  toAttribute r = pure $
     case pathInfo r of
       []     -> Refutation PathVarNotFound
       (x:xs) ->
@@ -85,8 +84,8 @@ instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m whe
 --
 -- > path @"a/b/c" handler
 --
-path :: forall s ts res m a. (KnownSymbol s, MonadRouter m)
-     => RequestMiddleware m ts (Path s:ts) res a
+path :: forall s ts m a. (KnownSymbol s, MonadRouter m)
+     => RequestMiddleware m ts (Path s:ts) a
 path handler = Kleisli $
   probe @(Path s) >=> either (const rejectRoute) (runKleisli handler)
 
@@ -103,8 +102,8 @@ path handler = Kleisli $
 --
 -- > pathVar @"objId" @Int handler
 --
-pathVar :: forall tag val ts res m a. (FromHttpApiData val, MonadRouter m)
-        => RequestMiddleware m ts (PathVar tag val:ts) res a
+pathVar :: forall tag val ts m a. (FromHttpApiData val, MonadRouter m)
+        => RequestMiddleware m ts (PathVar tag val:ts) a
 pathVar handler = Kleisli $
   probe @(PathVar tag val) >=> either (const rejectRoute) (runKleisli handler)
 
