@@ -47,6 +47,7 @@ instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
 --
 -- > jsonRequestBody @t handler
 --
+-- Returns a 400 Bad Request response on failure to parse body.
 jsonRequestBody :: forall t m req a. (FromJSON t, MonadRouter m, MonadIO m)
                 => RequestMiddleware m req (JSONRequestBody t:req) a
 jsonRequestBody handler = Kleisli $
