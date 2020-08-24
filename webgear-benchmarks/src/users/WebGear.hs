@@ -55,7 +55,7 @@ putUser :: ( MonadRouter m
            )
         => Handler m req ByteString
 putUser = method @PUT
-          $ requestContentType @"application/json"
+          $ requestContentTypeHeader @"application/json"
           $ jsonRequestBody @User
           $ jsonResponseBody @User
           $ putUserHandler

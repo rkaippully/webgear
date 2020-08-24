@@ -22,7 +22,7 @@ module WebGear.Middlewares.Header
   , optionalLenientHeader
   , headerMatch
   , optionalHeaderMatch
-  , requestContentType
+  , requestContentTypeHeader
   , addResponseHeader
   ) where
 
@@ -339,11 +339,11 @@ optionalHeaderMatch handler = Kleisli $
 --
 -- Example usage:
 --
--- > requestContentType @"application/json" handler
+-- > requestContentTypeHeader @"application/json" handler
 --
-requestContentType :: forall val m req a. (KnownSymbol val, MonadRouter m)
-                   => RequestMiddleware m req (HeaderMatch "Content-Type" val:req) a
-requestContentType = headerMatch @"Content-Type" @val
+requestContentTypeHeader :: forall val m req a. (KnownSymbol val, MonadRouter m)
+                         => RequestMiddleware m req (HeaderMatch "Content-Type" val:req) a
+requestContentTypeHeader = headerMatch @"Content-Type" @val
 
 -- | A middleware to create or update a response header.
 --
