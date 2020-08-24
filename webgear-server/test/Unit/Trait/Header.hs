@@ -20,7 +20,7 @@ testMissingHeaderFails = testCase "Missing header fails Header trait" $ do
   let req = defaultRequest { requestHeaders = [] }
   toAttribute @(Header "foo" Int) req >>= \case
     Proof _ _    -> assertFailure "unexpected success"
-    Refutation e -> e @?= HeaderNotFound
+    Refutation e -> e @?= Left HeaderNotFound
 
 testHeaderMatchPositive :: TestTree
 testHeaderMatchPositive = testCase "Header match: positive" $ do
@@ -34,9 +34,7 @@ testHeaderMatchMissingHeader = testCase "Header match: missing header" $ do
   let req = defaultRequest { requestHeaders = [] }
   toAttribute @(HeaderMatch "foo" "bar") req >>= \case
     Proof _ _    -> assertFailure "unexpected success"
-    Refutation e -> e @?= HeaderMismatch { expectedHeader = "bar"
-                                         , actualHeader = Nothing
-                                         }
+    Refutation e -> e @?= Nothing
 
 tests :: TestTree
 tests = testGroup "Trait.Header" [ testMissingHeaderFails

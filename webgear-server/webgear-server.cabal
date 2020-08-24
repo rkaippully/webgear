@@ -102,6 +102,7 @@ library
                     , WebGear.Middlewares.Body
                     , WebGear.Middlewares.Header
                     , WebGear.Middlewares.Method
+                    , WebGear.Middlewares.Params
                     , WebGear.Middlewares.Path
   other-modules:      Paths_webgear_server
                     , WebGear.Util
@@ -118,6 +119,7 @@ test-suite webgear-server-test
                     , Properties
                     , Properties.Trait.Body
                     , Properties.Trait.Header
+                    , Properties.Trait.Params
                     , Properties.Trait.Method
                     , Properties.Trait.Path
                     , Properties.Trait.Auth.Basic

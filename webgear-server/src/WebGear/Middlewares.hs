@@ -10,6 +10,7 @@ module WebGear.Middlewares
   , module WebGear.Middlewares.Path
   , module WebGear.Middlewares.Header
   , module WebGear.Middlewares.Body
+  , module WebGear.Middlewares.Params
   , module WebGear.Middlewares.Auth.Basic
   ) where
 
@@ -17,4 +18,5 @@ import WebGear.Middlewares.Auth.Basic
 import WebGear.Middlewares.Body
 import WebGear.Middlewares.Header
 import WebGear.Middlewares.Method
+import WebGear.Middlewares.Params
 import WebGear.Middlewares.Path

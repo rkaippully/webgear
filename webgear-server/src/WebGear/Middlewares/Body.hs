@@ -15,15 +15,14 @@ import Control.Monad ((>=>))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.ByteString.Lazy (ByteString, fromChunks, fromStrict)
-import Data.HashMap.Strict (fromList)
 import Data.Kind (Type)
 import Data.Text (Text, pack)
 import Data.Text.Encoding (encodeUtf8)
-import Network.HTTP.Types (badRequest400, hContentType)
+import Network.HTTP.Types (hContentType)
 
 import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (Result (..), Trait (..), probe)
-import WebGear.Types (Request, RequestMiddleware, Response (..), ResponseMiddleware,
+import WebGear.Types (Request, RequestMiddleware, Response (..), ResponseMiddleware, badRequest400,
                       getRequestBodyChunk, setResponseHeader)
 import WebGear.Util (takeWhileM)
 
@@ -54,11 +53,7 @@ jsonRequestBody handler = Kleisli $
   probe @(JSONRequestBody t) >=> either (failHandler . mkError) (runKleisli handler)
   where
     mkError :: Text -> Response ByteString
-    mkError e = Response
-          { responseStatus  = badRequest400
-          , responseHeaders = fromList []
-          , responseBody    = Just $ fromStrict $ encodeUtf8 $ "Error parsing request body: " <> e
-          }
+    mkError e = badRequest400 $ fromStrict $ encodeUtf8 $ "Error parsing request body: " <> e
 
 -- | A middleware that converts the response that has a 'ToJSON'
 -- instance to a 'ByteString' response.
