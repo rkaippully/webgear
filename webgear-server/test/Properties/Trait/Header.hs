@@ -25,7 +25,7 @@ prop_headerParseError = property $ \hval ->
       Proof _ v    ->
         counterexample ("Unexpected result: " <> show v) (property False)
       Refutation e ->
-        e === HeaderParseError ("could not parse: `" <> hval' <> "' (input does not start with a digit)")
+        e === Right (HeaderParseError $ "could not parse: `" <> hval' <> "' (input does not start with a digit)")
 
 prop_headerParseSuccess :: Property
 prop_headerParseSuccess = property $ \(n :: Int) ->
@@ -43,9 +43,11 @@ prop_headerMatch = property $ \v ->
     req = defaultRequest { requestHeaders = [("foo", v)] }
   in
     case runIdentity (toAttribute @(HeaderMatch "foo" "bar") req) of
-      Proof _ _    -> v === "bar"
-      Refutation e ->
-        expectedHeader e === "bar" .&&. actualHeader e =/= Nothing .&&. actualHeader e =/= Just "bar"
+      Proof _ _           -> v === "bar"
+      Refutation Nothing  ->
+        counterexample "Unexpected result: Nothing" (property False)
+      Refutation (Just e) ->
+        expectedHeader e === "bar" .&&. actualHeader e =/= "bar"
 
 
 -- Hack for TH splicing

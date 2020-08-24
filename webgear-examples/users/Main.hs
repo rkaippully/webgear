@@ -132,7 +132,7 @@ putUser :: ( MonadRouter m
            )
         => Handler m req ByteString
 putUser = method @PUT
-          $ requestContentType @"application/json"
+          $ requestContentTypeHeader @"application/json"
           $ jsonRequestBody @User
           $ jsonResponseBody @User
           $ putUserHandler
@@ -156,7 +156,7 @@ getUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
-  maybe notFound404 ok200 user
+  pure $ maybe notFound404 ok200 user
 
 logActivity :: (MonadIO m, Has BasicAuth req) => Linked req Request -> String -> m ()
 logActivity request msg = do
@@ -177,7 +177,7 @@ putUserHandler = Kleisli $ \request -> do
   store <- ask
   addUser store user'
   logActivity request "updated"
-  ok200 user'
+  pure $ ok200 user'
 
 deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
@@ -190,8 +190,8 @@ deleteUserHandler = Kleisli $ \request -> do
   store <- ask
   found <- removeUser store (UserId uid)
   if found
-    then logActivity request "deleted" >> noContent204
-    else notFound404
+    then logActivity request "deleted" >> pure noContent204
+    else pure notFound404
 
 
 --------------------------------------------------------------------------------

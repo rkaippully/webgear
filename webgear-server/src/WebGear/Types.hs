@@ -162,189 +162,189 @@ type RequestMiddleware m req req' a = Middleware m req req' a a
 type ResponseMiddleware m req a' a = Middleware m req req a' a
 
 -- | Create a response with a given status and body
-respond :: Monad m => HTTP.Status -> Maybe a -> m (Response a)
-respond s = pure . Response s mempty
+respond :: HTTP.Status -> Maybe a -> Response a
+respond s = Response s mempty
 
 -- | Continue 100 response
-continue100 :: Monad m => m (Response a)
+continue100 :: Response a
 continue100 = respond HTTP.continue100 Nothing
 
 -- | Switching Protocols 101 response
-switchingProtocols101 :: Monad m => m (Response a)
+switchingProtocols101 :: Response a
 switchingProtocols101 = respond HTTP.switchingProtocols101 Nothing
 
 -- | OK 200 response
-ok200 :: Monad m => a -> m (Response a)
+ok200 :: a -> Response a
 ok200 = respond HTTP.ok200 . Just
 
 -- | Created 201 response
-created201 :: Monad m => a -> m (Response a)
+created201 :: a -> Response a
 created201 = respond HTTP.created201 . Just
 
 -- | Accepted 202 response
-accepted202 :: Monad m => a -> m (Response a)
+accepted202 :: a -> Response a
 accepted202 = respond HTTP.accepted202 . Just
 
 -- | Non-Authoritative 203 response
-nonAuthoritative203 :: Monad m => a -> m (Response a)
+nonAuthoritative203 :: a -> Response a
 nonAuthoritative203 = respond HTTP.nonAuthoritative203 . Just
 
 -- | No Content 204 response
-noContent204 :: Monad m => m (Response a)
+noContent204 :: Response a
 noContent204 = respond HTTP.noContent204 Nothing
 
 -- | Reset Content 205 response
-resetContent205 :: Monad m => m (Response a)
+resetContent205 :: Response a
 resetContent205 = respond HTTP.resetContent205 Nothing
 
 -- | Partial Content 206 response
-partialContent206 :: Monad m => a -> m (Response a)
+partialContent206 :: a -> Response a
 partialContent206 = respond HTTP.partialContent206 . Just
 
 -- | Multiple Choices 300 response
-multipleChoices300 :: Monad m => a -> m (Response a)
+multipleChoices300 :: a -> Response a
 multipleChoices300 = respond HTTP.multipleChoices300 . Just
 
 -- | Moved Permanently 301 response
-movedPermanently301 :: Monad m => a -> m (Response a)
+movedPermanently301 :: a -> Response a
 movedPermanently301 = respond HTTP.movedPermanently301 . Just
 
 -- | Found 302 response
-found302 :: Monad m => a -> m (Response a)
+found302 :: a -> Response a
 found302 = respond HTTP.found302 . Just
 
 -- | See Other 303 response
-seeOther303 :: Monad m => a -> m (Response a)
+seeOther303 :: a -> Response a
 seeOther303 = respond HTTP.seeOther303 . Just
 
 -- | Not Modified 304 response
-notModified304 :: Monad m => m (Response a)
+notModified304 :: Response a
 notModified304 = respond HTTP.notModified304 Nothing
 
 -- | Temporary Redirect 307 response
-temporaryRedirect307 :: Monad m => a -> m (Response a)
+temporaryRedirect307 :: a -> Response a
 temporaryRedirect307 = respond HTTP.temporaryRedirect307 . Just
 
 -- | Permanent Redirect 308 response
-permanentRedirect308 :: Monad m => a -> m (Response a)
+permanentRedirect308 :: a -> Response a
 permanentRedirect308 = respond HTTP.permanentRedirect308 . Just
 
 -- | Bad Request 400 response
-badRequest400 :: Monad m => a -> m (Response a)
+badRequest400 :: a -> Response a
 badRequest400 = respond HTTP.badRequest400 . Just
 
 -- | Unauthorized 401 response
-unauthorized401 :: Monad m => a -> m (Response a)
+unauthorized401 :: a -> Response a
 unauthorized401 = respond HTTP.unauthorized401 . Just
 
 -- | Payment Required 402 response
-paymentRequired402 :: Monad m => a -> m (Response a)
+paymentRequired402 :: a -> Response a
 paymentRequired402 = respond HTTP.paymentRequired402 . Just
 
 -- | Forbidden 403 response
-forbidden403 :: Monad m => a -> m (Response a)
+forbidden403 :: a -> Response a
 forbidden403 = respond HTTP.forbidden403 . Just
 
 -- | Not Found 404 response
-notFound404 :: Monad m => m (Response a)
+notFound404 :: Response a
 notFound404 = respond HTTP.notFound404 Nothing
 
 -- | Method Not Allowed 405 response
-methodNotAllowed405 :: Monad m => a -> m (Response a)
+methodNotAllowed405 :: a -> Response a
 methodNotAllowed405 = respond HTTP.methodNotAllowed405 . Just
 
 -- | Not Acceptable 406 response
-notAcceptable406 :: Monad m => a -> m (Response a)
+notAcceptable406 :: a -> Response a
 notAcceptable406 = respond HTTP.notAcceptable406 . Just
 
 -- | Proxy Authentication Required 407 response
-proxyAuthenticationRequired407 :: Monad m => a -> m (Response a)
+proxyAuthenticationRequired407 :: a -> Response a
 proxyAuthenticationRequired407 = respond HTTP.proxyAuthenticationRequired407 . Just
 
 -- | Request Timeout 408 response
-requestTimeout408 :: Monad m => a -> m (Response a)
+requestTimeout408 :: a -> Response a
 requestTimeout408 = respond HTTP.requestTimeout408 . Just
 
 -- | Conflict 409 response
-conflict409 :: Monad m => a -> m (Response a)
+conflict409 :: a -> Response a
 conflict409 = respond HTTP.conflict409 . Just
 
 -- | Gone 410 response
-gone410 :: Monad m => a -> m (Response a)
+gone410 :: a -> Response a
 gone410 = respond HTTP.gone410 . Just
 
 -- | Length Required 411 response
-lengthRequired411 :: Monad m => a -> m (Response a)
+lengthRequired411 :: a -> Response a
 lengthRequired411 = respond HTTP.lengthRequired411 . Just
 
 -- | Precondition Failed 412 response
-preconditionFailed412 :: Monad m => a -> m (Response a)
+preconditionFailed412 :: a -> Response a
 preconditionFailed412 = respond HTTP.preconditionFailed412 . Just
 
 -- | Request Entity Too Large 413 response
-requestEntityTooLarge413 :: Monad m => a -> m (Response a)
+requestEntityTooLarge413 :: a -> Response a
 requestEntityTooLarge413 = respond HTTP.requestEntityTooLarge413 . Just
 
 -- | Request URI Too Long 414 response
-requestURITooLong414 :: Monad m => a -> m (Response a)
+requestURITooLong414 :: a -> Response a
 requestURITooLong414 = respond HTTP.requestURITooLong414 . Just
 
 -- | Unsupported Media Type 415 response
-unsupportedMediaType415 :: Monad m => a -> m (Response a)
+unsupportedMediaType415 :: a -> Response a
 unsupportedMediaType415 = respond HTTP.unsupportedMediaType415 . Just
 
 -- | Requested Range Not Satisfiable 416 response
-requestedRangeNotSatisfiable416 :: Monad m => a -> m (Response a)
+requestedRangeNotSatisfiable416 :: a -> Response a
 requestedRangeNotSatisfiable416 = respond HTTP.requestedRangeNotSatisfiable416 . Just
 
 -- | Expectation Failed 417 response
-expectationFailed417 :: Monad m => a -> m (Response a)
+expectationFailed417 :: a -> Response a
 expectationFailed417 = respond HTTP.expectationFailed417 . Just
 
 -- | I'm A Teapot 418 response
-imATeapot418 :: Monad m => a -> m (Response a)
+imATeapot418 :: a -> Response a
 imATeapot418 = respond HTTP.imATeapot418 . Just
 
 -- | Unprocessable Entity 422 response
-unprocessableEntity422 :: Monad m => a -> m (Response a)
+unprocessableEntity422 :: a -> Response a
 unprocessableEntity422 = respond HTTP.unprocessableEntity422 . Just
 
 -- | Precondition Required 428 response
-preconditionRequired428 :: Monad m => a -> m (Response a)
+preconditionRequired428 :: a -> Response a
 preconditionRequired428 = respond HTTP.preconditionRequired428 . Just
 
 -- | Too Many Requests 429 response
-tooManyRequests429 :: Monad m => a -> m (Response a)
+tooManyRequests429 :: a -> Response a
 tooManyRequests429 = respond HTTP.tooManyRequests429 . Just
 
 -- | Request Header Fields Too Large 431 response
-requestHeaderFieldsTooLarge431 :: Monad m => a -> m (Response a)
+requestHeaderFieldsTooLarge431 :: a -> Response a
 requestHeaderFieldsTooLarge431 = respond HTTP.requestHeaderFieldsTooLarge431 . Just
 
 -- | Internal Server Error 500 response
-internalServerError500 :: Monad m => a -> m (Response a)
+internalServerError500 :: a -> Response a
 internalServerError500 = respond HTTP.internalServerError500 . Just
 
 -- | Not Implemented 501 response
-notImplemented501 :: Monad m => a -> m (Response a)
+notImplemented501 :: a -> Response a
 notImplemented501 = respond HTTP.notImplemented501 . Just
 
 -- | Bad Gateway 502 response
-badGateway502 :: Monad m => a -> m (Response a)
+badGateway502 :: a -> Response a
 badGateway502 = respond HTTP.badGateway502 . Just
 
 -- | Service Unavailable 503 response
-serviceUnavailable503 :: Monad m => a -> m (Response a)
+serviceUnavailable503 :: a -> Response a
 serviceUnavailable503 = respond HTTP.serviceUnavailable503 . Just
 
 -- | Gateway Timeout 504 response
-gatewayTimeout504 :: Monad m => a -> m (Response a)
+gatewayTimeout504 :: a -> Response a
 gatewayTimeout504 = respond HTTP.gatewayTimeout504 . Just
 
 -- | HTTP Version Not Supported 505 response
-httpVersionNotSupported505 :: Monad m => a -> m (Response a)
+httpVersionNotSupported505 :: a -> Response a
 httpVersionNotSupported505 = respond HTTP.httpVersionNotSupported505 . Just
 
 -- | Network Authentication Required 511 response
-networkAuthenticationRequired511 :: Monad m => a -> m (Response a)
+networkAuthenticationRequired511 :: a -> Response a
 networkAuthenticationRequired511 = respond HTTP.networkAuthenticationRequired511 . Just

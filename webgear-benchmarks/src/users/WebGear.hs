@@ -55,7 +55,7 @@ putUser :: ( MonadRouter m
            )
         => Handler m req ByteString
 putUser = method @PUT
-          $ requestContentType @"application/json"
+          $ requestContentTypeHeader @"application/json"
           $ jsonRequestBody @User
           $ jsonResponseBody @User
           $ putUserHandler
@@ -78,7 +78,7 @@ getUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
-  maybe notFound404 ok200 user
+  pure $ maybe notFound404 ok200 user
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
@@ -92,7 +92,7 @@ putUserHandler = Kleisli $ \request -> do
       user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
-  ok200 user'
+  pure $ ok200 user'
 
 deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
@@ -103,7 +103,7 @@ deleteUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
   found <- removeUser store (UserId uid)
-  if found then noContent204 else notFound404
+  pure $ if found then noContent204 else notFound404
 
 
 --------------------------------------------------------------------------------

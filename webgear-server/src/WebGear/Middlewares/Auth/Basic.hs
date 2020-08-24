@@ -27,11 +27,9 @@ import Data.Tagged (untag)
 
 import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (Has (..), Linked, Result (..), Trait (..), probe)
-import WebGear.Types (Request, RequestMiddleware, Response (..), requestHeader)
+import WebGear.Types (Request, RequestMiddleware, Response (..), forbidden403, requestHeader,
+                      setResponseHeader, unauthorized401)
 import WebGear.Util (maybeToRight)
-
-import qualified Data.HashMap.Strict as HM
-import qualified Network.HTTP.Types as HTTP
 
 
 -- | Trait for HTTP basic authentication: https://tools.ietf.org/html/rfc7617
@@ -110,11 +108,9 @@ basicAuth (Realm realm) credCheck handler = Kleisli $
   probe @BasicAuth >=> either unauthorized (validateCredentials >=> runKleisli handler)
   where
     unauthorized :: BasicAuthError -> m (Response a)
-    unauthorized = const $ failHandler $ Response
-      { responseStatus  = HTTP.unauthorized401
-      , responseHeaders = HM.singleton "WWW-Authenticate" ("Basic realm=\"" <> realm <> "\"")
-      , responseBody    = Just "Unauthorized"
-      }
+    unauthorized = const $ failHandler
+      $ setResponseHeader "WWW-Authenticate" ("Basic realm=\"" <> realm <> "\"")
+      $ unauthorized401 "Unauthorized"
 
     validateCredentials :: Linked (BasicAuth : req) Request
                         -> m (Linked (BasicAuth : req) Request)
@@ -122,8 +118,4 @@ basicAuth (Realm realm) credCheck handler = Kleisli $
       valid <- credCheck . untag $ get @BasicAuth req
       if valid
         then pure req
-        else failHandler $ Response
-               { responseStatus = HTTP.forbidden403
-               , responseHeaders = HM.empty
-               , responseBody = Just "Forbidden"
-               }
+        else failHandler $ forbidden403 "Forbidden"

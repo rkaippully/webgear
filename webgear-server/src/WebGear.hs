@@ -158,7 +158,7 @@ import WebGear.Types
 --
 -- @
 -- putUser = 'method' \@PUT
---           $ 'requestContentType' \@"application/json"
+--           $ 'requestContentTypeHeader' \@"application/json"
 --           $ 'jsonRequestBody' \@User
 --           $ 'jsonResponseBody' \@User
 --           $ putUserHandler
@@ -207,7 +207,7 @@ import WebGear.Types
 --
 -- putUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req ByteString
 -- putUser = 'method' \@PUT
---           $ 'requestContentType' \@"application/json"
+--           $ 'requestContentTypeHeader' \@"application/json"
 --           $ 'jsonRequestBody' \@User
 --           $ putUserHandler
 --

@@ -54,7 +54,7 @@ instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
 -- | A path variable that is extracted and converted to a value of
 -- type @val@. The @tag@ is usually a type-level symbol (string) to
 -- uniquely identify this variable.
-data PathVar tag (val :: *)
+data PathVar tag val
 
 -- | Failure to extract a 'PathVar'
 data PathVarError = PathVarNotFound | PathVarParseError Text
