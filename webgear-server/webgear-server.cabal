@@ -80,6 +80,7 @@ common webgear-common
                     , http-api-data         ==0.4.*
                     , aeson                 >=1.4 && <1.6
                     , tagged                ==0.8.*
+                    , network               >=2.8 && <3.2
   ghc-options:        -Wall
                       -Wno-unticked-promoted-constructors
                       -Wincomplete-record-updates
@@ -96,7 +97,6 @@ library
                     , WebGear.Modifiers
                     , WebGear.Trait
                     , WebGear.Types
-                    , WebGear.Route
                     , WebGear.Middlewares
                     , WebGear.Middlewares.Auth.Basic
                     , WebGear.Middlewares.Body

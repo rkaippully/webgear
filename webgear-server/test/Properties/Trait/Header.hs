@@ -5,7 +5,7 @@ module Properties.Trait.Header
 import Data.Functor.Identity (runIdentity)
 import Data.String (fromString)
 import Data.Text.Encoding (encodeUtf8)
-import Network.Wai (defaultRequest, requestHeaders)
+import Network.Wai (defaultRequest)
 import Test.QuickCheck (Property, allProperties, counterexample, property, (.&&.), (=/=), (===))
 import Test.QuickCheck.Instances ()
 import Test.Tasty (TestTree)
@@ -13,6 +13,7 @@ import Test.Tasty.QuickCheck (testProperties)
 
 import WebGear.Middlewares.Header
 import WebGear.Trait
+import WebGear.Types
 
 
 prop_headerParseError :: Property
@@ -22,7 +23,7 @@ prop_headerParseError = property $ \hval ->
     req = defaultRequest { requestHeaders = [("foo", encodeUtf8 hval')] }
   in
     case runIdentity (toAttribute @(Header "foo" Int) req) of
-      Proof _ v    ->
+      Proof v      ->
         counterexample ("Unexpected result: " <> show v) (property False)
       Refutation e ->
         e === Right (HeaderParseError $ "could not parse: `" <> hval' <> "' (input does not start with a digit)")
@@ -33,7 +34,7 @@ prop_headerParseSuccess = property $ \(n :: Int) ->
     req = defaultRequest { requestHeaders = [("foo", fromString $ show n)] }
   in
     case runIdentity (toAttribute @(Header "foo" Int) req) of
-      Proof _ n'   -> n === n'
+      Proof n'     -> n === n'
       Refutation e ->
         counterexample ("Unexpected result: " <> show e) (property False)
 
@@ -43,7 +44,7 @@ prop_headerMatch = property $ \v ->
     req = defaultRequest { requestHeaders = [("foo", v)] }
   in
     case runIdentity (toAttribute @(HeaderMatch "foo" "bar") req) of
-      Proof _ _           -> v === "bar"
+      Proof _             -> v === "bar"
       Refutation Nothing  ->
         counterexample "Unexpected result: Nothing" (property False)
       Refutation (Just e) ->

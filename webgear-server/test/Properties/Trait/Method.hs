@@ -4,7 +4,7 @@ module Properties.Trait.Method
 
 import Data.Functor.Identity (runIdentity)
 import Network.HTTP.Types (StdMethod (..), methodGet, renderStdMethod)
-import Network.Wai (defaultRequest, requestMethod)
+import Network.Wai (defaultRequest)
 import Test.QuickCheck (Arbitrary (arbitrary), Property, allProperties, elements, property, (.&&.),
                         (=/=), (===))
 import Test.Tasty (TestTree)
@@ -12,6 +12,7 @@ import Test.Tasty.QuickCheck (testProperties)
 
 import WebGear.Middlewares.Method
 import WebGear.Trait
+import WebGear.Types
 
 
 newtype MethodWrapper = MethodWrapper StdMethod
@@ -26,7 +27,7 @@ prop_methodMatch = property $ \(MethodWrapper v) ->
     req = defaultRequest { requestMethod = renderStdMethod v }
   in
     case runIdentity (toAttribute @(Method GET) req) of
-      Proof _ _    -> v === GET
+      Proof _      -> v === GET
       Refutation e ->
         expectedMethod e === methodGet .&&. actualMethod e =/= methodGet
 

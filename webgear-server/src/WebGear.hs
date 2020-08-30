@@ -37,7 +37,6 @@ import Web.HttpApiData (FromHttpApiData)
 import qualified Network.Wai as Wai
 
 import WebGear.Middlewares
-import WebGear.Route
 import WebGear.Trait
 import WebGear.Types
 
@@ -178,14 +177,14 @@ import WebGear.Types
 -- @
 -- class (Alternative m, MonadPlus m) => 'MonadRouter' m where
 --   'rejectRoute' :: m a
---   'failHandler' :: 'Response' ByteString -> m a
+--   'errorResponse' :: 'Response' ByteString -> m a
 -- @
 --
--- The 'failHandler' can be used in cases where we find a matching
+-- The 'errorResponse' can be used in cases where we find a matching
 -- route but the request handling is aborted for some reason. For
 -- example, if a route requires the request Content-type header to
 -- have a particular value but the actual request had a different
--- Content-type, 'failHandler' can be used to abort and return an
+-- Content-type, 'errorResponse' can be used to abort and return an
 -- error response.
 --
 -- Second, we need a mechanism to try an alternate route when one
@@ -222,7 +221,7 @@ import WebGear.Types
 -- 'runRoute':
 --
 -- @
--- runRoute :: Monad m => 'Handler' (RouterT m) '[] ByteString -> ('Wai.Request' -> m 'Wai.Response')
+-- runRoute :: Monad m => 'Handler' (Router m) '[] ByteString -> ('Wai.Request' -> m 'Wai.Response')
 -- @
 --
 -- This function converts a WebGear handler to a function from
