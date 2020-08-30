@@ -15,19 +15,21 @@ module WebGear.Middlewares.Path
 
 import Control.Arrow (Kleisli (..))
 import Control.Monad ((>=>))
+import Control.Monad.State.Strict (MonadState (..))
+import Data.Foldable (toList)
 import Data.Function ((&))
-import Data.List.NonEmpty (NonEmpty (..), toList)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Proxy (Proxy (..))
 import Data.Text (Text, pack)
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import Language.Haskell.TH.Quote (QuasiQuoter (..))
 import Language.Haskell.TH.Syntax (Exp (..), Q, TyLit (..), Type (..), mkName)
+import Prelude hiding (drop, take)
 import Web.HttpApiData (FromHttpApiData (..))
 
 import WebGear.Middlewares.Method (method)
-import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (Result (..), Trait (..), probe)
-import WebGear.Types (Request, RequestMiddleware, pathInfo, setPathInfo)
+import WebGear.Types (MonadRouter (..), PathInfo (..), Request, RequestMiddleware')
 import WebGear.Util (splitOn)
 
 import qualified Data.List as List
@@ -37,18 +39,21 @@ import qualified Data.List as List
 -- but discarded after that.
 data Path (s :: Symbol)
 
-instance (KnownSymbol s, Monad m) => Trait (Path s) Request m where
+instance (KnownSymbol s, MonadState PathInfo m) => Trait (Path s) Request m where
   type Attribute (Path s) Request = ()
   type Absence (Path s) Request = ()
 
   toAttribute :: Request -> m (Result (Path s) Request)
-  toAttribute r = pure $
-    let expected = map pack $ toList $ splitOn '/' $ symbolVal $ Proxy @s
-        actual = pathInfo r
-    in
-      case List.stripPrefix expected actual of
-        Nothing   -> Refutation ()
-        Just rest -> Proof (setPathInfo rest r) ()
+  toAttribute _ = do
+    PathInfo actualPath <- get
+    case List.stripPrefix expectedPath actualPath of
+      Nothing   -> pure $ Refutation ()
+      Just rest -> do
+        put $ PathInfo rest
+        pure $ Proof ()
+
+    where
+      expectedPath = map pack $ toList $ splitOn '/' $ symbolVal $ Proxy @s
 
 
 -- | A path variable that is extracted and converted to a value of
@@ -60,18 +65,21 @@ data PathVar tag val
 data PathVarError = PathVarNotFound | PathVarParseError Text
   deriving (Eq, Show, Read)
 
-instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m where
+instance (FromHttpApiData val, MonadState PathInfo m) => Trait (PathVar tag val) Request m where
   type Attribute (PathVar tag val) Request = val
   type Absence (PathVar tag val) Request = PathVarError
 
   toAttribute :: Request -> m (Result (PathVar tag val) Request)
-  toAttribute r = pure $
-    case pathInfo r of
-      []     -> Refutation PathVarNotFound
-      (x:xs) ->
-        case parseUrlPiece @val x of
-          Left e  -> Refutation $ PathVarParseError e
-          Right h -> Proof (setPathInfo xs r) h
+  toAttribute _ = do
+    PathInfo actualPath <- get
+    case actualPath of
+      []     -> pure $ Refutation PathVarNotFound
+      (x:xs) -> case parseUrlPiece @val x of
+        Left e  -> pure $ Refutation $ PathVarParseError e
+        Right v -> do
+          put $ PathInfo xs
+          pure $ Proof v
+
 
 -- | A middleware that literally matches path @s@.
 --
@@ -85,7 +93,7 @@ instance (FromHttpApiData val, Monad m) => Trait (PathVar tag val) Request m whe
 -- > path @"a/b/c" handler
 --
 path :: forall s ts m a. (KnownSymbol s, MonadRouter m)
-     => RequestMiddleware m ts (Path s:ts) a
+     => RequestMiddleware' m ts (Path s:ts) a
 path handler = Kleisli $
   probe @(Path s) >=> either (const rejectRoute) (runKleisli handler)
 
@@ -103,7 +111,7 @@ path handler = Kleisli $
 -- > pathVar @"objId" @Int handler
 --
 pathVar :: forall tag val ts m a. (FromHttpApiData val, MonadRouter m)
-        => RequestMiddleware m ts (PathVar tag val:ts) a
+        => RequestMiddleware' m ts (PathVar tag val:ts) a
 pathVar handler = Kleisli $
   probe @(PathVar tag val) >=> either (const rejectRoute) (runKleisli handler)
 

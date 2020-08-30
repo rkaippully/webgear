@@ -32,9 +32,9 @@ import Text.Printf (printf)
 import Web.HttpApiData (FromHttpApiData (..))
 
 import WebGear.Modifiers (Existence (..), ParseStyle (..))
-import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (Result (..), Trait (..), probe)
-import WebGear.Types (Request, RequestMiddleware, Response (..), badRequest400, queryString)
+import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response (..), badRequest400,
+                      queryString)
 
 import qualified Data.ByteString.Lazy as LBS
 
@@ -73,7 +73,7 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
     Nothing        -> Refutation (Left ParamNotFound)
     Just (Left e)  -> Refutation (Right $ ParamParseError e)
-    Just (Right x) -> Proof r x
+    Just (Right x) -> Proof x
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Strict name val) Request m where
   type Attribute (QueryParam' Optional Strict name val) Request = Maybe val
@@ -81,9 +81,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 
   toAttribute :: Request -> m (Result (QueryParam' Optional Strict name val) Request)
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Proof r Nothing
+    Nothing        -> Proof Nothing
     Just (Left e)  -> Refutation $ ParamParseError e
-    Just (Right x) -> Proof r (Just x)
+    Just (Right x) -> Proof (Just x)
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Required Lenient name val) Request m where
   type Attribute (QueryParam' Required Lenient name val) Request = Either Text val
@@ -92,8 +92,8 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
   toAttribute :: Request -> m (Result (QueryParam' Required Lenient name val) Request)
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
     Nothing        -> Refutation ParamNotFound
-    Just (Left e)  -> Proof r (Left e)
-    Just (Right x) -> Proof r (Right x)
+    Just (Left e)  -> Proof (Left e)
+    Just (Right x) -> Proof (Right x)
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Lenient name val) Request m where
   type Attribute (QueryParam' Optional Lenient name val) Request = Maybe (Either Text val)
@@ -101,9 +101,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 
   toAttribute :: Request -> m (Result (QueryParam' Optional Lenient name val) Request)
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Proof r Nothing
-    Just (Left e)  -> Proof r (Just (Left e))
-    Just (Right x) -> Proof r (Just (Right x))
+    Nothing        -> Proof Nothing
+    Just (Left e)  -> Proof (Just (Left e))
+    Just (Right x) -> Proof (Just (Right x))
 
 
 -- | A middleware to extract a query parameter and convert it to a
@@ -117,8 +117,8 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 -- respond with a 400 Bad Request response if the query parameter is
 -- not found or could not be parsed.
 queryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-           => RequestMiddleware m req (QueryParam name val:req) a
-queryParam handler = Kleisli $ probe @(QueryParam name val) >=> either (failHandler . mkError) (runKleisli handler)
+           => RequestMiddleware' m req (QueryParam name val:req) a
+queryParam handler = Kleisli $ probe @(QueryParam name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     paramName :: String
     paramName = symbolVal $ Proxy @name
@@ -140,8 +140,8 @@ queryParam handler = Kleisli $ probe @(QueryParam name val) >=> either (failHand
 -- value indicates a missing param. A 400 Bad Request response is
 -- returned if the query parameter could not be parsed.
 optionalQueryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-                   => RequestMiddleware m req (QueryParam' Optional Strict name val:req) a
-optionalQueryParam handler = Kleisli $ probe @(QueryParam' Optional Strict name val) >=> either (failHandler . mkError) (runKleisli handler)
+                   => RequestMiddleware' m req (QueryParam' Optional Strict name val:req) a
+optionalQueryParam handler = Kleisli $ probe @(QueryParam' Optional Strict name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     paramName :: String
     paramName = symbolVal $ Proxy @name
@@ -161,9 +161,9 @@ optionalQueryParam handler = Kleisli $ probe @(QueryParam' Optional Strict name 
 -- missing. The parsing is done leniently; the trait attribute is set
 -- to @Left Text@ in case of parse errors or @Right val@ on success.
 lenientQueryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-                  => RequestMiddleware m req (QueryParam' Required Lenient name val:req) a
+                  => RequestMiddleware' m req (QueryParam' Required Lenient name val:req) a
 lenientQueryParam handler = Kleisli $
-  probe @(QueryParam' Required Lenient name val) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(QueryParam' Required Lenient name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     paramName :: String
     paramName = symbolVal $ Proxy @name
@@ -181,6 +181,6 @@ lenientQueryParam handler = Kleisli $
 -- The associated trait attribute has type @Maybe (Either Text
 -- val)@. This middleware never fails.
 optionalLenientQueryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-                          => RequestMiddleware m req (QueryParam' Optional Lenient name val:req) a
+                          => RequestMiddleware' m req (QueryParam' Optional Lenient name val:req) a
 optionalLenientQueryParam handler = Kleisli $
   probe @(QueryParam' Optional Lenient name val) >=> either absurd (runKleisli handler)

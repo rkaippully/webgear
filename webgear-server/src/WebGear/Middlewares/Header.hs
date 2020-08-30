@@ -40,10 +40,10 @@ import Text.Printf (printf)
 import Web.HttpApiData (FromHttpApiData (..), ToHttpApiData (..))
 
 import WebGear.Modifiers (Existence (..), ParseStyle (..))
-import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (Result (..), Trait (..), probe)
-import WebGear.Types (Request, RequestMiddleware, Response (..), ResponseMiddleware, badRequest400,
-                      requestHeader, responseHeader, setResponseHeader)
+import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response (..),
+                      ResponseMiddleware', badRequest400, requestHeader, responseHeader,
+                      setResponseHeader)
 
 import qualified Data.ByteString.Lazy as LBS
 
@@ -87,7 +87,7 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
     Nothing        -> Refutation (Left HeaderNotFound)
     Just (Left e)  -> Refutation (Right $ HeaderParseError e)
-    Just (Right x) -> Proof r x
+    Just (Right x) -> Proof x
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Strict name val) Request m where
@@ -96,9 +96,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Request -> m (Result (Header' Optional Strict name val) Request)
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
-    Nothing        -> Proof r Nothing
+    Nothing        -> Proof Nothing
     Just (Left e)  -> Refutation $ HeaderParseError e
-    Just (Right x) -> Proof r (Just x)
+    Just (Right x) -> Proof (Just x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Required Lenient name val) Request m where
@@ -108,8 +108,8 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
   toAttribute :: Request -> m (Result (Header' Required Lenient name val) Request)
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
     Nothing        -> Refutation HeaderNotFound
-    Just (Left e)  -> Proof r (Left e)
-    Just (Right x) -> Proof r (Right x)
+    Just (Left e)  -> Proof (Left e)
+    Just (Right x) -> Proof (Right x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Lenient name val) Request m where
@@ -118,9 +118,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Request -> m (Result (Header' Optional Lenient name val) Request)
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
-    Nothing        -> Proof r Nothing
-    Just (Left e)  -> Proof r (Just (Left e))
-    Just (Right x) -> Proof r (Just (Right x))
+    Nothing        -> Proof Nothing
+    Just (Left e)  -> Proof (Just (Left e))
+    Just (Right x) -> Proof (Just (Right x))
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Required Strict name val) (Response a) m where
@@ -131,7 +131,7 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
     Nothing        -> Refutation (Left HeaderNotFound)
     Just (Left e)  -> Refutation (Right $ HeaderParseError e)
-    Just (Right x) -> Proof r x
+    Just (Right x) -> Proof x
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Strict name val) (Response a) m where
@@ -140,9 +140,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Response a -> m (Result (Header' Optional Strict name val) (Response a))
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
-    Nothing        -> Proof r Nothing
+    Nothing        -> Proof Nothing
     Just (Left e)  -> Refutation $ HeaderParseError e
-    Just (Right x) -> Proof r (Just x)
+    Just (Right x) -> Proof (Just x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Required Lenient name val) (Response a) m where
@@ -152,8 +152,8 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
   toAttribute :: Response a -> m (Result (Header' Required Lenient name val) (Response a))
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
     Nothing        -> Refutation HeaderNotFound
-    Just (Left e)  -> Proof r (Left e)
-    Just (Right x) -> Proof r (Right x)
+    Just (Left e)  -> Proof (Left e)
+    Just (Right x) -> Proof (Right x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Lenient name val) (Response a) m where
@@ -162,9 +162,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Response a -> m (Result (Header' Optional Lenient name val) (Response a))
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
-    Nothing        -> Proof r Nothing
-    Just (Left e)  -> Proof r (Just (Left e))
-    Just (Right x) -> Proof r (Just (Right x))
+    Nothing        -> Proof Nothing
+    Just (Left e)  -> Proof (Just (Left e))
+    Just (Right x) -> Proof (Just (Right x))
 
 
 -- | A 'Trait' for ensuring that an HTTP header with specified @name@
@@ -196,7 +196,7 @@ instance (KnownSymbol name, KnownSymbol val, Monad m) => Trait (HeaderMatch' Req
     in
       case requestHeader name r of
         Nothing                  -> Refutation Nothing
-        Just hv | hv == expected -> Proof r ()
+        Just hv | hv == expected -> Proof ()
                 | otherwise      -> Refutation $ Just HeaderMismatch {expectedHeader = expected, actualHeader = hv}
 
 instance (KnownSymbol name, KnownSymbol val, Monad m) => Trait (HeaderMatch' Optional name val) Request m where
@@ -210,8 +210,8 @@ instance (KnownSymbol name, KnownSymbol val, Monad m) => Trait (HeaderMatch' Opt
       expected = fromString $ symbolVal (Proxy @val)
     in
       case requestHeader name r of
-        Nothing                  -> Proof r Nothing
-        Just hv | hv == expected -> Proof r (Just ())
+        Nothing                  -> Proof Nothing
+        Just hv | hv == expected -> Proof (Just ())
                 | otherwise      -> Refutation HeaderMismatch {expectedHeader = expected, actualHeader = hv}
 
 
@@ -227,9 +227,9 @@ instance (KnownSymbol name, KnownSymbol val, Monad m) => Trait (HeaderMatch' Opt
 -- parsed.
 header :: forall name val m req a.
           (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-       => RequestMiddleware m req (Header name val:req) a
+       => RequestMiddleware' m req (Header name val:req) a
 header handler = Kleisli $
-  probe @(Header name val) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(Header name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     headerName :: String
     headerName = symbolVal $ Proxy @name
@@ -251,9 +251,9 @@ header handler = Kleisli $
 -- Bad Request response is returned if the header could not be parsed.
 optionalHeader :: forall name val m req a.
                   (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-               => RequestMiddleware m req (Header' Optional Strict name val:req) a
+               => RequestMiddleware' m req (Header' Optional Strict name val:req) a
 optionalHeader handler = Kleisli $
-  probe @(Header' Optional Strict name val) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(Header' Optional Strict name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     headerName :: String
     headerName = symbolVal $ Proxy @name
@@ -275,9 +275,9 @@ optionalHeader handler = Kleisli $
 -- Text@ in case of parse errors or @Right val@ on success.
 lenientHeader :: forall name val m req a.
                  (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-              => RequestMiddleware m req (Header' Required Lenient name val:req) a
+              => RequestMiddleware' m req (Header' Required Lenient name val:req) a
 lenientHeader handler = Kleisli $
-  probe @(Header' Required Lenient name val) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(Header' Required Lenient name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     headerName :: String
     headerName = symbolVal $ Proxy @name
@@ -296,7 +296,7 @@ lenientHeader handler = Kleisli $
 -- val)@. This middleware never fails.
 optionalLenientHeader :: forall name val m req a.
                          (KnownSymbol name, FromHttpApiData val, MonadRouter m)
-                      => RequestMiddleware m req (Header' Optional Lenient name val:req) a
+                      => RequestMiddleware' m req (Header' Optional Lenient name val:req) a
 optionalLenientHeader handler = Kleisli $
   probe @(Header' Optional Lenient name val) >=> either absurd (runKleisli handler)
 
@@ -305,9 +305,9 @@ optionalLenientHeader handler = Kleisli $
 -- if the header does not exist or does not match.
 headerMatch :: forall name val m req a.
                (KnownSymbol name, KnownSymbol val, MonadRouter m)
-            => RequestMiddleware m req (HeaderMatch name val:req) a
+            => RequestMiddleware' m req (HeaderMatch name val:req) a
 headerMatch handler = Kleisli $
-  probe @(HeaderMatch name val) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(HeaderMatch name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     headerName :: String
     headerName = symbolVal $ Proxy @name
@@ -322,9 +322,9 @@ headerMatch handler = Kleisli $
 -- if the header has a different value.
 optionalHeaderMatch :: forall name val m req a.
                        (KnownSymbol name, KnownSymbol val, MonadRouter m)
-                    => RequestMiddleware m req (HeaderMatch' Optional name val:req) a
+                    => RequestMiddleware' m req (HeaderMatch' Optional name val:req) a
 optionalHeaderMatch handler = Kleisli $
-  probe @(HeaderMatch' Optional name val) >=> either (failHandler . mkError) (runKleisli handler)
+  probe @(HeaderMatch' Optional name val) >=> either (errorResponse . mkError) (runKleisli handler)
   where
     headerName :: String
     headerName = symbolVal $ Proxy @name
@@ -342,7 +342,7 @@ optionalHeaderMatch handler = Kleisli $
 -- > requestContentTypeHeader @"application/json" handler
 --
 requestContentTypeHeader :: forall val m req a. (KnownSymbol val, MonadRouter m)
-                         => RequestMiddleware m req (HeaderMatch "Content-Type" val:req) a
+                         => RequestMiddleware' m req (HeaderMatch "Content-Type" val:req) a
 requestContentTypeHeader = headerMatch @"Content-Type" @val
 
 -- | A middleware to create or update a response header.
@@ -352,5 +352,5 @@ requestContentTypeHeader = headerMatch @"Content-Type" @val
 -- > addResponseHeader "Content-type" "application/json" handler
 --
 addResponseHeader :: forall t m req a. (ToHttpApiData t, Monad m)
-                  => HeaderName -> t -> ResponseMiddleware m req a a
+                  => HeaderName -> t -> ResponseMiddleware' m req a a
 addResponseHeader name val handler = Kleisli $ runKleisli handler >=> pure . setResponseHeader name (toHeader val)

@@ -7,7 +7,7 @@ module Properties.Trait.Body
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.IORef (newIORef, readIORef, writeIORef)
 import Data.String (fromString)
-import Network.Wai (Request, defaultRequest, requestBody)
+import Network.Wai (defaultRequest, requestBody)
 import Test.QuickCheck (Property, allProperties, counterexample, property)
 import Test.QuickCheck.Instances ()
 import Test.QuickCheck.Monadic (assert, monadicIO, monitor)
@@ -16,6 +16,7 @@ import Test.Tasty.QuickCheck (testProperties)
 
 import WebGear.Middlewares.Body
 import WebGear.Trait
+import WebGear.Types
 
 
 bodyToRequest :: (MonadIO m, Show a) => a -> m Request
@@ -28,21 +29,21 @@ prop_emptyRequestBodyFails :: Property
 prop_emptyRequestBodyFails = monadicIO $ do
   req <- bodyToRequest ("" :: String)
   toAttribute @(JSONRequestBody Int) req >>= \case
-    Proof _ _    -> monitor (counterexample "Unexpected success") >> assert False
+    Proof _      -> monitor (counterexample "Unexpected success") >> assert False
     Refutation _ -> assert True
 
 prop_validBodyParses :: Property
 prop_validBodyParses = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
   toAttribute @(JSONRequestBody Integer) req >>= \case
-    Proof _ n'   -> assert (n == n')
+    Proof n'     -> assert (n == n')
     Refutation _ -> assert False
 
 prop_invalidBodyFails :: Property
 prop_invalidBodyFails = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
   toAttribute @(JSONRequestBody String) req >>= \case
-    Proof _ _    -> assert False
+    Proof _      -> assert False
     Refutation _ -> assert True
 
 

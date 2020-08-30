@@ -28,16 +28,19 @@ module WebGear
 
     -- * Running the Server
     -- $running
+
+    -- * Servers with other monads
+    -- $otherMonads
   ) where
 
 import Control.Applicative (Alternative (..))
 import Control.Arrow (Kleisli (..))
+import Data.ByteString.Lazy (ByteString)
 import Web.HttpApiData (FromHttpApiData)
 
 import qualified Network.Wai as Wai
 
 import WebGear.Middlewares
-import WebGear.Route
 import WebGear.Trait
 import WebGear.Types
 
@@ -49,9 +52,13 @@ import WebGear.Types
 -- takes a request as input and produces a response as output in a
 -- monadic context.
 --
--- @
--- handler :: Monad m => 'Request' -> m 'Response'
--- @
+-- > handler :: Monad m => Request -> m Response
+--
+-- For reasons that will be explained later, WebGear uses the 'Router'
+-- monad for running handlers. Thus the above type signature changes
+-- to:
+--
+-- > handler :: Request -> Router Response
 --
 -- Most APIs will require extracting some information from the
 -- request, processing it and then producing a response. For example,
@@ -63,18 +70,17 @@ import WebGear.Types
 -- $traits
 --
 -- A trait is an attribute associated with a value. For example, a
--- @Request@ might have a header that we are interested in; the
--- 'Header' trait represents that. All traits have instances of the
+-- @Request@ might have a header that we are interested in, which is
+-- represented by the 'Header' trait. All traits have instances of the
 -- 'Trait' typeclass. The 'toAttribute' function helps to check
 -- presence of the trait. It also has two associated types -
 -- 'Attribute' and 'Absence' - to represent the result of the
 -- extraction.
 --
 -- For example, the 'Header' trait has an instance of the 'Trait'
--- typeclass. The 'toAttribute' function evaluates to a 'Proof' value
--- if the header exists and can be converted to an attribute via the
--- 'FromHttpApiData' typeclass. Otherwise, it evaluates to a
--- 'Refutation' value.
+-- typeclass. The 'toAttribute' function evaluates to a 'Proof' or
+-- 'Refutation' value depending on whether we can successfully
+-- retrieve the header value.
 --
 -- WebGear provides type-safety by linking traits to the request at
 -- type level. The 'Linked' data type associates a 'Request' with a
@@ -102,19 +108,19 @@ import WebGear.Types
 -- request value with this trait using:
 --
 -- @
--- linkedRequest :: Monad m => 'Request' -> m (Either 'MethodMismatch' ('Linked' '['Method' GET] 'Request'))
+-- linkedRequest :: Monad m => 'Request' -> 'Router' (Either 'MethodMismatch' ('Linked' '['Method' GET] 'Request'))
 -- linkedRequest = 'probe' @('Method' GET) . 'link'
 -- @
 --
 -- Let us modify the type signature of our handler to use linked
 -- values instead of regular values:
 --
--- > handler :: Monad m => Linked req Request -> m (Response)
+-- > handler :: Linked req Request -> Router Response
 --
 -- Here, @req@ is a type-level list of traits associated with the
--- @Request@ that this handler requires. This implies that this
--- handler can be called only with a request possessing certain
--- traits.
+-- @Request@ that this handler requires. This ensures that this
+-- handler can only be called with a request possessing certain
+-- traits thus providing type-safety to our handlers.
 --
 --
 -- $handlers
@@ -123,13 +129,18 @@ import WebGear.Types
 -- above.
 --
 -- @
--- type 'Handler' m req a = 'Kleisli' m ('Linked' req 'Request') ('Response' a)
+-- type 'Handler'' m req a = 'Kleisli' m ('Linked' req 'Request') ('Response' a)
+--
+-- type 'Handler' req a = 'Handler'' 'Router' req a
 -- @
 --
 -- It is a 'Kleisli' arrow as described in the above section with
 -- type-level trait lists. However, the response is parameterized by
 -- the type variable @a@, which represents the type of the response
 -- body.
+--
+-- 'Handler'' can work with any monad while 'Handler' works with
+-- 'Router'.
 --
 -- A handler can extract some trait attribute of a request with the
 -- 'get' function.
@@ -145,7 +156,7 @@ import WebGear.Types
 -- For example, here is the definition of the 'method' middleware:
 --
 -- @
--- method :: ('IsStdMethod' t, 'MonadRouter' m) => 'Handler' m ('Method' t:req) a -> 'Handler' m req a
+-- method :: ('IsStdMethod' t, 'MonadRouter' m) => 'Handler'' m ('Method' t:req) a -> 'Handler'' m req a
 -- method handler = 'Kleisli' $ 'probe' \@('Method' t) >=> 'either' ('const' 'rejectRoute') ('runKleisli' handler)
 -- @
 --
@@ -154,7 +165,7 @@ import WebGear.Types
 -- mismatch, this route is rejected by calling 'rejectRoute'.
 --
 -- Many middlewares can be composed to form complex request handling
--- logic.
+-- logic. For example:
 --
 -- @
 -- putUser = 'method' \@PUT
@@ -178,14 +189,15 @@ import WebGear.Types
 -- @
 -- class (Alternative m, MonadPlus m) => 'MonadRouter' m where
 --   'rejectRoute' :: m a
---   'failHandler' :: 'Response' ByteString -> m a
+--   'errorResponse' :: 'Response' 'ByteString' -> m a
+--   'catchErrorResponse' :: m a -> ('Response' 'ByteString' -> m a) -> m a
 -- @
 --
--- The 'failHandler' can be used in cases where we find a matching
+-- The 'errorResponse' can be used in cases where we find a matching
 -- route but the request handling is aborted for some reason. For
 -- example, if a route requires the request Content-type header to
 -- have a particular value but the actual request had a different
--- Content-type, 'failHandler' can be used to abort and return an
+-- Content-type, 'errorResponse' can be used to abort and return an
 -- error response.
 --
 -- Second, we need a mechanism to try an alternate route when one
@@ -196,22 +208,22 @@ import WebGear.Types
 -- example:
 --
 -- @
--- allRoutes :: 'MonadRouter' m => 'Handler' m '[] ByteString
+-- allRoutes :: 'Handler' '[] 'ByteString'
 -- allRoutes = ['match'| v1\/users\/userId:Int |]    -- non-TH version: 'path' \@"v1/users" . 'pathVar' \@"userId" \@Int
 --             $ getUser \<|\> putUser \<|\> deleteUser
 --
 -- type IntUserId = 'PathVar' "userId" Int
 --
--- getUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req ByteString
+-- getUser :: 'Has' IntUserId req => 'Handler' req 'ByteString'
 -- getUser = 'method' \@GET getUserHandler
 --
--- putUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req ByteString
+-- putUser :: 'Has' IntUserId req => 'Handler' req 'ByteString'
 -- putUser = 'method' \@PUT
 --           $ 'requestContentTypeHeader' \@"application/json"
 --           $ 'jsonRequestBody' \@User
 --           $ putUserHandler
 --
--- deleteUser :: ('MonadRouter' m, 'Has' IntUserId req) => 'Handler' m req ByteString
+-- deleteUser :: 'Has' IntUserId req => 'Handler' req 'ByteString'
 -- deleteUser = 'method' \@DELETE deleteUserHandler
 -- @
 --
@@ -222,11 +234,11 @@ import WebGear.Types
 -- 'runRoute':
 --
 -- @
--- runRoute :: Monad m => 'Handler' (RouterT m) '[] ByteString -> ('Wai.Request' -> m 'Wai.Response')
+-- runRoute :: 'Handler' '[] 'ByteString' -> ('Wai.Request' -> IO 'Wai.Response')
 -- @
 --
 -- This function converts a WebGear handler to a function from
--- 'Wai.Request' to 'Wai.Response' in a monadic context @m@. Then it
+-- 'Wai.Request' to 'IO Wai.Response'. Then it
 -- is trivial to convert that to a WAI 'Wai.Application' and run it as a
 -- warp server:
 --
@@ -237,4 +249,33 @@ import WebGear.Types
 -- main :: IO ()
 -- main = Warp.run 3000 application
 -- @
+--
+--
+-- $otherMonads
+--
+-- It may not be practical to use 'Router' monad for your handlers. In
+-- most cases, you would need your own monad transformer stack or
+-- algebraic effect runners. WebGear supports that easily.
+--
+-- Let us say, the @putUserHandler@ from the above example runs on
+-- some monad other than 'Router'. You can still use it as a handler thus:
+--
+-- @
+-- putUser = 'method' \@PUT
+--           $ 'requestContentTypeHeader' \@"application/json"
+--           $ 'jsonRequestBody' \@User
+--           $ 'jsonResponseBody' \@User
+--           $ 'transform' customMonadToRouter putUserHandler
+--
+-- putUserHandler :: 'Handler'' MyCustomMonad req User
+-- putUserHandler = ....
+--
+-- customMonadToRouter :: MyCustomMonad a -> Router a
+-- customMonadToRouter = ...
+-- @
+--
+-- As long as you have a way of transforming values in your custom
+-- monad to a 'Router' monadic value, you can use 'transform' to
+-- convert the handlers in that custom monad to handlers running in
+-- 'Router' monad.
 --

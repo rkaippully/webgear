@@ -7,19 +7,15 @@
 --
 module WebGear.Types
   ( -- * WebGear Request
-    -- | WebGear requests are WAI requests. This module reexports a number
-    -- of useful functions that operate on requests from "Network.Wai"
-    -- module.
     Request
   , remoteHost
   , httpVersion
   , isSecure
   , requestMethod
   , pathInfo
-  , setPathInfo
   , queryString
-  , requestHeaders
   , requestHeader
+  , requestHeaders
   , requestBodyLength
   , getRequestBodyChunk
 
@@ -78,21 +74,42 @@ module WebGear.Types
   , httpVersionNotSupported505
   , networkAuthenticationRequired511
 
+  , Handler'
   , Handler
+  , Middleware'
   , Middleware
+  , RequestMiddleware'
   , RequestMiddleware
+  , ResponseMiddleware'
   , ResponseMiddleware
+
+  , Router (..)
+  , MonadRouter (..)
+  , PathInfo (..)
+  , RouteError (..)
+  , transform
+  , runRoute
   ) where
 
-import Control.Arrow (Kleisli)
+import Control.Applicative (Alternative)
+import Control.Arrow (Kleisli (..))
+import Control.Monad (MonadPlus)
+import Control.Monad.Except (ExceptT, MonadError, catchError, runExceptT, throwError)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.State.Strict (MonadState, StateT, evalStateT)
 import Data.ByteString (ByteString)
 import Data.List (find)
 import Data.Maybe (fromMaybe)
+import Data.Semigroup (Semigroup (..), stimesIdempotent)
+import Data.String (fromString)
 import Data.Text (Text)
+import Data.Version (showVersion)
+import GHC.Exts (fromList)
 import Network.Wai (Request, getRequestBodyChunk, httpVersion, isSecure, pathInfo, queryString,
                     remoteHost, requestBodyLength, requestHeaders, requestMethod)
 
-import WebGear.Trait (Linked)
+import Paths_webgear_server (version)
+import WebGear.Trait (Linked, link)
 
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.HashMap.Strict as HM
@@ -104,11 +121,7 @@ import qualified Network.Wai as Wai
 requestHeader :: HTTP.HeaderName -> Request -> Maybe ByteString
 requestHeader h r = snd <$> find ((== h) . fst) (requestHeaders r)
 
--- | Get request with an updated URL path info.
-setPathInfo :: [Text] -> Request -> Request
-setPathInfo p r = r { pathInfo = p }
-
--- | A response sent from the server to the client.
+-- | An HTTP response sent from the server to the client.
 --
 -- The response contains a status, optional headers and an optional
 -- body of type @a@.
@@ -117,7 +130,7 @@ data Response a = Response
     , responseHeaders :: HM.HashMap HTTP.HeaderName ByteString  -- ^ Response headers
     , responseBody    :: Maybe a                                -- ^ Optional response body
     }
-    deriving stock (Eq, Ord, Functor)
+    deriving stock (Eq, Ord, Show, Functor)
 
 -- | Looks up a response header
 responseHeader :: HTTP.HeaderName -> Response a -> Maybe ByteString
@@ -134,32 +147,6 @@ waiResponse Response{..} = Wai.responseLBS
   (HM.toList responseHeaders)
   (fromMaybe "" responseBody)
 
--- | A handler is a function from a request to response in a monadic
--- context. Both the request and the response can have linked traits.
---
--- The type level list @req@ contains all the traits expected to be
--- present in the request.
-type Handler m req a = Kleisli m (Linked req Request) (Response a)
-
--- | A middleware takes a handler as input and produces another
--- handler that usually adds some functionality.
---
--- A middleware can do a number of things with the request
--- handling such as:
---
---   * Change the request traits before invoking the handler.
---   * Use the linked value of any of the request traits.
---   * Change the response body.
---
-type Middleware m req req' a' a = Handler m req' a' -> Handler m req a
-
--- | A middleware that manipulates only the request traits and passes
--- the response through.
-type RequestMiddleware m req req' a = Middleware m req req' a a
-
--- | A middleware that manipulates only the response and passes the
--- request through.
-type ResponseMiddleware m req a' a = Middleware m req req a' a
 
 -- | Create a response with a given status and body
 respond :: HTTP.Status -> Maybe a -> Response a
@@ -348,3 +335,132 @@ httpVersionNotSupported505 = respond HTTP.httpVersionNotSupported505 . Just
 -- | Network Authentication Required 511 response
 networkAuthenticationRequired511 :: a -> Response a
 networkAuthenticationRequired511 = respond HTTP.networkAuthenticationRequired511 . Just
+
+
+
+-- | A handler is a function from a request to response in a monadic
+-- context. Both the request and the response can have linked traits.
+--
+-- The type level list @req@ contains all the traits expected to be
+-- present in the request.
+type Handler' m req a = Kleisli m (Linked req Request) (Response a)
+
+-- | A handler that runs on the 'Router' monad.
+type Handler req a = Handler' Router req a
+
+-- | A middleware takes a handler as input and produces another
+-- handler that usually adds some functionality.
+--
+-- A middleware can do a number of things with the request
+-- handling such as:
+--
+--   * Change the request traits before invoking the handler.
+--   * Use the linked value of any of the request traits.
+--   * Change the response body.
+--
+type Middleware' m req req' a' a = Handler' m req' a' -> Handler' m req a
+
+-- | A middleware that runs on the 'Router' monad.
+type Middleware req req' a' a = Middleware' Router req req' a' a
+
+-- | A middleware that manipulates only the request traits and passes
+-- the response through.
+type RequestMiddleware' m req req' a = Middleware' m req req' a a
+
+-- | A request middleware that runs on the 'Router' monad.
+type RequestMiddleware req req' a = RequestMiddleware' Router req req' a
+
+-- | A middleware that manipulates only the response and passes the
+-- request through.
+type ResponseMiddleware' m req a' a = Middleware' m req req a' a
+
+-- | A response middleware that runs on the 'Router' monad.
+type ResponseMiddleware req a' a = ResponseMiddleware' Router req a' a
+
+-- | A natural transformation of handler monads.
+--
+-- This is useful if you want to run a handler in a monad other than
+-- 'Router'.
+--
+transform :: (forall x. m x -> n x) -> Handler' m req a -> Handler' n req a
+transform f (Kleisli mf) = Kleisli $ f . mf
+
+-- | The path components to be matched by routing machinery
+newtype PathInfo = PathInfo [Text]
+
+-- | Responses that cause routes to abort execution
+data RouteError = RouteMismatch
+                  -- ^ A route did not match and the next one can be
+                  -- tried
+                | ErrorResponse (Response LBS.ByteString)
+                  -- ^ A route matched but returned a short circuiting
+                  -- error response
+                deriving (Eq, Ord, Show)
+
+instance Semigroup RouteError where
+  RouteMismatch <> e = e
+  e <> _             = e
+
+  stimes :: Integral b => b -> RouteError -> RouteError
+  stimes = stimesIdempotent
+
+instance Monoid RouteError where
+  mempty = RouteMismatch
+
+-- | The monad for routing.
+newtype Router a = Router
+  { unRouter :: StateT PathInfo (ExceptT RouteError IO) a }
+  deriving newtype ( Functor, Applicative, Alternative, Monad, MonadPlus
+                   , MonadError RouteError
+                   , MonadState PathInfo
+                   , MonadIO
+                   )
+
+-- | HTTP request routing with short circuiting behavior.
+class (MonadState PathInfo m, Alternative m, MonadPlus m) => MonadRouter m where
+  -- | Mark the current route as rejected, alternatives can be tried
+  rejectRoute :: m a
+
+  -- | Short-circuit the current handler and return a response
+  errorResponse :: Response LBS.ByteString -> m a
+
+  -- | Handle an error response
+  catchErrorResponse :: m a -> (Response LBS.ByteString -> m a) -> m a
+
+instance MonadRouter Router where
+  rejectRoute :: Router a
+  rejectRoute = throwError RouteMismatch
+
+  errorResponse :: Response LBS.ByteString -> Router a
+  errorResponse = throwError . ErrorResponse
+
+  catchErrorResponse :: Router a -> (Response LBS.ByteString -> Router a) -> Router a
+  catchErrorResponse action handle = action `catchError` f
+    where
+      f RouteMismatch       = rejectRoute
+      f (ErrorResponse res) = handle res
+
+
+-- | Convert a routable handler into a plain function.
+--
+-- This function is typically used to convert WebGear routes to a
+-- 'Wai.Application'.
+runRoute :: Handler '[] LBS.ByteString -> (Wai.Request -> IO Wai.Response)
+runRoute route req = waiResponse . addServerHeader . either routeErrorToResponse id <$> runRouter
+  where
+    runRouter :: IO (Either RouteError (Response LBS.ByteString))
+    runRouter = runExceptT
+                $ flip evalStateT (PathInfo $ pathInfo req)
+                $ unRouter
+                $ runKleisli route
+                $ link req
+
+    routeErrorToResponse :: RouteError -> Response LBS.ByteString
+    routeErrorToResponse RouteMismatch     = notFound404
+    routeErrorToResponse (ErrorResponse r) = r
+
+    addServerHeader :: Response LBS.ByteString -> Response LBS.ByteString
+    addServerHeader r = r { responseHeaders = responseHeaders r <> fromList [serverHeader] }
+
+    serverHeader :: HTTP.Header
+    serverHeader = (HTTP.hServer, fromString $ "WebGear/" ++ showVersion version)

@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE TypeApplications  #-}
 
 module Main where
@@ -12,7 +13,7 @@ module Main where
 import Control.Applicative (Alternative (..))
 import Control.Arrow (Kleisli (..))
 import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.Reader (MonadReader (..), runReaderT)
+import Control.Monad.Reader (MonadReader (..), ReaderT, runReaderT)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.ByteString.Lazy (ByteString)
 import Data.Hashable (Hashable)
@@ -26,7 +27,6 @@ import Network.HTTP.Types (StdMethod (..))
 import Network.Wai (Application)
 
 import WebGear.Middlewares
-import WebGear.Route
 import WebGear.Trait
 import WebGear.Types
 
@@ -82,86 +82,49 @@ removeUser store@(UserStore ref) uid = liftIO $ do
 --------------------------------------------------------------------------------
 type IntUserId = PathVar "userId" Int
 
-userRoutes :: ( MonadRouter m
-              , MonadReader UserStore m
-              , MonadIO m
-              )
-           => Handler m '[] ByteString
-userRoutes = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
-             (publicRoutes <|> protectedRoutes)
+userRoutes :: (forall req a. Handler' (ReaderT UserStore IO) req a -> Handler req a)
+           -> Handler '[] ByteString
+userRoutes handler = allRoutes
+  where
+    allRoutes :: Handler '[] ByteString
+    allRoutes = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
+                (publicRoutes <|> protectedRoutes)
 
--- | Routes accessible without any authentication
-publicRoutes :: ( MonadRouter m
-                , Has IntUserId req
-                , MonadReader UserStore m
-                , MonadIO m
-                )
-             => Handler m req ByteString
-publicRoutes = getUser
+    -- | Routes accessible without any authentication
+    publicRoutes :: Has IntUserId req => Handler req ByteString
+    publicRoutes = getUser
 
--- | Routes that require HTTP basic authentication
-protectedRoutes :: ( MonadRouter m
-                   , Has IntUserId req
-                   , MonadReader UserStore m
-                   , MonadIO m
-                   )
-                => Handler m req ByteString
-protectedRoutes = basicAuth "Wakanda" isValidCreds
-                  $ putUser <|> deleteUser
+    -- | Routes that require HTTP basic authentication
+    protectedRoutes :: Has IntUserId req => Handler req ByteString
+    protectedRoutes = basicAuth "Wakanda" checkCreds
+                      $ putUser <|> deleteUser
 
-isValidCreds :: Monad m => Credentials -> m Bool
-isValidCreds creds = pure $
-  credentialsUsername creds == "panther"
-  && credentialsPassword creds == "forever"
+    getUser :: Has IntUserId req => Handler req ByteString
+    getUser = method @GET
+              $ jsonResponseBody @User
+              $ handler getUserHandler
 
-getUser :: ( MonadRouter m
-           , Has IntUserId req
-           , MonadReader UserStore m
-           , MonadIO m
-           )
-        => Handler m req ByteString
-getUser = method @GET
-          $ jsonResponseBody @User
-          $ getUserHandler
+    putUser :: (Has IntUserId req, Has BasicAuth req) => Handler req ByteString
+    putUser = method @PUT
+              $ requestContentTypeHeader @"application/json"
+              $ jsonRequestBody @User
+              $ jsonResponseBody @User
+              $ handler putUserHandler
 
-putUser :: ( MonadRouter m
-           , Has IntUserId req
-           , Has BasicAuth req
-           , MonadReader UserStore m
-           , MonadIO m
-           )
-        => Handler m req ByteString
-putUser = method @PUT
-          $ requestContentTypeHeader @"application/json"
-          $ jsonRequestBody @User
-          $ jsonResponseBody @User
-          $ putUserHandler
-
-deleteUser :: ( MonadRouter m
-              , Has IntUserId req
-              , Has BasicAuth req
-              , MonadReader UserStore m
-              , MonadIO m
-              )
-           => Handler m req ByteString
-deleteUser = method @DELETE
-             $ deleteUserHandler
+    deleteUser :: (Has IntUserId req, Has BasicAuth req) => Handler req ByteString
+    deleteUser = method @DELETE
+                 $ handler deleteUserHandler
 
 getUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
                   , Has IntUserId req
                   )
-               => Handler m req User
+               => Handler' m req User
 getUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
   pure $ maybe notFound404 ok200 user
-
-logActivity :: (MonadIO m, Has BasicAuth req) => Linked req Request -> String -> m ()
-logActivity request msg = do
-  let Tagged name = credentialsUsername <$> get @BasicAuth request
-  liftIO $ putStrLn $ msg <> ": by " <> show name
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
@@ -169,7 +132,7 @@ putUserHandler :: ( MonadReader UserStore m
                   , Has (JSONRequestBody User) req
                   , Has BasicAuth req
                   )
-               => Handler m req User
+               => Handler' m req User
 putUserHandler = Kleisli $ \request -> do
   let Tagged uid  = get @IntUserId request
       Tagged user = get @(JSONRequestBody User) request
@@ -184,7 +147,7 @@ deleteUserHandler :: ( MonadReader UserStore m
                      , Has IntUserId req
                      , Has BasicAuth req
                      )
-                  => Handler m req ByteString
+                  => Handler' m req ByteString
 deleteUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
@@ -193,12 +156,23 @@ deleteUserHandler = Kleisli $ \request -> do
     then logActivity request "deleted" >> pure noContent204
     else pure notFound404
 
+checkCreds :: Monad m => Credentials -> m Bool
+checkCreds creds = pure $ creds == Credentials "panther" "forever"
+
+logActivity :: (MonadIO m, Has BasicAuth req) => Linked req Request -> String -> m ()
+logActivity request msg = do
+  let Tagged name = credentialsUsername <$> get @BasicAuth request
+  liftIO $ putStrLn $ msg <> ": by " <> show name
+
 
 --------------------------------------------------------------------------------
 -- | The application server
 --------------------------------------------------------------------------------
 application :: UserStore -> Application
-application store req cont = runReaderT (runRoute userRoutes req) store >>= cont
+application store req cont = runRoute (userRoutes $ transform appToRouter) req >>= cont
+  where
+    appToRouter :: ReaderT UserStore IO a -> Router a
+    appToRouter = liftIO . flip runReaderT store
 
 main :: IO ()
 main = do

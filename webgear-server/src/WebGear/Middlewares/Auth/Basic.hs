@@ -25,10 +25,9 @@ import Data.CaseInsensitive (CI, mk)
 import Data.String (IsString)
 import Data.Tagged (untag)
 
-import WebGear.Route (MonadRouter (..))
 import WebGear.Trait (Has (..), Linked, Result (..), Trait (..), probe)
-import WebGear.Types (Request, RequestMiddleware, Response (..), forbidden403, requestHeader,
-                      setResponseHeader, unauthorized401)
+import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response (..), forbidden403,
+                      requestHeader, setResponseHeader, unauthorized401)
 import WebGear.Util (maybeToRight)
 
 
@@ -65,7 +64,7 @@ instance Monad m => Trait BasicAuth Request m where
   type Absence BasicAuth Request = BasicAuthError
 
   toAttribute :: Request -> m (Result BasicAuth Request)
-  toAttribute r = pure $ either Refutation (Proof r) $ do
+  toAttribute r = pure $ either Refutation Proof $ do
     h <- getAuthHeader r
     (scheme, creds) <- parseAuthHeader h
     when (scheme /= "Basic") $
@@ -103,12 +102,12 @@ parseCreds enc =
 basicAuth :: forall m req a. MonadRouter m
           => Realm
           -> (Credentials -> m Bool)
-          -> RequestMiddleware m req (BasicAuth : req) a
+          -> RequestMiddleware' m req (BasicAuth : req) a
 basicAuth (Realm realm) credCheck handler = Kleisli $
   probe @BasicAuth >=> either unauthorized (validateCredentials >=> runKleisli handler)
   where
     unauthorized :: BasicAuthError -> m (Response a)
-    unauthorized = const $ failHandler
+    unauthorized = const $ errorResponse
       $ setResponseHeader "WWW-Authenticate" ("Basic realm=\"" <> realm <> "\"")
       $ unauthorized401 "Unauthorized"
 
@@ -118,4 +117,4 @@ basicAuth (Realm realm) credCheck handler = Kleisli $
       valid <- credCheck . untag $ get @BasicAuth req
       if valid
         then pure req
-        else failHandler $ forbidden403 "Forbidden"
+        else errorResponse $ forbidden403 "Forbidden"

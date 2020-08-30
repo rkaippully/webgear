@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE TypeApplications  #-}
 
 module WebGear where
@@ -12,7 +13,7 @@ module WebGear where
 import Control.Applicative (Alternative (..))
 import Control.Arrow (Kleisli (..))
 import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.Reader (MonadReader (..), runReaderT)
+import Control.Monad.Reader (MonadReader (..), ReaderT, runReaderT)
 import Data.ByteString.Lazy (ByteString)
 import Data.Tagged (Tagged (..))
 import Network.HTTP.Types (StdMethod (..))
@@ -20,7 +21,6 @@ import Network.Wai (Application)
 
 import Model
 import WebGear.Middlewares
-import WebGear.Route
 import WebGear.Trait
 import WebGear.Types
 
@@ -30,50 +30,32 @@ import WebGear.Types
 --------------------------------------------------------------------------------
 type IntUserId = PathVar "userId" Int
 
-userRoutes :: ( MonadRouter m
-              , MonadReader UserStore m
-              , MonadIO m
-              )
-           => Handler m '[] ByteString
-userRoutes = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
-             $ getUser <|> putUser <|> deleteUser
+userRoutes :: (forall req a. Handler' (ReaderT UserStore IO) req a -> Handler req a)
+           -> Handler '[] ByteString
+userRoutes toRouter = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
+                      $ getUser <|> putUser <|> deleteUser
+  where
+    getUser :: Has IntUserId req => Handler req ByteString
+    getUser = method @GET
+              $ jsonResponseBody @User
+              $ toRouter getUserHandler
 
-getUser :: ( MonadRouter m
-           , Has IntUserId req
-           , MonadReader UserStore m
-           , MonadIO m
-           )
-        => Handler m req ByteString
-getUser = method @GET
-          $ jsonResponseBody @User
-          $ getUserHandler
+    putUser :: Has IntUserId req => Handler req ByteString
+    putUser = method @PUT
+              $ requestContentTypeHeader @"application/json"
+              $ jsonRequestBody @User
+              $ jsonResponseBody @User
+              $ toRouter putUserHandler
 
-putUser :: ( MonadRouter m
-           , Has IntUserId req
-           , MonadReader UserStore m
-           , MonadIO m
-           )
-        => Handler m req ByteString
-putUser = method @PUT
-          $ requestContentTypeHeader @"application/json"
-          $ jsonRequestBody @User
-          $ jsonResponseBody @User
-          $ putUserHandler
-
-deleteUser :: ( MonadRouter m
-              , Has IntUserId req
-              , MonadReader UserStore m
-              , MonadIO m
-              )
-           => Handler m req ByteString
-deleteUser = method @DELETE
-             $ deleteUserHandler
+    deleteUser :: Has IntUserId req => Handler req ByteString
+    deleteUser = method @DELETE
+                 $ toRouter deleteUserHandler
 
 getUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
                   , Has IntUserId req
                   )
-               => Handler m req User
+               => Handler' m req User
 getUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
@@ -85,7 +67,7 @@ putUserHandler :: ( MonadReader UserStore m
                   , Has IntUserId req
                   , Has (JSONRequestBody User) req
                   )
-               => Handler m req User
+               => Handler' m req User
 putUserHandler = Kleisli $ \request -> do
   let Tagged uid  = get @IntUserId request
       Tagged user = get @(JSONRequestBody User) request
@@ -98,7 +80,7 @@ deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
                      , Has IntUserId req
                      )
-                  => Handler m req ByteString
+                  => Handler' m req ByteString
 deleteUserHandler = Kleisli $ \request -> do
   let Tagged uid = get @IntUserId request
   store <- ask
@@ -110,4 +92,7 @@ deleteUserHandler = Kleisli $ \request -> do
 -- | The application server
 --------------------------------------------------------------------------------
 application :: UserStore -> Application
-application store req cont = runReaderT (runRoute userRoutes req) store >>= cont
+application store req cont =  runRoute (userRoutes $ transform appToRouter) req >>= cont
+  where
+    appToRouter :: ReaderT UserStore IO a -> Router a
+    appToRouter = liftIO . flip runReaderT store
