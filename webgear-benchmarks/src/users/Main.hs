@@ -39,7 +39,7 @@ runCriterion = do
               ]
 
 runTest :: Application -> IO ()
-runTest app = replicateM_ 50 $ do
+runTest app = replicateM_ 500 $ do
   _ <- putRequest >>= flip app (respond 200)
   _ <- app getRequest (respond 200)
   _ <- app deleteRequest (respond 204)
