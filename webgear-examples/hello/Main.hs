@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes      #-}
 {-# LANGUAGE TypeApplications #-}
 
-import Network.HTTP.Types (StdMethod (..))
+import Network.HTTP.Types (StdMethod (GET))
 import Network.Wai.Handler.Warp
 import WebGear
 
