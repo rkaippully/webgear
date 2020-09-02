@@ -87,7 +87,7 @@ userRoutes :: (forall req a. Handler' (ReaderT UserStore IO) req a -> Handler re
 userRoutes handler = allRoutes
   where
     allRoutes :: Handler '[] ByteString
-    allRoutes = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
+    allRoutes = [match| /v1/users/userId:Int |]   -- non-TH version: path @"/v1/users" . pathVar @"userId" @Int
                 (publicRoutes <|> protectedRoutes)
 
     -- | Routes accessible without any authentication
@@ -104,14 +104,14 @@ userRoutes handler = allRoutes
               $ jsonResponseBody @User
               $ handler getUserHandler
 
-    putUser :: (Has IntUserId req, Has BasicAuth req) => Handler req ByteString
+    putUser :: Have [IntUserId, BasicAuth] req => Handler req ByteString
     putUser = method @PUT
               $ requestContentTypeHeader @"application/json"
               $ jsonRequestBody @User
               $ jsonResponseBody @User
               $ handler putUserHandler
 
-    deleteUser :: (Has IntUserId req, Has BasicAuth req) => Handler req ByteString
+    deleteUser :: Have [IntUserId, BasicAuth] req => Handler req ByteString
     deleteUser = method @DELETE
                  $ handler deleteUserHandler
 
@@ -128,9 +128,7 @@ getUserHandler = Kleisli $ \request -> do
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
-                  , Has IntUserId req
-                  , Has (JSONRequestBody User) req
-                  , Has BasicAuth req
+                  , Have [IntUserId, JSONRequestBody User, BasicAuth] req
                   )
                => Handler' m req User
 putUserHandler = Kleisli $ \request -> do
@@ -144,8 +142,7 @@ putUserHandler = Kleisli $ \request -> do
 
 deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
-                     , Has IntUserId req
-                     , Has BasicAuth req
+                     , Have [IntUserId, BasicAuth] req
                      )
                   => Handler' m req ByteString
 deleteUserHandler = Kleisli $ \request -> do

@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_HADDOCK ignore-exports #-}
 -- |
 -- Copyright        : (c) Raghu Kaippully, 2020
 -- License          : MPL-2.0
@@ -31,11 +32,25 @@ module WebGear
 
     -- * Servers with other monads
     -- $otherMonads
+
+    module Control.Applicative
+  , module Control.Arrow
+  , module Data.ByteString.Lazy
+  , module Data.String.Conversions
+  , module Data.Tagged
+  , module Data.Text
+  , module Web.HttpApiData
+  , module WebGear.Middlewares
+  , module WebGear.Trait
+  , module WebGear.Types
   ) where
 
-import Control.Applicative (Alternative (..))
+import Control.Applicative (Alternative ((<|>)))
 import Control.Arrow (Kleisli (..))
 import Data.ByteString.Lazy (ByteString)
+import Data.String.Conversions (ConvertibleStrings)
+import Data.Tagged
+import Data.Text
 import Web.HttpApiData (FromHttpApiData)
 
 import qualified Network.Wai as Wai
@@ -209,7 +224,7 @@ import WebGear.Types
 --
 -- @
 -- allRoutes :: 'Handler' '[] 'ByteString'
--- allRoutes = ['match'| v1\/users\/userId:Int |]    -- non-TH version: 'path' \@"v1/users" . 'pathVar' \@"userId" \@Int
+-- allRoutes = ['match'| /v1\/users\/userId:Int |]    -- non-TH version: 'path' \@"/v1/users" . 'pathVar' \@"userId" \@Int
 --             $ getUser \<|\> putUser \<|\> deleteUser
 --
 -- type IntUserId = 'PathVar' "userId" Int
@@ -230,24 +245,18 @@ import WebGear.Types
 --
 -- $running
 --
--- Routable handlers can be converted to a regular function using
--- 'runRoute':
+-- Routable handlers can be converted to a Wai 'Wai.Application' using
+-- 'toApplication':
 --
 -- @
--- runRoute :: 'Handler' '[] 'ByteString' -> ('Wai.Request' -> IO 'Wai.Response')
+-- toApplication :: 'ConvertibleStrings' s 'ByteString' => 'Handler' '[] s -> 'Wai.Application'
 -- @
 --
--- This function converts a WebGear handler to a function from
--- 'Wai.Request' to 'IO Wai.Response'. Then it
--- is trivial to convert that to a WAI 'Wai.Application' and run it as a
--- warp server:
+-- This Wai application can then be run as a Warp web server.
 --
 -- @
--- application :: 'Wai.Application'
--- application req respond = 'runRoute' allRoutes req >>= respond
---
 -- main :: IO ()
--- main = Warp.run 3000 application
+-- main = Warp.run 3000 $ 'toApplication' allRoutes
 -- @
 --
 --

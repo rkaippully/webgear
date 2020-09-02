@@ -32,7 +32,7 @@ type IntUserId = PathVar "userId" Int
 
 userRoutes :: (forall req a. Handler' (ReaderT UserStore IO) req a -> Handler req a)
            -> Handler '[] ByteString
-userRoutes toRouter = [match| v1/users/userId:Int |]   -- non-TH version: path @"v1/users" . pathVar @"userId" @Int
+userRoutes toRouter = [match| /v1/users/userId:Int |]   -- non-TH version: path @"/v1/users" . pathVar @"userId" @Int
                       $ getUser <|> putUser <|> deleteUser
   where
     getUser :: Has IntUserId req => Handler req ByteString

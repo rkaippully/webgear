@@ -89,6 +89,7 @@ module WebGear.Types
   , RouteError (..)
   , transform
   , runRoute
+  , toApplication
   ) where
 
 import Control.Applicative (Alternative)
@@ -102,6 +103,7 @@ import Data.List (find)
 import Data.Maybe (fromMaybe)
 import Data.Semigroup (Semigroup (..), stimesIdempotent)
 import Data.String (fromString)
+import Data.String.Conversions (ConvertibleStrings, convertString)
 import Data.Text (Text)
 import Data.Version (showVersion)
 import GHC.Exts (fromList)
@@ -441,15 +443,13 @@ instance MonadRouter Router where
       f (ErrorResponse res) = handle res
 
 
--- | Convert a routable handler into a plain function.
---
--- This function is typically used to convert WebGear routes to a
--- 'Wai.Application'.
-runRoute :: Handler '[] LBS.ByteString -> (Wai.Request -> IO Wai.Response)
+-- | Convert a routable handler into a plain function from request to response.
+runRoute :: ConvertibleStrings s LBS.ByteString => Handler '[] s -> (Wai.Request -> IO Wai.Response)
 runRoute route req = waiResponse . addServerHeader . either routeErrorToResponse id <$> runRouter
   where
     runRouter :: IO (Either RouteError (Response LBS.ByteString))
-    runRouter = runExceptT
+    runRouter = fmap (fmap (fmap convertString))
+                $ runExceptT
                 $ flip evalStateT (PathInfo $ pathInfo req)
                 $ unRouter
                 $ runKleisli route
@@ -464,3 +464,7 @@ runRoute route req = waiResponse . addServerHeader . either routeErrorToResponse
 
     serverHeader :: HTTP.Header
     serverHeader = (HTTP.hServer, fromString $ "WebGear/" ++ showVersion version)
+
+-- | Convert a routable handler into a Wai application
+toApplication :: ConvertibleStrings s LBS.ByteString => Handler '[] s -> Wai.Application
+toApplication route request next = runRoute route request >>= next
