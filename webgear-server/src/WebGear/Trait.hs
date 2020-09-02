@@ -32,10 +32,13 @@ module WebGear.Trait
     -- * Retrive trait attributes from linked values
   , Has (..)
   , Have
+
+  , MissingTrait
   ) where
 
 import Data.Kind (Constraint, Type)
 import Data.Tagged (Tagged (..))
+import GHC.TypeLits (ErrorMessage (..), TypeError)
 
 
 -- | A trait is an optional attribute @t@ associated with a value
@@ -130,6 +133,21 @@ instance {-# OVERLAPPABLE #-} Has t ts => Has t (t':ts) where
     where
       rightLinked :: Linked (q:qs) b -> Linked qs b
       rightLinked (Linked (_, rv) a) = Linked rv a
+
+-- For better type errors
+instance TypeError (MissingTrait t) => Has t '[] where
+   get = undefined
+
+-- | Type error for nicer UX of missing traits
+type MissingTrait t = Text "The request doesn't have the trait ‘" :<>: ShowType t :<>: Text "’."
+                      :$$: Text ""
+                      :$$: Text "Did you use a wrong trait type?"
+                      :$$: Text "For e.g., ‘PathVar \"foo\" Int’ instead of ‘PathVar \"foo\" String’?"
+                      :$$: Text ""
+                      :$$: Text "Or did you forget to apply an appropriate middleware?"
+                      :$$: Text "For e.g. The trait ‘JSONRequestBody Foo’ can be used with ‘jsonRequestBody @Foo’ middleware."
+                      :$$: Text ""
+
 
 -- | Constraint that proves that all the traits in the list @ts@ are
 -- also present in the list @qs@.

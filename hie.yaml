@@ -10,6 +10,11 @@ cradle:
         cradle:
           stack:
             component: "webgear-server:webgear-server-test"
+    - path: "./webgear-examples/hello"
+      config:
+        cradle:
+          stack:
+            component: "webgear-examples:exe:hello"
     - path: "./webgear-examples/users"
       config:
         cradle:

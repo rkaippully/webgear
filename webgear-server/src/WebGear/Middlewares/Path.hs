@@ -8,9 +8,12 @@ module WebGear.Middlewares.Path
   ( Path
   , PathVar
   , PathVarError (..)
+  , PathEnd
   , path
   , pathVar
+  , pathEnd
   , match
+  , route
   ) where
 
 import Control.Arrow (Kleisli (..))
@@ -18,13 +21,13 @@ import Control.Monad ((>=>))
 import Control.Monad.State.Strict (MonadState (..))
 import Data.Foldable (toList)
 import Data.Function ((&))
-import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty (NonEmpty (..), filter)
 import Data.Proxy (Proxy (..))
 import Data.Text (Text, pack)
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import Language.Haskell.TH.Quote (QuasiQuoter (..))
 import Language.Haskell.TH.Syntax (Exp (..), Q, TyLit (..), Type (..), mkName)
-import Prelude hiding (drop, take)
+import Prelude hiding (drop, filter, take)
 import Web.HttpApiData (FromHttpApiData (..))
 
 import WebGear.Middlewares.Method (method)
@@ -80,6 +83,20 @@ instance (FromHttpApiData val, MonadState PathInfo m) => Trait (PathVar tag val)
           put $ PathInfo xs
           pure $ Proof v
 
+-- | Trait to indicate that no more path components are present in the request
+data PathEnd
+
+instance MonadState PathInfo m => Trait PathEnd Request m where
+  type Attribute PathEnd Request = ()
+  type Absence PathEnd Request = ()
+
+  toAttribute :: Request -> m (Result PathEnd Request)
+  toAttribute _ = do
+    PathInfo actualPath <- get
+    pure $ if null actualPath
+           then Proof ()
+           else Refutation ()
+
 
 -- | A middleware that literally matches path @s@.
 --
@@ -115,47 +132,96 @@ pathVar :: forall tag val ts m a. (FromHttpApiData val, MonadRouter m)
 pathVar handler = Kleisli $
   probe @(PathVar tag val) >=> either (const rejectRoute) (runKleisli handler)
 
--- | Produces middleware(s) to match an optional HTTP method and path.
+-- | A middleware that verifies that end of path is reached.
+pathEnd :: MonadRouter m => RequestMiddleware' m ts (PathEnd:ts) a
+pathEnd handler = Kleisli $
+  probe @PathEnd >=> either (const rejectRoute) (runKleisli handler)
+
+-- | Produces middleware(s) to match an optional HTTP method and some
+-- path components.
+--
+-- This middleware matches a prefix of path components, the remaining
+-- components can be matched by subsequent uses of 'match'.
 --
 -- This quasiquoter can be used in several ways:
 --
--- * @[match|a\/b\/c]@ is equivalent to @'path' \@\"a\/b\/c\"@
--- * @[match|a\/b\/objId:Int\/d]@ is equivalent to
---   @'path' \@\"a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' @\"d\"@
--- * @[match|GET a\/b\/c]@ is equivalent to
---   @'method' \@GET $ 'path' \@\"a\/b\/c\"@
--- * @[match|GET a\/b\/objId:Int\/d]@ is equivalent to
---   @'method' \@GET . 'path' \@\"a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' \@\"d\"@
+-- +---------------------------------------+---------------------------------------------------------------------------------------+
+-- | QuasiQuoter                           | Equivalent Middleware                                                                 |
+-- +=======================================+=======================================================================================+
+-- | @[match| \/a\/b\/c |]@                | @'path' \@\"\/a\/b\/c\"@                                                              |
+-- +---------------------------------------+---------------------------------------------------------------------------------------+
+-- | @[match| \/a\/b\/objId:Int\/d |]@     | @'path' \@\"\/a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' \@\"d\"@                  |
+-- +---------------------------------------+---------------------------------------------------------------------------------------+
+-- | @[match| GET \/a\/b\/c |]@            | @'method' \@GET . 'path' \@\"\/a\/b\/c\"@                                             |
+-- +---------------------------------------+---------------------------------------------------------------------------------------+
+-- | @[match| GET \/a\/b\/objId:Int\/d |]@ | @'method' \@GET . 'path' \@\"\/a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' \@\"d\"@ |
+-- +---------------------------------------+---------------------------------------------------------------------------------------+
 --
 match :: QuasiQuoter
 match = QuasiQuoter
-  { quoteExp  = toExp
+  { quoteExp  = toMatchExp
   , quotePat  = const $ fail "match cannot be used in a pattern"
   , quoteType = const $ fail "match cannot be used in a type"
   , quoteDec  = const $ fail "match cannot be used in a declaration"
   }
-  where
-    toExp :: String -> Q Exp
-    toExp s = case List.words s of
-      [m, p] -> do
-        let methodExp = AppTypeE (VarE 'method) (ConT $ mkName m)
-        pathExps <- toPathExps p
-        pure $ List.foldr1 compose $ methodExp :| pathExps
-      [p]    -> do
-        pathExps <- toPathExps p
-        pure $ List.foldr1 compose pathExps
-      _      -> fail "match expects an HTTP method and a path or just a path"
 
+-- | Produces middleware(s) to match an optional HTTP method and the
+-- entire request path.
+--
+-- This middleware is intended to be used in cases where the entire
+-- path needs to be matched. Use 'match' middleware to match only an
+-- initial portion of the path.
+--
+-- This quasiquoter can be used in several ways:
+--
+-- +---------------------------------------+---------------------------------------------------------------------------------------------------+
+-- | QuasiQuoter                           | Equivalent Middleware                                                                             |
+-- +=======================================+===================================================================================================+
+-- | @[route| \/a\/b\/c |]@                | @'path' \@\"\/a\/b\/c\" . 'pathEnd'@                                                              |
+-- +---------------------------------------+---------------------------------------------------------------------------------------------------+
+-- | @[route| \/a\/b\/objId:Int\/d |]@     | @'path' \@\"\/a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' \@\"d\" . 'pathEnd'@                  |
+-- +---------------------------------------+---------------------------------------------------------------------------------------------------+
+-- | @[route| GET \/a\/b\/c |]@            | @'method' \@GET . 'path' \@\"\/a\/b\/c\" . 'pathEnd'@                                             |
+-- +---------------------------------------+---------------------------------------------------------------------------------------------------+
+-- | @[route| GET \/a\/b\/objId:Int\/d |]@ | @'method' \@GET . 'path' \@\"\/a\/b\" . 'pathVar' \@\"objId\" \@Int . 'path' \@\"d\" . 'pathEnd'@ |
+-- +---------------------------------------+---------------------------------------------------------------------------------------------------+
+--
+route :: QuasiQuoter
+route = QuasiQuoter
+  { quoteExp  = toRouteExp
+  , quotePat  = const $ fail "route cannot be used in a pattern"
+  , quoteType = const $ fail "route cannot be used in a type"
+  , quoteDec  = const $ fail "route cannot be used in a declaration"
+  }
+
+toRouteExp :: String -> Q Exp
+toRouteExp s = do
+  e <- toMatchExp s
+  pure $ compose e (VarE 'pathEnd)
+
+toMatchExp :: String -> Q Exp
+toMatchExp s = case List.words s of
+  [m, p] -> do
+    let methodExp = AppTypeE (VarE 'method) (ConT $ mkName m)
+    pathExps <- toPathExps p
+    pure $ List.foldr1 compose $ methodExp :| pathExps
+  [p]    -> do
+    pathExps <- toPathExps p
+    pure $ List.foldr1 compose pathExps
+  _      -> fail "Expected an HTTP method and a path or just a path"
+
+  where
     toPathExps :: String -> Q [Exp]
     toPathExps p = splitOn '/' p
+                   & filter (/= "")
                    & fmap (splitOn ':')
                    & List.foldr joinPath []
                    & fmap toPathExp
                    & sequence
 
     joinPath :: NonEmpty String -> [NonEmpty String] -> [NonEmpty String]
-    joinPath s []                    = [s]
-    joinPath (s:|[]) ((s':|[]) : xs) = ((s <> "/" <> s') :| []) : xs
+    joinPath p []                    = [p]
+    joinPath (p:|[]) ((p':|[]) : xs) = ((p <> "/" <> p') :| []) : xs
     joinPath y (x:xs)                = y:x:xs
 
     toPathExp :: NonEmpty String -> Q Exp
@@ -163,5 +229,5 @@ match = QuasiQuoter
     toPathExp (v :| [t]) = pure $ AppTypeE (AppTypeE (VarE 'pathVar) (LitT $ StrTyLit v)) (ConT $ mkName t)
     toPathExp xs         = fail $ "Invalid path component: " <> List.intercalate ":" (toList xs)
 
-    compose :: Exp -> Exp -> Exp
-    compose l = UInfixE l (VarE $ mkName ".")
+compose :: Exp -> Exp -> Exp
+compose l = UInfixE l (VarE $ mkName ".")
