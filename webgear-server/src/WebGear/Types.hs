@@ -99,11 +99,11 @@ import Control.Monad.Except (ExceptT, MonadError, catchError, runExceptT, throwE
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Strict (MonadState, StateT, evalStateT)
 import Data.ByteString (ByteString)
+import Data.ByteString.Conversion.To (ToByteString, toByteString)
 import Data.List (find)
 import Data.Maybe (fromMaybe)
 import Data.Semigroup (Semigroup (..), stimesIdempotent)
 import Data.String (fromString)
-import Data.String.Conversions (ConvertibleStrings, convertString)
 import Data.Text (Text)
 import Data.Version (showVersion)
 import GHC.Exts (fromList)
@@ -444,11 +444,11 @@ instance MonadRouter Router where
 
 
 -- | Convert a routable handler into a plain function from request to response.
-runRoute :: ConvertibleStrings s LBS.ByteString => Handler '[] s -> (Wai.Request -> IO Wai.Response)
+runRoute :: ToByteString a => Handler '[] a -> (Wai.Request -> IO Wai.Response)
 runRoute route req = waiResponse . addServerHeader . either routeErrorToResponse id <$> runRouter
   where
     runRouter :: IO (Either RouteError (Response LBS.ByteString))
-    runRouter = fmap (fmap (fmap convertString))
+    runRouter = fmap (fmap (fmap toByteString))
                 $ runExceptT
                 $ flip evalStateT (PathInfo $ pathInfo req)
                 $ unRouter
@@ -466,5 +466,5 @@ runRoute route req = waiResponse . addServerHeader . either routeErrorToResponse
     serverHeader = (HTTP.hServer, fromString $ "WebGear/" ++ showVersion version)
 
 -- | Convert a routable handler into a Wai application
-toApplication :: ConvertibleStrings s LBS.ByteString => Handler '[] s -> Wai.Application
+toApplication :: ToByteString a => Handler '[] a -> Wai.Application
 toApplication route request next = runRoute route request >>= next
