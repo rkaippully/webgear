@@ -36,7 +36,7 @@ module WebGear
     module Control.Applicative
   , module Control.Arrow
   , module Data.ByteString.Lazy
-  , module Data.String.Conversions
+  , module Data.ByteString.Conversion.To
   , module Data.Tagged
   , module Data.Text
   , module Web.HttpApiData
@@ -47,8 +47,8 @@ module WebGear
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Arrow (Kleisli (..))
+import Data.ByteString.Conversion.To
 import Data.ByteString.Lazy (ByteString)
-import Data.String.Conversions (ConvertibleStrings)
 import Data.Tagged
 import Data.Text
 import Web.HttpApiData (FromHttpApiData)
@@ -249,7 +249,7 @@ import WebGear.Types
 -- 'toApplication':
 --
 -- @
--- toApplication :: 'ConvertibleStrings' s 'ByteString' => 'Handler' '[] s -> 'Wai.Application'
+-- toApplication :: 'ToByteString' a => 'Handler' '[] a -> 'Wai.Application'
 -- @
 --
 -- This Wai application can then be run as a Warp web server.

@@ -121,15 +121,15 @@ remove l = Linked (snd $ linkAttribute l) (unlink l)
 -- of traits @ts@.
 class Has t ts where
   -- | Get the attribute associated with @t@ from a linked value
-  get :: Linked ts a -> Tagged t (Attribute t a)
+  get :: Tagged t (Linked ts a) -> Attribute t a
 
 instance Has t (t:ts) where
-  get :: Linked (t:ts) a -> Tagged t (Attribute t a)
-  get (Linked (lv, _) _) = Tagged lv
+  get :: Tagged t (Linked (t:ts) a) -> Attribute t a
+  get (Tagged (Linked (lv, _) _)) = lv
 
 instance {-# OVERLAPPABLE #-} Has t ts => Has t (t':ts) where
-  get :: Linked (t':ts) a -> Tagged t (Attribute t a)
-  get l = get (rightLinked l)
+  get :: Tagged t (Linked (t':ts) a) -> Attribute t a
+  get l = get (rightLinked <$> l)
     where
       rightLinked :: Linked (q:qs) b -> Linked qs b
       rightLinked (Linked (_, rv) a) = Linked rv a

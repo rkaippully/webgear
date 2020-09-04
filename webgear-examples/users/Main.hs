@@ -121,7 +121,7 @@ getUserHandler :: ( MonadReader UserStore m
                   )
                => Handler' m req User
 getUserHandler = Kleisli $ \request -> do
-  let Tagged uid = get @IntUserId request
+  let uid = get $ Tagged @IntUserId request
   store <- ask
   user <- lookupUser store (UserId uid)
   pure $ maybe notFound404 ok200 user
@@ -132,8 +132,8 @@ putUserHandler :: ( MonadReader UserStore m
                   )
                => Handler' m req User
 putUserHandler = Kleisli $ \request -> do
-  let Tagged uid  = get @IntUserId request
-      Tagged user = get @(JSONRequestBody User) request
+  let uid  = get $ Tagged @IntUserId request
+      user = get $ Tagged @(JSONRequestBody User) request
       user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
@@ -146,7 +146,7 @@ deleteUserHandler :: ( MonadReader UserStore m
                      )
                   => Handler' m req ByteString
 deleteUserHandler = Kleisli $ \request -> do
-  let Tagged uid = get @IntUserId request
+  let uid = get $ Tagged @IntUserId request
   store <- ask
   found <- removeUser store (UserId uid)
   if found
@@ -158,7 +158,7 @@ checkCreds creds = pure $ creds == Credentials "panther" "forever"
 
 logActivity :: (MonadIO m, Has BasicAuth req) => Linked req Request -> String -> m ()
 logActivity request msg = do
-  let Tagged name = credentialsUsername <$> get @BasicAuth request
+  let name = credentialsUsername $ get $ Tagged @BasicAuth request
   liftIO $ putStrLn $ msg <> ": by " <> show name
 
 
