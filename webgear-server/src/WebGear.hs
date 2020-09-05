@@ -37,7 +37,7 @@ module WebGear
   , module Control.Arrow
   , module Data.ByteString.Lazy
   , module Data.ByteString.Conversion.To
-  , module Data.Tagged
+  , module Data.Proxy
   , module Data.Text
   , module Web.HttpApiData
   , module WebGear.Middlewares
@@ -49,7 +49,7 @@ import Control.Applicative (Alternative ((<|>)))
 import Control.Arrow (Kleisli (..))
 import Data.ByteString.Conversion.To
 import Data.ByteString.Lazy (ByteString)
-import Data.Tagged
+import Data.Proxy (Proxy (..))
 import Data.Text
 import Web.HttpApiData (FromHttpApiData)
 

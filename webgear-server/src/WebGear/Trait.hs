@@ -37,7 +37,7 @@ module WebGear.Trait
   ) where
 
 import Data.Kind (Constraint, Type)
-import Data.Tagged (Tagged (..))
+import Data.Proxy (Proxy (..))
 import GHC.TypeLits (ErrorMessage (..), TypeError)
 
 
@@ -121,15 +121,15 @@ remove l = Linked (snd $ linkAttribute l) (unlink l)
 -- of traits @ts@.
 class Has t ts where
   -- | Get the attribute associated with @t@ from a linked value
-  get :: Tagged t (Linked ts a) -> Attribute t a
+  get :: Proxy t -> Linked ts a -> Attribute t a
 
 instance Has t (t:ts) where
-  get :: Tagged t (Linked (t:ts) a) -> Attribute t a
-  get (Tagged (Linked (lv, _) _)) = lv
+  get :: Proxy t -> Linked (t:ts) a -> Attribute t a
+  get _ (Linked (lv, _) _) = lv
 
 instance {-# OVERLAPPABLE #-} Has t ts => Has t (t':ts) where
-  get :: Tagged t (Linked (t':ts) a) -> Attribute t a
-  get l = get (rightLinked <$> l)
+  get :: Proxy t -> Linked (t':ts) a -> Attribute t a
+  get _ l = get (Proxy @t) (rightLinked l)
     where
       rightLinked :: Linked (q:qs) b -> Linked qs b
       rightLinked (Linked (_, rv) a) = Linked rv a
