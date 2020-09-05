@@ -22,8 +22,8 @@ import Data.ByteString (ByteString, intercalate)
 import Data.ByteString.Base64 (decodeLenient)
 import Data.ByteString.Char8 (split)
 import Data.CaseInsensitive (CI, mk)
+import Data.Proxy (Proxy (..))
 import Data.String (IsString)
-import Data.Tagged (Tagged (..))
 
 import WebGear.Trait (Has (..), Linked, Result (..), Trait (..), probe)
 import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response (..), forbidden403,
@@ -114,7 +114,7 @@ basicAuth (Realm realm) credCheck handler = Kleisli $
     validateCredentials :: Linked (BasicAuth : req) Request
                         -> m (Linked (BasicAuth : req) Request)
     validateCredentials req = do
-      valid <- credCheck $ get (Tagged @BasicAuth req)
+      valid <- credCheck $ get (Proxy @BasicAuth) req
       if valid
         then pure req
         else errorResponse $ forbidden403 "Forbidden"

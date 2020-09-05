@@ -9,7 +9,7 @@ import WebGear
 routes :: Handler '[] String
 routes = [route| GET /hello/name:String/ |] $ Kleisli $
            \request -> do
-             let name = get $ Tagged @(PathVar "name" String) request
+             let name = get (Proxy @(PathVar "name" String)) request
              return $ ok200 $ "Hello, " ++ name
 
 main :: IO ()

@@ -56,7 +56,11 @@ instance (KnownSymbol s, MonadState PathInfo m) => Trait (Path s) Request m wher
         pure $ Proof ()
 
     where
-      expectedPath = map pack $ toList $ splitOn '/' $ symbolVal $ Proxy @s
+      expectedPath = Proxy @s
+                     & symbolVal
+                     & splitOn '/'
+                     & filter (/= "")
+                     & map pack
 
 
 -- | A path variable that is extracted and converted to a value of
