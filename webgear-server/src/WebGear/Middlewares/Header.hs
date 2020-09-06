@@ -85,9 +85,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
 
   toAttribute :: Request -> m (Result (Header' Required Strict name val) Request)
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
-    Nothing        -> Refutation (Left HeaderNotFound)
-    Just (Left e)  -> Refutation (Right $ HeaderParseError e)
-    Just (Right x) -> Proof x
+    Nothing        -> NotFound (Left HeaderNotFound)
+    Just (Left e)  -> NotFound (Right $ HeaderParseError e)
+    Just (Right x) -> Found x
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Strict name val) Request m where
@@ -96,9 +96,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Request -> m (Result (Header' Optional Strict name val) Request)
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
-    Nothing        -> Proof Nothing
-    Just (Left e)  -> Refutation $ HeaderParseError e
-    Just (Right x) -> Proof (Just x)
+    Nothing        -> Found Nothing
+    Just (Left e)  -> NotFound $ HeaderParseError e
+    Just (Right x) -> Found (Just x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Required Lenient name val) Request m where
@@ -107,9 +107,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
 
   toAttribute :: Request -> m (Result (Header' Required Lenient name val) Request)
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
-    Nothing        -> Refutation HeaderNotFound
-    Just (Left e)  -> Proof (Left e)
-    Just (Right x) -> Proof (Right x)
+    Nothing        -> NotFound HeaderNotFound
+    Just (Left e)  -> Found (Left e)
+    Just (Right x) -> Found (Right x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Lenient name val) Request m where
@@ -118,9 +118,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Request -> m (Result (Header' Optional Lenient name val) Request)
   toAttribute r = pure $ deriveRequestHeader (Proxy @name) r $ \case
-    Nothing        -> Proof Nothing
-    Just (Left e)  -> Proof (Just (Left e))
-    Just (Right x) -> Proof (Just (Right x))
+    Nothing        -> Found Nothing
+    Just (Left e)  -> Found (Just (Left e))
+    Just (Right x) -> Found (Just (Right x))
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Required Strict name val) (Response a) m where
@@ -129,9 +129,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
 
   toAttribute :: Response a -> m (Result (Header' Required Strict name val) (Response a))
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
-    Nothing        -> Refutation (Left HeaderNotFound)
-    Just (Left e)  -> Refutation (Right $ HeaderParseError e)
-    Just (Right x) -> Proof x
+    Nothing        -> NotFound (Left HeaderNotFound)
+    Just (Left e)  -> NotFound (Right $ HeaderParseError e)
+    Just (Right x) -> Found x
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Strict name val) (Response a) m where
@@ -140,9 +140,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Response a -> m (Result (Header' Optional Strict name val) (Response a))
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
-    Nothing        -> Proof Nothing
-    Just (Left e)  -> Refutation $ HeaderParseError e
-    Just (Right x) -> Proof (Just x)
+    Nothing        -> Found Nothing
+    Just (Left e)  -> NotFound $ HeaderParseError e
+    Just (Right x) -> Found (Just x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Required Lenient name val) (Response a) m where
@@ -151,9 +151,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Requ
 
   toAttribute :: Response a -> m (Result (Header' Required Lenient name val) (Response a))
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
-    Nothing        -> Refutation HeaderNotFound
-    Just (Left e)  -> Proof (Left e)
-    Just (Right x) -> Proof (Right x)
+    Nothing        -> NotFound HeaderNotFound
+    Just (Left e)  -> Found (Left e)
+    Just (Right x) -> Found (Right x)
 
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Optional Lenient name val) (Response a) m where
@@ -162,9 +162,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (Header' Opti
 
   toAttribute :: Response a -> m (Result (Header' Optional Lenient name val) (Response a))
   toAttribute r = pure $ deriveResponseHeader (Proxy @name) r $ \case
-    Nothing        -> Proof Nothing
-    Just (Left e)  -> Proof (Just (Left e))
-    Just (Right x) -> Proof (Just (Right x))
+    Nothing        -> Found Nothing
+    Just (Left e)  -> Found (Just (Left e))
+    Just (Right x) -> Found (Just (Right x))
 
 
 -- | A 'Trait' for ensuring that an HTTP header with specified @name@
@@ -195,9 +195,9 @@ instance (KnownSymbol name, KnownSymbol val, Monad m) => Trait (HeaderMatch' Req
       expected = fromString $ symbolVal (Proxy @val)
     in
       case requestHeader name r of
-        Nothing                  -> Refutation Nothing
-        Just hv | hv == expected -> Proof ()
-                | otherwise      -> Refutation $ Just HeaderMismatch {expectedHeader = expected, actualHeader = hv}
+        Nothing                  -> NotFound Nothing
+        Just hv | hv == expected -> Found ()
+                | otherwise      -> NotFound $ Just HeaderMismatch {expectedHeader = expected, actualHeader = hv}
 
 instance (KnownSymbol name, KnownSymbol val, Monad m) => Trait (HeaderMatch' Optional name val) Request m where
   type Attribute (HeaderMatch' Optional name val) Request = Maybe ()
@@ -210,9 +210,9 @@ instance (KnownSymbol name, KnownSymbol val, Monad m) => Trait (HeaderMatch' Opt
       expected = fromString $ symbolVal (Proxy @val)
     in
       case requestHeader name r of
-        Nothing                  -> Proof Nothing
-        Just hv | hv == expected -> Proof (Just ())
-                | otherwise      -> Refutation HeaderMismatch {expectedHeader = expected, actualHeader = hv}
+        Nothing                  -> Found Nothing
+        Just hv | hv == expected -> Found (Just ())
+                | otherwise      -> NotFound HeaderMismatch {expectedHeader = expected, actualHeader = hv}
 
 
 -- | A middleware to extract a header value and convert it to a value

@@ -29,10 +29,10 @@ prop_basicAuth = property f
             req = defaultRequest { requestHeaders = [("Authorization", hval)] }
           in
             case runIdentity (toAttribute @BasicAuth req) of
-              Proof creds ->
+              Found creds ->
                 credentialsUsername creds === Username username
                 .&&. credentialsPassword creds === Password password
-              Refutation e  ->
+              NotFound e  ->
                 counterexample ("Unexpected failure: " <> show e) (property False)
 
 

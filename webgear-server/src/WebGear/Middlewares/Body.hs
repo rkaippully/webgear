@@ -36,8 +36,8 @@ instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
   toAttribute r = do
     chunks <- takeWhileM (/= mempty) $ repeat $ liftIO $ getRequestBodyChunk r
     pure $ case eitherDecode' (fromChunks chunks) of
-             Left e  -> Refutation (pack e)
-             Right t -> Proof t
+             Left e  -> NotFound (pack e)
+             Right t -> Found t
 
 -- | A middleware to parse the request body as JSON and convert it to
 -- a value via a 'FromJSON' instance.

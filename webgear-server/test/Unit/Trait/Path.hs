@@ -21,8 +21,8 @@ testMissingPathVar :: TestTree
 testMissingPathVar = testCase "PathVar match: missing variable" $ do
   let req = defaultRequest { pathInfo = [] }
   case evalState (toAttribute @(PathVar "tag" Int) req) (PathInfo []) of
-    Proof _      -> assertFailure "unexpected success"
-    Refutation e -> e @?= PathVarNotFound
+    Found _    -> assertFailure "unexpected success"
+    NotFound e -> e @?= PathVarNotFound
 
 tests :: TestTree
 tests = testGroup "Trait.Path" [ testMissingPathVar ]

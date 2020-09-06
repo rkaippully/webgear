@@ -17,12 +17,12 @@ jobs:
           - ubuntu-latest
           - macos-latest
         ghc:
-          - 8.10.1
-          - 8.8.3
+          - 8.10.2
+          - 8.8.4
           - 8.6.5
         exclude:
           - os: macos-latest
-            ghc: 8.8.3
+            ghc: 8.8.4
           - os: macos-latest
             ghc: 8.6.5
 
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout Source Code
 
-      - uses: actions/setup-haskell@v1.1
+      - uses: bubba/setup-haskell@2215b2c
         name: Setup Haskell Build Environment
         with:
           ghc-version: ${{ matrix.ghc }}
@@ -42,14 +42,14 @@ jobs:
       - uses: actions/cache@v2
         name: Cache dependencies
         with:
-          path: |
-            ~/.stack
-            !~/.stack/setup-exe-src
-            !~/.stack/setup-exe-cache
+          path: ~/.stack
           key: ${{ runner.os }}-${{ matrix.ghc }}-stack-${{ hashFiles(env.STACK_YAML) }}
 
       - name: Build
-        run: stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
+        run: |
+          # Workaround for random errors on macos
+          rm -rf ~/.stack/setup-exe-src ~/.stack/setup-exe-cache
+          stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
 
       - name: Test
         run: stack test --system-ghc --ta '--quickcheck-tests 100000'
@@ -68,12 +68,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         ghc:
-          - 8.10.1
-          - 8.8.3
+          - 8.10.2
+          - 8.8.4
           - 8.6.5
         exclude:
           - os: macos-latest
-            ghc: 8.8.3
+            ghc: 8.8.4
           - os: macos-latest
             ghc: 8.6.5
 
@@ -84,7 +84,7 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout Source Code
 
-      - uses: actions/setup-haskell@v1.1
+      - uses: bubba/setup-haskell@2215b2c
         name: Setup Haskell Build Environment
         with:
           ghc-version: ${{ matrix.ghc }}

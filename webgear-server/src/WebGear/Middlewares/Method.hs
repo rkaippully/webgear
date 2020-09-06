@@ -41,8 +41,8 @@ instance (IsStdMethod t, Monad m) => Trait (Method t) Request m where
       actual = requestMethod r
     in
       pure $ if expected == actual
-             then Proof ()
-             else Refutation $ MethodMismatch expected actual
+             then Found ()
+             else NotFound $ MethodMismatch expected actual
 
 
 -- | A typeclass to map a 'HTTP.StdMethod' from type level to term

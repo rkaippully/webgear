@@ -29,22 +29,22 @@ prop_emptyRequestBodyFails :: Property
 prop_emptyRequestBodyFails = monadicIO $ do
   req <- bodyToRequest ("" :: String)
   toAttribute @(JSONRequestBody Int) req >>= \case
-    Proof _      -> monitor (counterexample "Unexpected success") >> assert False
-    Refutation _ -> assert True
+    Found _    -> monitor (counterexample "Unexpected success") >> assert False
+    NotFound _ -> assert True
 
 prop_validBodyParses :: Property
 prop_validBodyParses = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
   toAttribute @(JSONRequestBody Integer) req >>= \case
-    Proof n'     -> assert (n == n')
-    Refutation _ -> assert False
+    Found n'   -> assert (n == n')
+    NotFound _ -> assert False
 
 prop_invalidBodyFails :: Property
 prop_invalidBodyFails = property $ \n -> monadicIO $ do
   req <- bodyToRequest (n :: Integer)
   toAttribute @(JSONRequestBody String) req >>= \case
-    Proof _      -> assert False
-    Refutation _ -> assert True
+    Found _    -> assert False
+    NotFound _ -> assert True
 
 
 -- Hack for TH splicing

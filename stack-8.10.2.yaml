@@ -1,0 +1,9 @@
+resolver: nightly-2020-09-06
+
+packages:
+- ./webgear-server
+- ./webgear-examples
+- ./webgear-benchmarks
+
+extra-deps:
+- servant-server-0.18@sha256:ec7f361bc9848968b1fff8091fa2213b721d3f47549421945c6a7ca1702e22e6,5424

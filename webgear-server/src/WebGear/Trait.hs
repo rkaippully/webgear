@@ -60,10 +60,9 @@ class Monad m => Trait t a m where
 
 
 -- | The result of 'toAttribute' - either a successful deduction of an
--- attribute with a potentially updated value, or an error.
-data Result t a = Refutation (Absence t a)
-                | Proof (Attribute t a)
-
+-- attribute or an error.
+data Result t a = NotFound (Absence t a)
+                | Found (Attribute t a)
 
 -- | A trivial derivable trait that is always present and whose
 -- attribute does not carry any meaningful information.
@@ -72,7 +71,7 @@ instance Monad m => Trait '[] a m where
   type Absence '[] a = ()
 
   toAttribute :: a -> m (Result '[] a)
-  toAttribute = const $ pure $ Proof ()
+  toAttribute = const $ pure $ Found ()
 
 -- | Combination of many derivable traits all of which are present for
 -- a value.
@@ -82,10 +81,10 @@ instance (Trait t a m, Trait ts a m, Monad m) => Trait (t:ts) a m where
 
   toAttribute :: a -> m (Result (t:ts) a)
   toAttribute a = toAttribute @t a >>= \case
-    e@(Refutation _) -> pure $ Refutation $ Left e
-    Proof l          -> toAttribute @ts a >>= \case
-      e@(Refutation _) -> pure $ Refutation $ Right e
-      Proof r          -> pure $ Proof (l, r)
+    e@(NotFound _) -> pure $ NotFound $ Left e
+    Found l        -> toAttribute @ts a >>= \case
+      e@(NotFound _) -> pure $ NotFound $ Right e
+      Found r        -> pure $ Found (l, r)
 
 
 -- | A value linked with a type-level list of traits.
@@ -109,8 +108,8 @@ probe l = do
   pure $ mkLinked v l
   where
     mkLinked :: Result t a -> Linked ts a -> Either (Absence t a) (Linked (t:ts) a)
-    mkLinked (Proof left) lv  = Right $ Linked (left, linkAttribute lv) (unlink lv)
-    mkLinked (Refutation e) _ = Left e
+    mkLinked (Found left) lv = Right $ Linked (left, linkAttribute lv) (unlink lv)
+    mkLinked (NotFound e) _  = Left e
 
 -- | Remove the leading trait from the type-level list of traits
 remove :: Linked (t:ts) a -> Linked ts a
