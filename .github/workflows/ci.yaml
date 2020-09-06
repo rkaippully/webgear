@@ -51,7 +51,7 @@ jobs:
       - name: Build
         run: |
           ls -l ~/.stack
-          ls -l ~/.stack/setup-exe-cache
+          ls -lR ~/.stack/setup-exe-cache
           stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
 
       - name: Test
