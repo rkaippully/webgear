@@ -1,0 +1,619 @@
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Composable, Extensible, Type-Safe HTTP APIs in Haskell">
+      
+      
+        <link rel="canonical" href="https://rkaippully.github.io/webgear/show-me-the-code/">
+      
+      
+        <meta name="author" content="Raghu Kaippully">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.11">
+    
+    
+      
+        <title>Show me the code! - WebGear</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.860688db.min.css">
+      
+      
+    
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#show-me-some-code" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://rkaippully.github.io/webgear" title="WebGear" class="md-header-nav__button md-logo" aria-label="WebGear">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            WebGear
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              Show me the code!
+            
+          </span>
+        </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/rkaippully/webgear/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+        
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://rkaippully.github.io/webgear" title="WebGear" class="md-nav__button md-logo" aria-label="WebGear">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    WebGear
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/rkaippully/webgear/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Show me the code!
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" title="Show me the code!" class="md-nav__link md-nav__link--active">
+      Show me the code!
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#building-request-handlers" class="md-nav__link">
+    Building Request Handlers
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-request-traits" class="md-nav__link">
+    Accessing Request Traits
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-responses" class="md-nav__link">
+    Sending Responses
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-without-templatehaskell" class="md-nav__link">
+    Routing without TemplateHaskell
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composable-routes" class="md-nav__link">
+    Composable routes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#middlewares" class="md-nav__link">
+    Middlewares
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-class-json-support" class="md-nav__link">
+    First-class JSON support
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      User Guide
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="User Guide" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon"></span>
+        User Guide
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../guide/introduction/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../guide/first-app/" title="First Application" class="md-nav__link">
+      First Application
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#building-request-handlers" class="md-nav__link">
+    Building Request Handlers
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-request-traits" class="md-nav__link">
+    Accessing Request Traits
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-responses" class="md-nav__link">
+    Sending Responses
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-without-templatehaskell" class="md-nav__link">
+    Routing without TemplateHaskell
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composable-routes" class="md-nav__link">
+    Composable routes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#middlewares" class="md-nav__link">
+    Middlewares
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-class-json-support" class="md-nav__link">
+    First-class JSON support
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/rkaippully/webgear/edit/master/docs/show-me-the-code.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                <h1 id="show-me-some-code">Show me some code!<a class="headerlink" href="#show-me-some-code" title="Permanent link">&para;</a></h1>
+<p>This is a whirlwind tour of WebGear. If you want to learn more, go to the <a href="/guide/introduction">user guide</a>.</p>
+<h2 id="building-request-handlers">Building Request Handlers<a class="headerlink" href="#building-request-handlers" title="Permanent link">&para;</a></h2>
+<p>A request handler is just a function that takes a request value and produces a response value in a monadic context. This
+is where the business logic of your application lives.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- The &#39;Has (JSONRequestBody Widget) r&#39; constrait indicates that this handler</span>
+<span class="c1">-- can only be called if the request body is a valid JSON that can be parsed</span>
+<span class="c1">-- to a Widget value.</span>
+<span class="nf">putWidget</span> <span class="ow">::</span> <span class="kt">Has</span> <span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">)</span> <span class="n">r</span> <span class="ow">=&gt;</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="kt">Widget</span>
+<span class="nf">putWidget</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+  <span class="kr">let</span> <span class="n">widget</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">))</span> <span class="n">req</span>
+  <span class="n">saveToDB</span> <span class="n">widget</span>
+  <span class="n">return</span> <span class="p">(</span><span class="n">ok200</span> <span class="n">widget</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The <code class="highlight"><span class="kt">Handler</span> <span class="n">req</span> <span class="kt">Widget</span></code> type in the example above is equivalent to the function type
+<code class="highlight"><span class="kt">Monad</span> <span class="n">m</span> <span class="ow">=&gt;</span> <span class="kt">Linked</span> <span class="n">req</span> <span class="kt">Request</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="p">(</span><span class="kt">Response</span> <span class="kt">Widget</span><span class="p">)</span></code> in principle. These type of functions are also known as
+Kleisli arrows; hence the use of <code class="highlight"><span class="kt">Kleisli</span></code> in the handler.</p>
+<h2 id="accessing-request-traits">Accessing Request Traits<a class="headerlink" href="#accessing-request-traits" title="Permanent link">&para;</a></h2>
+<p>Traits are attributes associated with the request. Header values, query parameters, path components, request body are
+all examples of traits.</p>
+<p>The trait values are accessed using the <code class="highlight"><span class="nf">get</span></code> function.</p>
+<div class="highlight"><pre><span></span><code><span class="nf">someHandler</span> <span class="ow">::</span> <span class="kt">Have</span> <span class="p">[</span> <span class="kt">PathVar</span> <span class="s">&quot;widgetId&quot;</span> <span class="kt">UUID</span>
+                    <span class="p">,</span> <span class="kt">JSONRequestBody</span> <span class="kt">Widget</span>
+                    <span class="p">,</span> <span class="kt">QueryParam</span> <span class="s">&quot;limit&quot;</span> <span class="kt">Integer</span>
+                    <span class="p">]</span> <span class="n">r</span>
+            <span class="ow">=&gt;</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="n">a</span>
+<span class="nf">someHandler</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+  <span class="kr">let</span>
+    <span class="n">widget</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">))</span> <span class="n">req</span>     <span class="c1">-- widget :: Widget</span>
+    <span class="n">wid</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">PathVar</span> <span class="s">&quot;widgetId&quot;</span> <span class="kt">UUID</span><span class="p">))</span> <span class="n">req</span>       <span class="c1">-- wid :: UUID</span>
+    <span class="n">limit</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">QueryParam</span> <span class="s">&quot;limit&quot;</span> <span class="kt">Integer</span><span class="p">))</span> <span class="n">req</span>  <span class="c1">-- limit :: Integer</span>
+  <span class="o">...</span>
+  <span class="n">return</span> <span class="n">noContent204</span>
+</code></pre></div>
+
+<h2 id="sending-responses">Sending Responses<a class="headerlink" href="#sending-responses" title="Permanent link">&para;</a></h2>
+<p>The response value returned contains the HTTP status code, response headers, and optionally a body. The body can be any
+type that can be converted to a lazy ByteString using the <code class="highlight"><span class="kt">ToByteString</span></code> type class.</p>
+<div class="highlight"><pre><span></span><code><span class="nf">createWidget</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+  <span class="o">...</span>
+  <span class="n">return</span> <span class="p">(</span><span class="n">created201</span> <span class="n">widget</span><span class="p">)</span>
+</code></pre></div>
+
+<p>In addition to functions such as <code class="highlight"><span class="nf">ok200</span></code> and <code class="highlight"><span class="nf">created201</span></code>, there is a generic <code class="highlight"><span class="nf">respond</span></code> function that
+accepts an HTTP status code, response headers and the body to generate a response.</p>
+<h2 id="routing-without-templatehaskell">Routing without TemplateHaskell<a class="headerlink" href="#routing-without-templatehaskell" title="Permanent link">&para;</a></h2>
+<p>You can use regular functions instead of TemplateHaskell QuasiQuotes for routing if you prefer that.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- matches GET /hello/name:String</span>
+<span class="nf">helloRoute</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="kt">String</span>
+<span class="nf">helloRoute</span> <span class="ow">=</span> <span class="n">method</span> <span class="o">@</span><span class="kt">GET</span>
+             <span class="o">$</span> <span class="n">path</span> <span class="o">@</span><span class="s">&quot;hello&quot;</span> <span class="o">$</span> <span class="n">pathVar</span> <span class="o">@</span><span class="s">&quot;name&quot;</span> <span class="o">@</span><span class="kt">String</span>
+             <span class="o">$</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+                 <span class="kr">let</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">PathVar</span> <span class="s">&quot;name&quot;</span> <span class="kt">String</span><span class="p">))</span> <span class="n">req</span>
+                 <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="o">$</span> <span class="s">&quot;Hello, &quot;</span> <span class="o">++</span> <span class="n">name</span>
+</code></pre></div>
+
+<h2 id="composable-routes">Composable routes<a class="headerlink" href="#composable-routes" title="Permanent link">&para;</a></h2>
+<p>Compose routes with <code class="highlight"><span class="o">&lt;|&gt;</span></code>. During request routing, each of these routes will be tried sequentially and the first
+matching handler will be called.</p>
+<div class="highlight"><pre><span></span><code><span class="nf">allRoutes</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="n">a</span>
+<span class="nf">allRoutes</span> <span class="ow">=</span> <span class="n">createWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">getWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">updateWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">deleteWidget</span>
+</code></pre></div>
+
+<p>Since handlers are functions, you can refactor and compose them as you wish. The below example shows an application with
+v1 and v2 path prefixes.</p>
+<div class="highlight"><pre><span></span><code><span class="nf">allRoutes</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="n">a</span>
+<span class="nf">allRoutes</span> <span class="ow">=</span> <span class="n">v1Routes</span> <span class="o">&lt;|&gt;</span> <span class="n">v2Routes</span>
+
+<span class="c1">-- matches any path starting with /v1</span>
+<span class="nf">v1Routes</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="n">a</span>
+<span class="nf">v1Routes</span> <span class="ow">=</span> <span class="p">[</span><span class="n">match</span><span class="o">|</span> <span class="o">/</span><span class="n">v1</span> <span class="p">]</span>
+           <span class="o">$</span> <span class="n">v1CreateWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">v1GetWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">v1UpdateWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">v1DeleteWidget</span>
+
+<span class="c1">-- matches any path starting with /v2</span>
+<span class="nf">v2Routes</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="n">a</span>
+<span class="nf">v2Routes</span> <span class="ow">=</span> <span class="p">[</span><span class="n">match</span><span class="o">|</span> <span class="o">/</span><span class="n">v2</span> <span class="p">]</span>
+           <span class="o">$</span> <span class="n">v2CreateWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">v2GetWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">v2UpdateWidget</span> <span class="o">&lt;|&gt;</span> <span class="n">v2DeleteWidget</span>
+</code></pre></div>
+
+<h2 id="middlewares">Middlewares<a class="headerlink" href="#middlewares" title="Permanent link">&para;</a></h2>
+<p>Middlewares are handlers that wrap another handler. They usually modify or enhance the bahaviour of the inner
+handler. For example, the <code class="highlight"><span class="nf">queryParam</span></code> middleware ensures that the inner handler is invoked only when the request
+contains a query parameter named <code>limit</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="nf">searchWidget</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="n">a</span>
+<span class="nf">searchWidget</span> <span class="ow">=</span> <span class="n">queryParam</span> <span class="o">@</span><span class="s">&quot;limit&quot;</span> <span class="o">@</span><span class="kt">Int</span> <span class="n">searchHandler</span>
+
+<span class="nf">searchHandler</span> <span class="ow">::</span> <span class="kt">Has</span> <span class="p">(</span><span class="kt">QueryParam</span> <span class="s">&quot;limit&quot;</span> <span class="kt">Int</span><span class="p">)</span> <span class="n">r</span> <span class="ow">=&gt;</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="n">a</span>
+<span class="nf">searchHandler</span> <span class="ow">=</span> <span class="o">...</span>
+</code></pre></div>
+
+<p>Typically you will compose many middlewares to form a route handler. The <a href="/guide/middlewares">user guide</a> explains how you can
+build your own middlewares.</p>
+<h2 id="first-class-json-support">First-class JSON support<a class="headerlink" href="#first-class-json-support" title="Permanent link">&para;</a></h2>
+<p>Use JSON input and output in your handlers without any boilerplate. WebGear uses the
+<a href="https://hackage.haskell.org/package/aeson">aeson</a> library to handle JSON values. The request body can be read as a JSON
+value using <code class="highlight"><span class="nf">jsonRequestBody</span></code> middleware. The response can be converted to a lazy ByteString using the <code class="highlight"><span class="nf">jsonResponseBody</span></code> middleware.</p>
+<div class="highlight"><pre><span></span><code><span class="nf">updateWidget</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="kt">ByteString</span>
+<span class="nf">updateWidget</span> <span class="ow">=</span> <span class="n">jsonRequestBody</span> <span class="o">@</span><span class="kt">Widget</span>
+             <span class="o">$</span> <span class="n">jsonResponseBody</span> <span class="o">@</span><span class="kt">Widget</span>
+             <span class="o">$</span> <span class="n">updateWidgetHandler</span>
+
+<span class="nf">updateWidgetHandler</span> <span class="ow">::</span> <span class="kt">Has</span> <span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">)</span> <span class="n">r</span> <span class="ow">=&gt;</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="kt">Widget</span>
+<span class="nf">updateWidgetHandler</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+  <span class="kr">let</span> <span class="n">widget</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">))</span> <span class="n">req</span>  <span class="c1">-- widget :: Widget</span>
+  <span class="o">...</span>
+  <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="n">widget</span>
+</code></pre></div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href=".." title="Home" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Home
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../guide/introduction/" title="Introduction" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Introduction
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2020 Raghu Kaippully
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/vendor.df0def68.min.js"></script>
+      <script src="../assets/javascripts/bundle.ba57d267.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      
+      <script>
+        app = initialize({
+          base: "..",
+          features: [],
+          search: Object.assign({
+            worker: "../assets/javascripts/worker/search.5eca75d3.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>
