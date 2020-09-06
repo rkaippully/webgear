@@ -10,10 +10,10 @@ packages:
       size: 2546
       sha256: c2470cd8665742cee13faae1db7e3d49d70b027d57c4578e3f7ba66ffc8dc7b4
   original:
-    hackage: servant-server-0.18
+    hackage: servant-server-0.18@sha256:ec7f361bc9848968b1fff8091fa2213b721d3f47549421945c6a7ca1702e22e6,5424
 snapshots:
 - completed:
-    size: 521085
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2020/8/16.yaml
-    sha256: 5fcd1cb4052971dd7648622a7b881c30d6b98adc17d67e2b97e1c98b9fadd0d2
-  original: nightly-2020-08-16
+    size: 528634
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2020/9/6.yaml
+    sha256: 89ea4655110abf21b7c9b541a0ec0bfe6f222f0d995cfefd3d08eb385f49ad02
+  original: nightly-2020-09-06

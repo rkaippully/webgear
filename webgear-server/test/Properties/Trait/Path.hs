@@ -22,8 +22,8 @@ prop_pathMatch = property $ \h ->
     req = defaultRequest { pathInfo = h:rest }
   in
     case evalState (toAttribute @(Path "a") req) (PathInfo $ h:rest) of
-      Proof _      -> h === "a"
-      Refutation _ -> h =/= "a"
+      Found _    -> h === "a"
+      NotFound _ -> h =/= "a"
 
 prop_pathVarMatch :: Property
 prop_pathVarMatch = property $ \(n :: Int) ->
@@ -32,8 +32,8 @@ prop_pathVarMatch = property $ \(n :: Int) ->
     req = defaultRequest { pathInfo = fromString (show n):rest }
   in
     case evalState (toAttribute @(PathVar "tag" Int) req) (PathInfo $ pathInfo req) of
-      Proof n'     -> n' === n
-      Refutation _ -> property False
+      Found n'   -> n' === n
+      NotFound _ -> property False
 
 prop_pathVarParseError :: Property
 prop_pathVarParseError = property $ \(p, ps) ->
@@ -42,8 +42,8 @@ prop_pathVarParseError = property $ \(p, ps) ->
     req = defaultRequest { pathInfo = p':ps }
   in
     case evalState (toAttribute @(PathVar "tag" Int) req) (PathInfo $ pathInfo req) of
-      Proof _      -> property False
-      Refutation e -> e === PathVarParseError ("could not parse: `" <> p' <> "' (input does not start with a digit)")
+      Found _    -> property False
+      NotFound e -> e === PathVarParseError ("could not parse: `" <> p' <> "' (input does not start with a digit)")
 
 
 -- Hack for TH splicing

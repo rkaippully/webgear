@@ -23,9 +23,9 @@ prop_headerParseError = property $ \hval ->
     req = defaultRequest { requestHeaders = [("foo", encodeUtf8 hval')] }
   in
     case runIdentity (toAttribute @(Header "foo" Int) req) of
-      Proof v      ->
+      Found v    ->
         counterexample ("Unexpected result: " <> show v) (property False)
-      Refutation e ->
+      NotFound e ->
         e === Right (HeaderParseError $ "could not parse: `" <> hval' <> "' (input does not start with a digit)")
 
 prop_headerParseSuccess :: Property
@@ -34,8 +34,8 @@ prop_headerParseSuccess = property $ \(n :: Int) ->
     req = defaultRequest { requestHeaders = [("foo", fromString $ show n)] }
   in
     case runIdentity (toAttribute @(Header "foo" Int) req) of
-      Proof n'     -> n === n'
-      Refutation e ->
+      Found n'   -> n === n'
+      NotFound e ->
         counterexample ("Unexpected result: " <> show e) (property False)
 
 prop_headerMatch :: Property
@@ -44,10 +44,10 @@ prop_headerMatch = property $ \v ->
     req = defaultRequest { requestHeaders = [("foo", v)] }
   in
     case runIdentity (toAttribute @(HeaderMatch "foo" "bar") req) of
-      Proof _             -> v === "bar"
-      Refutation Nothing  ->
+      Found _           -> v === "bar"
+      NotFound Nothing  ->
         counterexample "Unexpected result: Nothing" (property False)
-      Refutation (Just e) ->
+      NotFound (Just e) ->
         expectedHeader e === "bar" .&&. actualHeader e =/= "bar"
 
 

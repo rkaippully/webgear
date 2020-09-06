@@ -27,8 +27,8 @@ prop_methodMatch = property $ \(MethodWrapper v) ->
     req = defaultRequest { requestMethod = renderStdMethod v }
   in
     case runIdentity (toAttribute @(Method GET) req) of
-      Proof _      -> v === GET
-      Refutation e ->
+      Found _    -> v === GET
+      NotFound e ->
         expectedMethod e === methodGet .&&. actualMethod e =/= methodGet
 
 

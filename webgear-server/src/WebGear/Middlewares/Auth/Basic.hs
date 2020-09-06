@@ -64,7 +64,7 @@ instance Monad m => Trait BasicAuth Request m where
   type Absence BasicAuth Request = BasicAuthError
 
   toAttribute :: Request -> m (Result BasicAuth Request)
-  toAttribute r = pure $ either Refutation Proof $ do
+  toAttribute r = pure $ either NotFound Found $ do
     h <- getAuthHeader r
     (scheme, creds) <- parseAuthHeader h
     when (scheme /= "Basic") $

@@ -50,10 +50,10 @@ instance (KnownSymbol s, MonadState PathInfo m) => Trait (Path s) Request m wher
   toAttribute _ = do
     PathInfo actualPath <- get
     case List.stripPrefix expectedPath actualPath of
-      Nothing   -> pure $ Refutation ()
+      Nothing   -> pure $ NotFound ()
       Just rest -> do
         put $ PathInfo rest
-        pure $ Proof ()
+        pure $ Found ()
 
     where
       expectedPath = Proxy @s
@@ -80,12 +80,12 @@ instance (FromHttpApiData val, MonadState PathInfo m) => Trait (PathVar tag val)
   toAttribute _ = do
     PathInfo actualPath <- get
     case actualPath of
-      []     -> pure $ Refutation PathVarNotFound
+      []     -> pure $ NotFound PathVarNotFound
       (x:xs) -> case parseUrlPiece @val x of
-        Left e  -> pure $ Refutation $ PathVarParseError e
+        Left e  -> pure $ NotFound $ PathVarParseError e
         Right v -> do
           put $ PathInfo xs
-          pure $ Proof v
+          pure $ Found v
 
 -- | Trait to indicate that no more path components are present in the request
 data PathEnd
@@ -98,8 +98,8 @@ instance MonadState PathInfo m => Trait PathEnd Request m where
   toAttribute _ = do
     PathInfo actualPath <- get
     pure $ if null actualPath
-           then Proof ()
-           else Refutation ()
+           then Found ()
+           else NotFound ()
 
 
 -- | A middleware that literally matches path @s@.

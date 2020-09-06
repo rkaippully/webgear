@@ -23,9 +23,9 @@ prop_paramParseError = property $ \hval ->
     req = defaultRequest { queryString = [("foo", Just $ encodeUtf8 hval')] }
   in
     case runIdentity (toAttribute @(QueryParam "foo" Int) req) of
-      Proof v      ->
+      Found v    ->
         counterexample ("Unexpected result: " <> show v) (property False)
-      Refutation e ->
+      NotFound e ->
         e === Right (ParamParseError $ "could not parse: `" <> hval' <> "' (input does not start with a digit)")
 
 prop_paramParseSuccess :: Property
@@ -34,8 +34,8 @@ prop_paramParseSuccess = property $ \(n :: Int) ->
     req = defaultRequest { queryString = [("foo", Just $ fromString $ show n)] }
   in
     case runIdentity (toAttribute @(QueryParam "foo" Int) req) of
-      Proof n'     -> n === n'
-      Refutation e ->
+      Found n'   -> n === n'
+      NotFound e ->
         counterexample ("Unexpected result: " <> show e) (property False)
 
 

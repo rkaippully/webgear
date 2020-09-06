@@ -71,9 +71,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 
   toAttribute :: Request -> m (Result (QueryParam' Required Strict name val) Request)
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Refutation (Left ParamNotFound)
-    Just (Left e)  -> Refutation (Right $ ParamParseError e)
-    Just (Right x) -> Proof x
+    Nothing        -> NotFound (Left ParamNotFound)
+    Just (Left e)  -> NotFound (Right $ ParamParseError e)
+    Just (Right x) -> Found x
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Strict name val) Request m where
   type Attribute (QueryParam' Optional Strict name val) Request = Maybe val
@@ -81,9 +81,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 
   toAttribute :: Request -> m (Result (QueryParam' Optional Strict name val) Request)
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Proof Nothing
-    Just (Left e)  -> Refutation $ ParamParseError e
-    Just (Right x) -> Proof (Just x)
+    Nothing        -> Found Nothing
+    Just (Left e)  -> NotFound $ ParamParseError e
+    Just (Right x) -> Found (Just x)
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Required Lenient name val) Request m where
   type Attribute (QueryParam' Required Lenient name val) Request = Either Text val
@@ -91,9 +91,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 
   toAttribute :: Request -> m (Result (QueryParam' Required Lenient name val) Request)
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Refutation ParamNotFound
-    Just (Left e)  -> Proof (Left e)
-    Just (Right x) -> Proof (Right x)
+    Nothing        -> NotFound ParamNotFound
+    Just (Left e)  -> Found (Left e)
+    Just (Right x) -> Found (Right x)
 
 instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Lenient name val) Request m where
   type Attribute (QueryParam' Optional Lenient name val) Request = Maybe (Either Text val)
@@ -101,9 +101,9 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 
   toAttribute :: Request -> m (Result (QueryParam' Optional Lenient name val) Request)
   toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Proof Nothing
-    Just (Left e)  -> Proof (Just (Left e))
-    Just (Right x) -> Proof (Just (Right x))
+    Nothing        -> Found Nothing
+    Just (Left e)  -> Found (Just (Left e))
+    Just (Right x) -> Found (Just (Right x))
 
 
 -- | A middleware to extract a query parameter and convert it to a

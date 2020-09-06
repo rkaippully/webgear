@@ -93,9 +93,9 @@ import WebGear.Types
 -- extraction.
 --
 -- For example, the 'Header' trait has an instance of the 'Trait'
--- typeclass. The 'toAttribute' function evaluates to a 'Proof' or
--- 'Refutation' value depending on whether we can successfully
--- retrieve the header value.
+-- typeclass. The 'toAttribute' function evaluates to a 'Found' or
+-- 'NotFound' value depending on whether we can successfully retrieve
+-- the header value.
 --
 -- WebGear provides type-safety by linking traits to the request at
 -- type level. The 'Linked' data type associates a 'Request' with a
