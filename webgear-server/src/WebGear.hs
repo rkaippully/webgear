@@ -51,7 +51,7 @@ import Data.ByteString.Conversion.To
 import Data.ByteString.Lazy (ByteString)
 import Data.Proxy (Proxy (..))
 import Data.Text
-import Web.HttpApiData (FromHttpApiData)
+import Web.HttpApiData (FromHttpApiData (..))
 
 import qualified Network.Wai as Wai
 
