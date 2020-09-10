@@ -32,7 +32,7 @@ WebGear is built on a small number of simple concepts which makes it approachabl
 gazillion advanced language features to build type safe APIs. Friendly error messages will guide you when you make
 mistakes.
 
-<script id="asciicast-357600" src="https://asciinema.org/a/357600.js" async></script>
+![Error Messages](/static/webgear-error.png)
 
 ## Composability
 APIs are built by composing functions to form handlers and middlewares. Build complex APIs from smaller simpler parts!

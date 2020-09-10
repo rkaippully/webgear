@@ -119,8 +119,8 @@ jsonResponseBody` middleware.
 ```hs
 updateWidget :: Handler '[] ByteString
 updateWidget = jsonRequestBody @Widget
-             $ jsonResponseBody @Widget
-             $ updateWidgetHandler
+               $ jsonResponseBody @Widget
+               $ updateWidgetHandler
 
 updateWidgetHandler :: Has (JSONRequestBody Widget) r => Handler r Widget
 updateWidgetHandler = Kleisli $ \req -> do
