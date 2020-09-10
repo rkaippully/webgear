@@ -11,7 +11,7 @@
         <meta name="description" content="Composable, Extensible, Type-Safe HTTP APIs in Haskell">
       
       
-        <link rel="canonical" href="https://rkaippully.github.io/webgear/guide/introduction/">
+        <link rel="canonical" href="https://rkaippully.github.io/webgear/guide/middlewares/">
       
       
         <meta name="author" content="Raghu Kaippully">
@@ -21,7 +21,7 @@
     
     
       
-        <title>Introduction - WebGear</title>
+        <title>Middlewares - WebGear</title>
       
     
     
@@ -55,7 +55,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#webgear-user-guide" class="md-skip">
+        <a href="#middlewares" class="md-skip">
           Skip to content
         </a>
       
@@ -83,7 +83,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Introduction
+              Middlewares
             
           </span>
         </div>
@@ -228,83 +228,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Introduction
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" title="Introduction" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../introduction/" title="Introduction" class="md-nav__link">
       Introduction
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    Introduction
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
-    Quickstart
-  </a>
-  
-    <nav class="md-nav" aria-label="Quickstart">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#create-a-project" class="md-nav__link">
-    Create a project
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adjust-dependencies" class="md-nav__link">
-    Adjust dependencies
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -336,11 +264,49 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../middlewares/" title="Middlewares" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Middlewares
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" title="Middlewares" class="md-nav__link md-nav__link--active">
       Middlewares
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#types-of-middlewares" class="md-nav__link">
+    Types of Middlewares
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -409,43 +375,9 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    Introduction
+  <a href="#types-of-middlewares" class="md-nav__link">
+    Types of Middlewares
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
-    Quickstart
-  </a>
-  
-    <nav class="md-nav" aria-label="Quickstart">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#create-a-project" class="md-nav__link">
-    Create a project
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adjust-dependencies" class="md-nav__link">
-    Adjust dependencies
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -461,7 +393,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/rkaippully/webgear/edit/master/docs/guide/introduction.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/rkaippully/webgear/edit/master/docs/guide/middlewares.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -469,82 +401,35 @@
                   
                 
                 
-                <h1 id="webgear-user-guide">WebGear User Guide<a class="headerlink" href="#webgear-user-guide" title="Permanent link">&para;</a></h1>
-<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
-<p>WebGear is a library to build composable, extensible, type-safe APIs. This guide is designed to help you get started
-with WebGear. It follows a tutorial style; if you are looking for reference material, see the <a href="https://hackage.haskell.org/package/webgear-server">API
-documentation</a>.</p>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<p>This guide assumes that you have a good idea of how HTTP APIs work in general. You also need a good understanding of
-Haskell programming language features such as type classes, monads, monad transformers etc.</p>
-<p>WebGear uses a small set of GHC haskell features that are generally considered advanced. But this guide does not assume
-that you are an expert in these. All such features will be explained in this guide.</p>
-<p>However, it is assumed that you understand some basic GHC language extensions such as
-<a href="https://downloads.haskell.org/~ghc/8.10.2/docs/html/users_guide/glasgow_exts.html#extension-OverloadedStrings">OverloadedStrings</a>,
-<a href="https://downloads.haskell.org/~ghc/8.10.2/docs/html/users_guide/glasgow_exts.html#extension-TypeApplications">TypeApplications</a>,
-and
-<a href="https://downloads.haskell.org/~ghc/8.10.2/docs/html/users_guide/glasgow_exts.html#extension-FlexibleContexts">FlexibleContexts</a>. A
-cursory understanding of
-<a href="https://downloads.haskell.org/~ghc/8.10.2/docs/html/users_guide/glasgow_exts.html#extension-QuasiQuotes">QuasiQuotes</a>
-is useful but not essential.</p>
-<p>You need a working haskell development environment with either <a href="https://haskellstack.org">stack</a> or
-<a href="https://cabal.readthedocs.io">cabal</a>. If you are using cabal, use GHC version 8.8.4.</p>
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<p>Let us set up a project first.</p>
-<h3 id="create-a-project">Create a project<a class="headerlink" href="#create-a-project" title="Permanent link">&para;</a></h3>
-<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Stack</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>stack new webgear-guide simple --resolver lts-16.12
-<span class="nb">cd</span> webgear-guide
+                <h1 id="middlewares">Middlewares<a class="headerlink" href="#middlewares" title="Permanent link">&para;</a></h1>
+<p>Middlewares are functions that take a handler as their input and produces a handler as output. They are useful to
+enhance behaamviour of handlers somehow.</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span> <span class="kt">Middleware</span> <span class="n">req</span> <span class="n">req&#39;</span> <span class="n">a&#39;</span> <span class="n">a</span> <span class="ow">=</span> <span class="kt">Handler</span> <span class="n">req&#39;</span> <span class="n">a&#39;</span> <span class="ow">-&gt;</span> <span class="kt">Handler</span> <span class="n">req</span> <span class="n">a</span>
 </code></pre></div>
 
-</div>
-<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Cabal</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>cabal update
-mkdir webgear-guide
-<span class="nb">cd</span> webgear-guide
-cabal init --application-dir<span class="o">=</span>src
+<p>We already met the <code class="highlight"><span class="nf">queryParam</span></code> function in the previous section which is a middleware. Here is possible
+implementation for it in pseudo-code:</p>
+<div class="highlight"><pre><span></span><code><span class="nf">queryParam</span> <span class="ow">::</span> <span class="p">(</span><span class="kt">KnownSymbol</span> <span class="n">name</span><span class="p">,</span> <span class="kt">FromHttpApiData</span> <span class="n">val</span><span class="p">)</span>
+           <span class="ow">=&gt;</span> <span class="kt">Middleware</span> <span class="n">req</span> <span class="p">(</span><span class="kt">QueryParam</span> <span class="n">name</span> <span class="n">val</span><span class="kt">:</span><span class="n">req</span><span class="p">)</span> <span class="n">a</span> <span class="n">a</span>
+<span class="nf">queryParam</span> <span class="n">handler</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">request</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+  <span class="n">res</span> <span class="ow">&lt;-</span> <span class="n">probe</span> <span class="o">@</span><span class="p">(</span><span class="kt">QueryParam</span> <span class="n">name</span> <span class="n">val</span><span class="p">)</span> <span class="n">request</span>
+  <span class="n">either</span> <span class="n">sendErrorResponse</span> <span class="p">(</span><span class="n">runKleisli</span> <span class="n">handler</span><span class="p">)</span> <span class="n">res</span>
 </code></pre></div>
 
-</div>
-</div>
-<h3 id="adjust-dependencies">Adjust dependencies<a class="headerlink" href="#adjust-dependencies" title="Permanent link">&para;</a></h3>
-<p>Edit <code>webgear-guide.cabal</code> and add the following dependencies under <code>build-depends</code> section:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">build-depends</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">base                  ==4.13.0.0</span>
-             <span class="l l-Scalar l-Scalar-Plain">, webgear-server        ==0.2.0</span>
-             <span class="l l-Scalar l-Scalar-Plain">, mtl                   ==2.2.2</span>
-             <span class="l l-Scalar l-Scalar-Plain">, wai                   ==3.2.2.1</span>
-             <span class="l l-Scalar l-Scalar-Plain">, warp                  ==3.3.13</span>
-             <span class="l l-Scalar l-Scalar-Plain">, text                  ==1.2.4.0</span>
-             <span class="l l-Scalar l-Scalar-Plain">, bytestring            ==0.10.10.1</span>
-             <span class="l l-Scalar l-Scalar-Plain">, utf8-string           ==1.0.1.1</span>
-             <span class="l l-Scalar l-Scalar-Plain">, time                  ==1.9.3</span>
-             <span class="l l-Scalar l-Scalar-Plain">, unordered-containers  ==0.2.10.0</span>
-             <span class="l l-Scalar l-Scalar-Plain">, hashable              ==1.3.0.0</span>
-             <span class="l l-Scalar l-Scalar-Plain">, aeson                 ==1.4.7.1</span>
-             <span class="l l-Scalar l-Scalar-Plain">, http-types            ==0.12.3</span>
+<p>As you can see, this just uses <code class="highlight"><span class="nf">probe</span></code> as mentioned in the previous section in an attempt to prove the presence of
+the <code class="highlight"><span class="kt">QueryParam</span></code> trait. If successful, we call <code class="highlight"><span class="nf">handler</span></code> with that result and if unsuccessful, use <code class="highlight"><span class="nf">sendErrorResponse</span></code> to handle it.</p>
+<h2 id="types-of-middlewares">Types of Middlewares<a class="headerlink" href="#types-of-middlewares" title="Permanent link">&para;</a></h2>
+<p>So what are the kind of things we can do in a middleware?</p>
+<p>As seen in the <code class="highlight"><span class="nf">queryParam</span></code> example, we can modify the request parameter passed to the inner handler. Such
+middlewares are called request middlewares and have this type:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span> <span class="kt">RequestMiddleware</span> <span class="n">req</span> <span class="n">req&#39;</span> <span class="n">a</span> <span class="ow">=</span> <span class="kt">Middleware</span> <span class="n">req</span> <span class="n">req&#39;</span> <span class="n">a</span> <span class="n">a</span>
 </code></pre></div>
 
-<p>In addition to this, if you are using stack, add the following to <code>stack.yaml</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">extra-deps</span><span class="p">:</span>
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">webgear-server-0.2.0</span>
+<p>Similarly, we have response middlewares which modify the responses sent from the inner handler.</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span> <span class="kt">ResponseMiddleware</span> <span class="n">req</span> <span class="n">a&#39;</span> <span class="n">a</span> <span class="ow">=</span> <span class="kt">Middleware</span> <span class="n">req</span> <span class="n">req</span> <span class="n">a&#39;</span> <span class="n">a</span>
 </code></pre></div>
 
-<div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Stack</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>stack build
-</code></pre></div>
-
-</div>
-<input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Cabal</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>cabal build
-</code></pre></div>
-
-</div>
-</div>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>If this is the first time, it will take a long time to download and build the dependencies. Subsequent builds will
-use cached artifacts and will be faster.</p>
-</div>
+<p>Of course, we could have a middleware that modifies both the request and response.</p>
                 
               
               
@@ -563,7 +448,7 @@ use cached artifacts and will be faster.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../../show-me-the-code/" title="Show me the code!" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../traits/" title="Traits" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -572,19 +457,19 @@ use cached artifacts and will be faster.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Show me the code!
+                Traits
               </div>
             </div>
           </a>
         
         
-          <a href="../first-app/" title="First Application" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../routing/" title="Routing" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                First Application
+                Routing
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

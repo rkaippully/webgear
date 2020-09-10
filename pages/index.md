@@ -1,7 +1,7 @@
 # Welcome to WebGear
 WebGear makes it easy to build composable, extensible, type-Safe HTTP APIs in Haskell.
 
-[:fontawesome-solid-file-code: Show me the code!](/overview){: .md-button .md-button--primary }
+[:fontawesome-solid-file-code: Show me the code!](/show-me-the-code){: .md-button .md-button--primary }
 [:fontawesome-solid-book: User Guide](/guide/introduction){: .md-button }
 
 -------------------------------------
@@ -56,5 +56,5 @@ you want to use.
 
 Continue to learn more about WebGear.
 
-[:fontawesome-solid-file-code: Show me the code!](/overview){: .md-button .md-button--primary }
+[:fontawesome-solid-file-code: Show me the code!](/show-me-the-code){: .md-button .md-button--primary }
 [:fontawesome-solid-book: User Guide](/guide/introduction){: .md-button }

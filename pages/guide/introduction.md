@@ -6,8 +6,8 @@ with WebGear. It follows a tutorial style; if you are looking for reference mate
 documentation](https://hackage.haskell.org/package/webgear-server).
 
 ## Requirements
-You need a good understanding of Haskell programming language features such as type classes, monads, monad transformers
-to follow along this guide.
+This guide assumes that you have a good idea of how HTTP APIs work in general. You also need a good understanding of
+Haskell programming language features such as type classes, monads, monad transformers etc.
 
 WebGear uses a small set of GHC haskell features that are generally considered advanced. But this guide does not assume
 that you are an expert in these. All such features will be explained in this guide.
@@ -54,6 +54,7 @@ build-depends: base                  ==4.13.0.0
              , warp                  ==3.3.13
              , text                  ==1.2.4.0
              , bytestring            ==0.10.10.1
+             , utf8-string           ==1.0.1.1
              , time                  ==1.9.3
              , unordered-containers  ==0.2.10.0
              , hashable              ==1.3.0.0

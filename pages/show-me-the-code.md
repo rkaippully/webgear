@@ -1,4 +1,4 @@
-# Show me some code!
+# Show me the code!
 This is a whirlwind tour of WebGear. If you want to learn more, go to the [user guide](/guide/introduction).
 
 ## Building Request Handlers

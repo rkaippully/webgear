@@ -17,6 +17,11 @@ nav:
   - User Guide:
       - Introduction: guide/introduction.md
       - First Application: guide/first-app.md
+      - Traits: guide/traits.md
+      - Middlewares: guide/middlewares.md
+      - Routing: guide/routing.md
+      - Choosing a Monad: guide/choosing-a-monad.md
+      - Next Steps: guide/next-steps.md
 
 markdown_extensions:
   - admonition
