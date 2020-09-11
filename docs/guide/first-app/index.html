@@ -459,7 +459,7 @@ then passed to <code class="highlight"><span class="nf">run</span></code> which 
 <h2 id="handlers">Handlers<a class="headerlink" href="#handlers" title="Permanent link">&para;</a></h2>
 <p>Now we turn our attention to <code class="highlight"><span class="nf">getTime</span></code>. This is where the business logic of our application lives. In WebGear
 terminology this is called a Handler. There are a number of interesting things going on here.</p>
-<p>First of all, this is a function wrapped in <code class="highlight"><span class="kt">Kleisli</span></code> from
+<p>First, this is a function wrapped in <code class="highlight"><span class="kt">Kleisli</span></code> from
 <a href="https://hackage.haskell.org/package/base-4.14.0.0/docs/Control-Arrow.html#t:Kleisli">Control.Arrow</a> module. These are
 called Kleisli arrows which is just a fancy term for functions having the type <code class="highlight"><span class="kt">Monad</span> <span class="n">m</span> <span class="ow">=&gt;</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">b</span></code>. So why don't
 we use just a regular function instead of this <code class="highlight"><span class="kt">Kleisli</span></code> wrapper? Well, it gives us some useful type class
@@ -469,7 +469,7 @@ about routing.</p>
 value. We don't make use of the request in this function because we always return the current time. We also don't care
 about which monad this runs under as long as it is a <code class="highlight"><span class="kt">MonadIO</span></code>.</p>
 <p>Finally, the response is produced with <code class="highlight"><span class="nf">ok200</span> <span class="o">$</span> <span class="n">show</span> <span class="n">t</span></code>. As you would have guessed, this generates an HTTP <code>200 OK</code>
-response with the body produced by <code class="highlight"><span class="nf">show</span> <span class="n">t</span></code>. We returns a <code class="highlight"><span class="kt">String</span></code> body in this case, but it can be any type
+response with the body produced by <code class="highlight"><span class="nf">show</span> <span class="n">t</span></code>. We return a <code class="highlight"><span class="kt">String</span></code> body in this case, but it can be any type
 with a
 <a href="https://hackage.haskell.org/package/bytestring-conversion-0.3.1/docs/Data-ByteString-Conversion-To.html#t:ToByteString">ToByteString</a>
 instance.</p>

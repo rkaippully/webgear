@@ -434,7 +434,7 @@
 for serving different HTTP methods, URL paths etc. Let us see how to achieve this in WebGear.</p>
 <h2 id="alternatives">Alternatives<a class="headerlink" href="#alternatives" title="Permanent link">&para;</a></h2>
 <p>We know that handlers are kleisli arrows. This means that we can combine multiple handlers using the <code class="highlight"><span class="o">&lt;|&gt;</span></code> operator
-from <code class="highlight"><span class="kt">Alternative</span></code> type class. Thus if we have two handlers <code class="highlight"><span class="nf">getTime</span></code> and <code class="highlight"><span class="nf">setTime</span></code>, we could create a
+from <code class="highlight"><span class="kt">Alternative</span></code> type class. Thus, if we have two handlers <code class="highlight"><span class="nf">getTime</span></code> and <code class="highlight"><span class="nf">setTime</span></code>, we could create a
 combined handler like this.</p>
 <div class="highlight"><pre><span></span><code><span class="nf">timeHandler</span> <span class="ow">=</span> <span class="n">getTime</span> <span class="o">&lt;|&gt;</span> <span class="n">setTime</span>
 </code></pre></div>
@@ -472,7 +472,7 @@ that the next route is tried. This forms the basis of routing. For example, give
 <span class="nf">setTime</span> <span class="ow">=</span> <span class="n">method</span> <span class="o">@</span><span class="kt">POST</span> <span class="n">setTimeHandler</span>
 </code></pre></div>
 
-<p>The <code>#!MonadRouter</code> will try each route sequentially. If any of them calls <code class="highlight"><span class="nf">rejectRoute</span></code>, the next one will be
+<p>The <code class="highlight"><span class="kt">MonadRouter</span></code> will try each route sequentially. If any of them calls <code class="highlight"><span class="nf">rejectRoute</span></code>, the next one will be
 tried and the response from the first matching handler will be returned. If none of the route handlers matched, a <code>404
 Not Found</code> response will be returned.</p>
 <p>The <code class="highlight"><span class="nf">errorResponse</span></code> and <code class="highlight"><span class="nf">catchErrorResponse</span></code> are used in cases where you want to indicate that the current
@@ -482,8 +482,8 @@ mechanisms offered by the <code class="highlight"><span class="kt">MonadError</s
 <p>As you can see from the above description, the routing mechanism is very flexible in WebGear. Virtually any middleware
 or handler can invoke <code class="highlight"><span class="nf">rejectRoute</span></code> to skip the current handler and try the next. WebGear does not assume anything
 about which request attributes are used in the handler selection. That decision is left to middlewares and handlers.</p>
-<p>However, for most usecases, you want to route based on the HTTP method and/or the URL path. WebGear provides a number of
-middlewares that support this common usecase.</p>
+<p>However, for most use cases, you want to route based on the HTTP method and/or the URL path. WebGear provides a number
+of middlewares that support this common use case.</p>
 <ul>
 <li><code class="highlight"><span class="nf">method</span></code> attempts to match an HTTP method.</li>
 <li><code class="highlight"><span class="nf">path</span></code> attempts to match a prefix portion of the request URL path.</li>
@@ -506,6 +506,10 @@ middlewares that support this common usecase.</p>
 <div class="highlight"><pre><span></span><code><span class="nf">getWidget</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="n">req</span> <span class="n">a</span>
 <span class="nf">getWidget</span> <span class="ow">=</span> <span class="p">[</span><span class="n">route</span><span class="o">|</span> <span class="kt">GET</span> <span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">widgets</span><span class="o">/</span><span class="n">widgetId</span><span class="kt">:Int</span> <span class="o">|</span><span class="p">]</span> <span class="n">getWidgetHandler</span>
 </code></pre></div>
+
+<p>This version using the <code class="highlight"><span class="nf">route</span></code> quasiquoter is equivalent to the previous one.</p>
+<p>There is also the <code class="highlight"><span class="nf">match</span></code> quasiquoter which is similar to <code class="highlight"><span class="nf">route</span></code> but does not add the <code class="highlight"><span class="nf">pathEnd</span></code>
+middleware. It is useful in cases where only a prefix of the path needs to be matched.</p>
                 
               
               

@@ -285,13 +285,6 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#extracting-request-attributes" class="md-nav__link">
-    Extracting Request Attributes
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#requests" class="md-nav__link">
     Requests
   </a>
@@ -410,13 +403,6 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#extracting-request-attributes" class="md-nav__link">
-    Extracting Request Attributes
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#requests" class="md-nav__link">
     Requests
   </a>
@@ -472,10 +458,9 @@
                 
                 
                 <h1 id="traits">Traits<a class="headerlink" href="#traits" title="Permanent link">&para;</a></h1>
-<h2 id="extracting-request-attributes">Extracting Request Attributes<a class="headerlink" href="#extracting-request-attributes" title="Permanent link">&para;</a></h2>
 <p>The application from the previous section is very rudimentary. Let us enhance it a bit.</p>
 <p>Instead of always printing the time in UTC, let us accept a query parameter named <code>local</code> and respond with the
-time in the local timezone when it is set to true.</p>
+time in the local time zone when it is set to true.</p>
 <p>Obviously, this requires extracting a query parameter from the request. So far, we have not looked at the type of
 requests and operations allowed on them. So let us do that first.</p>
 <h2 id="requests">Requests<a class="headerlink" href="#requests" title="Permanent link">&para;</a></h2>
@@ -535,7 +520,7 @@ previous type.</p>
 </div>
 <h2 id="using-traits">Using Traits<a class="headerlink" href="#using-traits" title="Permanent link">&para;</a></h2>
 <p>Using traits in your API handlers is easy.</p>
-<p>First, when you start processing the request in your handler, we don't know whether any of traits that we are
+<p>First, when you start processing the request in your handler, we don't know whether any of the traits that we are
 interested in is present in the request. So the handler has the type <code class="highlight"><span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="n">a</span></code>; the list of traits is empty.</p>
 <p>Second, functions such as <code class="highlight"><span class="nf">queryParam</span></code> verify the presence of a trait and then invoke another handler (<code class="highlight"><span class="nf">getTimeHandler</span></code> in the above example). In this case, <code class="highlight"><span class="nf">queryParam</span></code> invokes <code class="highlight"><span class="nf">getTimeHandler</span></code> only if the request
 has the trait <code class="highlight"><span class="kt">QueryParam</span> <span class="s">&quot;local&quot;</span> <span class="kt">Bool</span></code>. Presence of this trait indicates that the request has a query parameter
@@ -553,7 +538,7 @@ documentation</a>.</p>
 </div>
 <h2 id="defining-traits">Defining Traits<a class="headerlink" href="#defining-traits" title="Permanent link">&para;</a></h2>
 <p>Most of the time, you can just use traits defined by WebGear as mentioned above and be done with it. But you can easily
-define your own traits as well if the traits provided out of the box are not sufficient for you.</p>
+define your own traits as well if the traits provided out of the box are insufficient.</p>
 <p>All you need to do is define a new data type and have an instance of <code class="highlight"><span class="kt">Trait</span></code> type class. For example, the trait for
 matching the HTTP method of a request can be defined as:</p>
 <div class="highlight"><pre><span></span><code><span class="cm">{-# LANGUAGE DataKinds, FlexibleInstances, InstanceSigs, KindSignatures,</span>
@@ -592,7 +577,7 @@ a <code class="highlight"><span class="kt">String</span></code> value.</p>
 </div>
 <p>The <code class="highlight"><span class="kt">Trait</span></code> type class defined two associated types. The type <code class="highlight"><span class="kt">Attribute</span></code> is the trait attribute value when
 the trait is present in the request. The type <code class="highlight"><span class="kt">Absence</span></code> is used to indicate absence of a trait; this could be some
-sort of an error value.</p>
+sort of error value.</p>
 <p>The <code class="highlight"><span class="nf">toAttribute</span></code> function either returns a <code class="highlight"><span class="kt">Found</span></code> value with an <code class="highlight"><span class="kt">Attribute</span></code> on success, or a <code class="highlight"><span class="kt">NotFound</span></code> value with an <code class="highlight"><span class="kt">Absence</span></code> on failure.</p>
 <p>Now we have a way of defining traits and checking their presence in the request. But there is still a missing piece. Our
 handlers accept a parameter of type <code class="highlight"><span class="kt">Linked</span> <span class="n">req</span> <span class="kt">Request</span></code>. How do we construct a value of this type?</p>
@@ -616,9 +601,9 @@ it. Think of this as a first step in starting to work with linked values.</li>
 <ol>
 <li>Define a data type <code class="highlight"><span class="kt">T</span></code> for the trait. </li>
 <li>Define an instance of <code class="highlight"><span class="kt">Trait</span></code> type class for this type.</li>
-<li>In your handlers, add a constrait <code class="highlight"><span class="kt">Has</span> <span class="kt">T</span> <span class="n">req</span></code>, so that you can use <code class="highlight"><span class="nf">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="kt">T</span><span class="p">)</span> <span class="n">request</span></code> to retrieve the
+<li>In your handlers, add a constraint <code class="highlight"><span class="kt">Has</span> <span class="kt">T</span> <span class="n">req</span></code>, so that you can use <code class="highlight"><span class="nf">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="kt">T</span><span class="p">)</span> <span class="n">request</span></code> to retrieve the
    trait value.</li>
-<li>Use <code class="highlight"><span class="nf">probe</span></code> to check presence of traits and form linked values. These linked reqests can be passed as arguments
+<li>Use <code class="highlight"><span class="nf">probe</span></code> to check presence of traits and form linked values. These linked requests can be passed as arguments
    to handlers.</li>
 </ol>
                 

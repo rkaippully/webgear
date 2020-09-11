@@ -442,10 +442,7 @@
                 
                 
                 <h1 id="welcome-to-webgear">Welcome to WebGear<a class="headerlink" href="#welcome-to-webgear" title="Permanent link">&para;</a></h1>
-<p>WebGear makes it easy to build composable, extensible, type-Safe HTTP APIs in Haskell.</p>
-<p><a class="md-button md-button--primary" href="/show-me-the-code"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M384 121.941V128H256V0h6.059c6.365 0 12.47 2.529 16.971 7.029l97.941 97.941A24.005 24.005 0 01384 121.941zM248 160c-13.2 0-24-10.8-24-24V0H24C10.745 0 0 10.745 0 24v464c0 13.255 10.745 24 24 24h336c13.255 0 24-10.745 24-24V160H248zM123.206 400.505a5.4 5.4 0 01-7.633.246l-64.866-60.812a5.4 5.4 0 010-7.879l64.866-60.812a5.4 5.4 0 017.633.246l19.579 20.885a5.4 5.4 0 01-.372 7.747L101.65 336l40.763 35.874a5.4 5.4 0 01.372 7.747l-19.579 20.884zm51.295 50.479l-27.453-7.97a5.402 5.402 0 01-3.681-6.692l61.44-211.626a5.402 5.402 0 016.692-3.681l27.452 7.97a5.4 5.4 0 013.68 6.692l-61.44 211.626a5.397 5.397 0 01-6.69 3.681zm160.792-111.045l-64.866 60.812a5.4 5.4 0 01-7.633-.246l-19.58-20.885a5.4 5.4 0 01.372-7.747L284.35 336l-40.763-35.874a5.4 5.4 0 01-.372-7.747l19.58-20.885a5.4 5.4 0 017.633-.246l64.866 60.812a5.4 5.4 0 01-.001 7.879z"/></svg></span> Show me the code!</a>
-<a class="md-button" href="/guide/introduction"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M448 360V24c0-13.3-10.7-24-24-24H96C43 0 0 43 0 96v320c0 53 43 96 96 96h328c13.3 0 24-10.7 24-24v-16c0-7.5-3.5-14.3-8.9-18.7-4.2-15.4-4.2-59.3 0-74.7 5.4-4.3 8.9-11.1 8.9-18.6zM128 134c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm0 64c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm253.4 250H96c-17.7 0-32-14.3-32-32 0-17.6 14.4-32 32-32h285.4c-1.9 17.1-1.9 46.9 0 64z"/></svg></span> User Guide</a></p>
-<hr />
+<p>WebGear is a Haskell library to build composable, extensible, and type-Safe HTTP APIs.</p>
 <h2 id="hello-webgear">Hello WebGear<a class="headerlink" href="#hello-webgear" title="Permanent link">&para;</a></h2>
 <p>Here is a fully functional WebGear application. If you access <a href="http://localhost:3000/hello/Legolas">http://localhost:3000/hello/Legolas</a>, you'd get a <code>200
 OK</code> response with body: <code>Hello, Legolas</code>.</p>
@@ -458,19 +455,17 @@ OK</code> response with body: <code>Hello, Legolas</code>.</p>
 <span class="nf">routes</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="kt">String</span>
 <span class="nf">routes</span> <span class="ow">=</span> <span class="p">[</span><span class="n">route</span><span class="o">|</span> <span class="kt">GET</span> <span class="o">/</span><span class="n">hello</span><span class="o">/</span><span class="n">name</span><span class="kt">:String</span> <span class="o">|</span><span class="p">]</span> <span class="o">$</span> <span class="kt">Kleisli</span> <span class="o">$</span>
            <span class="nf">\</span><span class="n">request</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
-             <span class="kr">let</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">PathVar</span> <span class="s">&quot;name&quot;</span> <span class="kt">String</span><span class="p">))</span> <span class="n">request</span>
-             <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="o">$</span> <span class="s">&quot;Hello, &quot;</span> <span class="o">++</span> <span class="n">name</span>
+              <span class="kr">let</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">PathVar</span> <span class="s">&quot;name&quot;</span> <span class="kt">String</span><span class="p">))</span> <span class="n">request</span>
+              <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="p">(</span><span class="s">&quot;Hello, &quot;</span> <span class="o">++</span> <span class="n">name</span><span class="p">)</span>
 
 <span class="nf">main</span> <span class="ow">::</span> <span class="kt">IO</span> <span class="nb">()</span>
 <span class="nf">main</span> <span class="ow">=</span> <span class="n">run</span> <span class="mi">3000</span> <span class="p">(</span><span class="n">toApplication</span> <span class="n">routes</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="developer-friendly">Developer Friendly<a class="headerlink" href="#developer-friendly" title="Permanent link">&para;</a></h2>
-<p>WebGear is built on a small number of simple concepts which makes it approachable. You don't need to understand a
-gazillion advanced language features to build type safe APIs. Friendly error messages will guide you when you make
-mistakes.</p>
-<script id="asciicast-357600" src="https://asciinema.org/a/357600.js" async></script>
-
+<p>WebGear is built on a small set of simple concepts which makes it approachable. You don't need to be a Haskell Guru to
+build APIs with WebGear. Friendly error messages will guide you when you make mistakes.</p>
+<p><img alt="Error Messages" src="/static/webgear-error.png" /></p>
 <h2 id="composability">Composability<a class="headerlink" href="#composability" title="Permanent link">&para;</a></h2>
 <p>APIs are built by composing functions to form handlers and middlewares. Build complex APIs from smaller simpler parts!</p>
 <div class="highlight"><pre><span></span><code><span class="nf">putUser</span> <span class="ow">=</span> <span class="n">method</span> <span class="o">@</span><span class="kt">PUT</span>
@@ -485,10 +480,6 @@ mistakes.</p>
 are as first-class as the ones provided by WebGear.</p>
 <p>APIs run with the framework of your choice. WebGear can work with monad transformers or algebraic effect systems that
 you want to use.</p>
-<hr />
-<p>Continue to learn more about WebGear.</p>
-<p><a class="md-button md-button--primary" href="/show-me-the-code"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M384 121.941V128H256V0h6.059c6.365 0 12.47 2.529 16.971 7.029l97.941 97.941A24.005 24.005 0 01384 121.941zM248 160c-13.2 0-24-10.8-24-24V0H24C10.745 0 0 10.745 0 24v464c0 13.255 10.745 24 24 24h336c13.255 0 24-10.745 24-24V160H248zM123.206 400.505a5.4 5.4 0 01-7.633.246l-64.866-60.812a5.4 5.4 0 010-7.879l64.866-60.812a5.4 5.4 0 017.633.246l19.579 20.885a5.4 5.4 0 01-.372 7.747L101.65 336l40.763 35.874a5.4 5.4 0 01.372 7.747l-19.579 20.884zm51.295 50.479l-27.453-7.97a5.402 5.402 0 01-3.681-6.692l61.44-211.626a5.402 5.402 0 016.692-3.681l27.452 7.97a5.4 5.4 0 013.68 6.692l-61.44 211.626a5.397 5.397 0 01-6.69 3.681zm160.792-111.045l-64.866 60.812a5.4 5.4 0 01-7.633-.246l-19.58-20.885a5.4 5.4 0 01.372-7.747L284.35 336l-40.763-35.874a5.4 5.4 0 01-.372-7.747l19.58-20.885a5.4 5.4 0 017.633-.246l64.866 60.812a5.4 5.4 0 01-.001 7.879z"/></svg></span> Show me the code!</a>
-<a class="md-button" href="/guide/introduction"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M448 360V24c0-13.3-10.7-24-24-24H96C43 0 0 43 0 96v320c0 53 43 96 96 96h328c13.3 0 24-10.7 24-24v-16c0-7.5-3.5-14.3-8.9-18.7-4.2-15.4-4.2-59.3 0-74.7 5.4-4.3 8.9-11.1 8.9-18.6zM128 134c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm0 64c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm253.4 250H96c-17.7 0-32-14.3-32-32 0-17.6 14.4-32 32-32h285.4c-1.9 17.1-1.9 46.9 0 64z"/></svg></span> User Guide</a></p>
                 
               
               

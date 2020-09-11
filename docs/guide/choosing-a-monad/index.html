@@ -416,8 +416,8 @@
                 
                 
                 <h1 id="choosing-a-monad">Choosing a Monad<a class="headerlink" href="#choosing-a-monad" title="Permanent link">&para;</a></h1>
-<p>So far, all our handlers used <code class="highlight"><span class="kt">Handler</span></code> which in turn used the <code class="highlight"><span class="kt">Router</span></code> monad. But this won't work if you want
-to use your own monad transformer stack or an algebraic effect system. How do we solve that?</p>
+<p>So far, all our handlers used the <code class="highlight"><span class="kt">Handler</span></code> type which in turn used the <code class="highlight"><span class="kt">Router</span></code> monad. But this won't work if
+you want to use your own monad transformer stack or an algebraic effect system. How do we solve that?</p>
 <h2 id="type-of-handlers">Type of Handlers<a class="headerlink" href="#type-of-handlers" title="Permanent link">&para;</a></h2>
 <p>The handler and middleware types are defined as:</p>
 <div class="highlight"><pre><span></span><code><span class="kr">type</span> <span class="kt">Handler&#39;</span> <span class="n">m</span> <span class="n">req</span> <span class="n">a</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="n">m</span> <span class="p">(</span><span class="kt">Linked</span> <span class="n">req</span> <span class="kt">Request</span><span class="p">)</span> <span class="p">(</span><span class="kt">Response</span> <span class="n">a</span><span class="p">)</span>

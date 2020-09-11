@@ -530,7 +530,7 @@ type that can be converted to a lazy ByteString using the <code class="highlight
 <p>In addition to functions such as <code class="highlight"><span class="nf">ok200</span></code> and <code class="highlight"><span class="nf">created201</span></code>, there is a generic <code class="highlight"><span class="nf">respond</span></code> function that
 accepts an HTTP status code, response headers and the body to generate a response.</p>
 <h2 id="routing-without-templatehaskell">Routing without TemplateHaskell<a class="headerlink" href="#routing-without-templatehaskell" title="Permanent link">&para;</a></h2>
-<p>You can use regular functions instead of TemplateHaskell QuasiQuotes for routing if you prefer that.</p>
+<p>You can use regular functions instead of TemplateHaskell QuasiQuoters for routing if you prefer that.</p>
 <div class="highlight"><pre><span></span><code><span class="c1">-- matches GET /hello/name:String</span>
 <span class="nf">helloRoute</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="kt">String</span>
 <span class="nf">helloRoute</span> <span class="ow">=</span> <span class="n">method</span> <span class="o">@</span><span class="kt">GET</span>
@@ -564,7 +564,7 @@ v1 and v2 path prefixes.</p>
 </code></pre></div>
 
 <h2 id="middlewares">Middlewares<a class="headerlink" href="#middlewares" title="Permanent link">&para;</a></h2>
-<p>Middlewares are handlers that wrap another handler. They usually modify or enhance the bahaviour of the inner
+<p>Middlewares are handlers that wrap another handler. They usually modify or enhance the behaviour of the inner
 handler. For example, the <code class="highlight"><span class="nf">queryParam</span></code> middleware ensures that the inner handler is invoked only when the request
 contains a query parameter named <code>limit</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="nf">searchWidget</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="n">a</span>
@@ -574,16 +574,16 @@ contains a query parameter named <code>limit</code>.</p>
 <span class="nf">searchHandler</span> <span class="ow">=</span> <span class="o">...</span>
 </code></pre></div>
 
-<p>Typically you will compose many middlewares to form a route handler. The <a href="/guide/middlewares">user guide</a> explains how you can
-build your own middlewares.</p>
+<p>Typically, you will compose many middlewares to form a route handler. The <a href="/guide/middlewares">user guide</a> explains how
+you can build your own middlewares.</p>
 <h2 id="first-class-json-support">First-class JSON support<a class="headerlink" href="#first-class-json-support" title="Permanent link">&para;</a></h2>
 <p>Use JSON input and output in your handlers without any boilerplate. WebGear uses the
 <a href="https://hackage.haskell.org/package/aeson">aeson</a> library to handle JSON values. The request body can be read as a JSON
 value using <code class="highlight"><span class="nf">jsonRequestBody</span></code> middleware. The response can be converted to a lazy ByteString using the <code class="highlight"><span class="nf">jsonResponseBody</span></code> middleware.</p>
 <div class="highlight"><pre><span></span><code><span class="nf">updateWidget</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="kt">ByteString</span>
 <span class="nf">updateWidget</span> <span class="ow">=</span> <span class="n">jsonRequestBody</span> <span class="o">@</span><span class="kt">Widget</span>
-             <span class="o">$</span> <span class="n">jsonResponseBody</span> <span class="o">@</span><span class="kt">Widget</span>
-             <span class="o">$</span> <span class="n">updateWidgetHandler</span>
+               <span class="o">$</span> <span class="n">jsonResponseBody</span> <span class="o">@</span><span class="kt">Widget</span>
+               <span class="o">$</span> <span class="n">updateWidgetHandler</span>
 
 <span class="nf">updateWidgetHandler</span> <span class="ow">::</span> <span class="kt">Has</span> <span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">)</span> <span class="n">r</span> <span class="ow">=&gt;</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="kt">Widget</span>
 <span class="nf">updateWidgetHandler</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
