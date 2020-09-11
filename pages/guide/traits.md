@@ -1,10 +1,8 @@
 # Traits
-
-## Extracting Request Attributes
 The application from the previous section is very rudimentary. Let us enhance it a bit.
 
 Instead of always printing the time in UTC, let us accept a query parameter named `local` and respond with the
-time in the local timezone when it is set to true.
+time in the local time zone when it is set to true.
 
 Obviously, this requires extracting a query parameter from the request. So far, we have not looked at the type of
 requests and operations allowed on them. So let us do that first.
@@ -74,7 +72,7 @@ main = run 3000 (toApplication getTime)
 ## Using Traits
 Using traits in your API handlers is easy.
 
-First, when you start processing the request in your handler, we don't know whether any of traits that we are
+First, when you start processing the request in your handler, we don't know whether any of the traits that we are
 interested in is present in the request. So the handler has the type `#!hs Handler '[] a`; the list of traits is empty.
 
 Second, functions such as `#!hs queryParam` verify the presence of a trait and then invoke another handler (`#!hs
@@ -96,7 +94,7 @@ handler. This is a type-safe access mechanism for trait attributes.
 
 ## Defining Traits
 Most of the time, you can just use traits defined by WebGear as mentioned above and be done with it. But you can easily
-define your own traits as well if the traits provided out of the box are not sufficient for you.
+define your own traits as well if the traits provided out of the box are insufficient.
 
 All you need to do is define a new data type and have an instance of `#!hs Trait` type class. For example, the trait for
 matching the HTTP method of a request can be defined as:
@@ -137,7 +135,7 @@ instance (KnownSymbol t, Monad m) => Trait (MethodMatch t) Request m where
 
 The `#!hs Trait` type class defined two associated types. The type `#!hs Attribute` is the trait attribute value when
 the trait is present in the request. The type `#!hs Absence` is used to indicate absence of a trait; this could be some
-sort of an error value.
+sort of error value.
 
 The `#!hs toAttribute` function either returns a `#!hs Found` value with an `#!hs Attribute` on success, or a `#!hs
 NotFound` value with an `#!hs Absence` on failure.
@@ -167,7 +165,7 @@ In summary, this is how you use traits:
 
 1. Define a data type `#!hs T` for the trait. 
 2. Define an instance of `#!hs Trait` type class for this type.
-3. In your handlers, add a constrait `#!hs Has T req`, so that you can use `#!hs get (Proxy @T) request` to retrieve the
+3. In your handlers, add a constraint `#!hs Has T req`, so that you can use `#!hs get (Proxy @T) request` to retrieve the
    trait value.
-4. Use `#!hs probe` to check presence of traits and form linked values. These linked reqests can be passed as arguments
+4. Use `#!hs probe` to check presence of traits and form linked values. These linked requests can be passed as arguments
    to handlers.

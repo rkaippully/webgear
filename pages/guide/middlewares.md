@@ -1,6 +1,6 @@
 # Middlewares
 Middlewares are functions that take a handler as their input and produces a handler as output. They are useful to
-enhance behaamviour of handlers somehow.
+enhance behaviour of handlers.
 
 ```hs
 type Middleware req req' a' a = Handler req' a' -> Handler req a

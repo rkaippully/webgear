@@ -1,10 +1,5 @@
 # Welcome to WebGear
-WebGear makes it easy to build composable, extensible, type-Safe HTTP APIs in Haskell.
-
-[:fontawesome-solid-file-code: Show me the code!](/show-me-the-code){: .md-button .md-button--primary }
-[:fontawesome-solid-book: User Guide](/guide/introduction){: .md-button }
-
--------------------------------------
+WebGear is a Haskell library to build composable, extensible, and type-Safe HTTP APIs.
 
 ## Hello WebGear
 Here is a fully functional WebGear application. If you access <http://localhost:3000/hello/Legolas>, you'd get a `200
@@ -20,17 +15,16 @@ import WebGear
 routes :: Handler '[] String
 routes = [route| GET /hello/name:String |] $ Kleisli $
            \request -> do
-             let name = get (Proxy @(PathVar "name" String)) request
-             return $ ok200 $ "Hello, " ++ name
+              let name = get (Proxy @(PathVar "name" String)) request
+              return $ ok200 ("Hello, " ++ name)
 
 main :: IO ()
 main = run 3000 (toApplication routes)
 ```
 
 ## Developer Friendly
-WebGear is built on a small number of simple concepts which makes it approachable. You don't need to understand a
-gazillion advanced language features to build type safe APIs. Friendly error messages will guide you when you make
-mistakes.
+WebGear is built on a small set of simple concepts which makes it approachable. You don't need to be a Haskell Guru to
+build APIs with WebGear. Friendly error messages will guide you when you make mistakes.
 
 ![Error Messages](/static/webgear-error.png)
 
@@ -51,10 +45,3 @@ are as first-class as the ones provided by WebGear.
 
 APIs run with the framework of your choice. WebGear can work with monad transformers or algebraic effect systems that
 you want to use.
-
--------------------------------------
-
-Continue to learn more about WebGear.
-
-[:fontawesome-solid-file-code: Show me the code!](/show-me-the-code){: .md-button .md-button--primary }
-[:fontawesome-solid-book: User Guide](/guide/introduction){: .md-button }

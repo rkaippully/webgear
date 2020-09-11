@@ -55,7 +55,7 @@ In addition to functions such as `#!hs ok200` and `#!hs created201`, there is a 
 accepts an HTTP status code, response headers and the body to generate a response.
 
 ## Routing without TemplateHaskell
-You can use regular functions instead of TemplateHaskell QuasiQuotes for routing if you prefer that.
+You can use regular functions instead of TemplateHaskell QuasiQuoters for routing if you prefer that.
 
 ```hs
 -- matches GET /hello/name:String
@@ -95,7 +95,7 @@ v2Routes = [match| /v2 ]
 ```
 
 ## Middlewares
-Middlewares are handlers that wrap another handler. They usually modify or enhance the bahaviour of the inner
+Middlewares are handlers that wrap another handler. They usually modify or enhance the behaviour of the inner
 handler. For example, the `#!hs queryParam` middleware ensures that the inner handler is invoked only when the request
 contains a query parameter named `limit`.
 
@@ -107,8 +107,8 @@ searchHandler :: Has (QueryParam "limit" Int) r => Handler r a
 searchHandler = ...
 ```
 
-Typically you will compose many middlewares to form a route handler. The [user guide](/guide/middlewares) explains how you can
-build your own middlewares.
+Typically, you will compose many middlewares to form a route handler. The [user guide](/guide/middlewares) explains how
+you can build your own middlewares.
 
 ## First-class JSON support
 Use JSON input and output in your handlers without any boilerplate. WebGear uses the

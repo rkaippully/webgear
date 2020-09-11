@@ -4,7 +4,7 @@ for serving different HTTP methods, URL paths etc. Let us see how to achieve thi
 
 ## Alternatives
 We know that handlers are kleisli arrows. This means that we can combine multiple handlers using the `#!hs <|>` operator
-from `#!hs Alternative` type class. Thus if we have two handlers `#!hs getTime` and `#!hs setTime`, we could create a
+from `#!hs Alternative` type class. Thus, if we have two handlers `#!hs getTime` and `#!hs setTime`, we could create a
 combined handler like this.
 
 ```hs
@@ -49,7 +49,7 @@ setTime :: Handler req a
 setTime = method @POST setTimeHandler
 ```
 
-The `#!MonadRouter` will try each route sequentially. If any of them calls `#!hs rejectRoute`, the next one will be
+The `#!hs MonadRouter` will try each route sequentially. If any of them calls `#!hs rejectRoute`, the next one will be
 tried and the response from the first matching handler will be returned. If none of the route handlers matched, a `404
 Not Found` response will be returned.
 
@@ -62,8 +62,8 @@ As you can see from the above description, the routing mechanism is very flexibl
 or handler can invoke `#!hs rejectRoute` to skip the current handler and try the next. WebGear does not assume anything
 about which request attributes are used in the handler selection. That decision is left to middlewares and handlers.
 
-However, for most usecases, you want to route based on the HTTP method and/or the URL path. WebGear provides a number of
-middlewares that support this common usecase.
+However, for most use cases, you want to route based on the HTTP method and/or the URL path. WebGear provides a number
+of middlewares that support this common use case.
 
 - `#!hs method` attempts to match an HTTP method.
 - `#!hs path` attempts to match a prefix portion of the request URL path.
@@ -90,3 +90,8 @@ If you prefer a less verbose version, you can use template haskell quasiquoter:
 getWidget :: Handler req a
 getWidget = [route| GET /v1/widgets/widgetId:Int |] getWidgetHandler
 ```
+
+This version using the `#!hs route` quasiquoter is equivalent to the previous one.
+
+There is also the `#!hs match` quasiquoter which is similar to `#!hs route` but does not add the `#!hs pathEnd`
+middleware. It is useful in cases where only a prefix of the path needs to be matched.

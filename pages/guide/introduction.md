@@ -1,15 +1,14 @@
 # WebGear User Guide
 
 ## Introduction
-WebGear is a library to build composable, extensible, type-safe APIs. This guide is designed to help you get started
-with WebGear. It follows a tutorial style; if you are looking for reference material, see the [API
-documentation](https://hackage.haskell.org/package/webgear-server).
+This guide is designed to help you get started with WebGear. It follows a tutorial style; if you are looking for
+reference material, see the [API documentation](https://hackage.haskell.org/package/webgear-server).
 
 ## Requirements
 This guide assumes that you have a good idea of how HTTP APIs work in general. You also need a good understanding of
 Haskell programming language features such as type classes, monads, monad transformers etc.
 
-WebGear uses a small set of GHC haskell features that are generally considered advanced. But this guide does not assume
+WebGear uses a small set of GHC Haskell features that are generally considered advanced. But this guide does not assume
 that you are an expert in these. All such features will be explained in this guide.
 
 However, it is assumed that you understand some basic GHC language extensions such as
@@ -21,7 +20,7 @@ cursory understanding of
 [QuasiQuotes](https://downloads.haskell.org/~ghc/8.10.2/docs/html/users_guide/glasgow_exts.html#extension-QuasiQuotes)
 is useful but not essential.
 
-You need a working haskell development environment with either [stack](https://haskellstack.org) or
+You need a working Haskell development environment with either [stack](https://haskellstack.org) or
 [cabal](https://cabal.readthedocs.io). If you are using cabal, use GHC version 8.8.4.
 
 ## Quickstart
@@ -80,5 +79,5 @@ extra-deps:
     ```
 
 !!! tip
-    If this is the first time, it will take a long time to download and build the dependencies. Subsequent builds will
-    use cached artifacts and will be faster.
+    If this is the first time you are setting up the project, it will take a long time to download and build the
+    dependencies. Subsequent builds will use cached artifacts and will be faster.

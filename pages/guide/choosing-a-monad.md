@@ -1,6 +1,6 @@
 # Choosing a Monad
-So far, all our handlers used `#!hs Handler` which in turn used the `#!hs Router` monad. But this won't work if you want
-to use your own monad transformer stack or an algebraic effect system. How do we solve that?
+So far, all our handlers used the `#!hs Handler` type which in turn used the `#!hs Router` monad. But this won't work if
+you want to use your own monad transformer stack or an algebraic effect system. How do we solve that?
 
 ## Type of Handlers
 The handler and middleware types are defined as:
