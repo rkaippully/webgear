@@ -1,7 +1,40 @@
-site_name: My Docs
+site_name: WebGear
+site_description: Composable, Extensible, Type-Safe HTTP APIs in Haskell
+site_url: https://rkaippully.github.io/webgear
+repo_url: https://github.com/rkaippully/webgear
+site_author: Raghu Kaippully
+copyright: Copyright &copy; 2020 Raghu Kaippully
 
 theme:
   name: material
 
 docs_dir: pages
 site_dir: docs
+
+nav:
+  - Home: index.md
+  - Show me the code!: show-me-the-code.md
+  - User Guide:
+      - Introduction: guide/introduction.md
+      - First Application: guide/first-app.md
+      - Traits: guide/traits.md
+      - Middlewares: guide/middlewares.md
+      - Routing: guide/routing.md
+      - Choosing a Monad: guide/choosing-a-monad.md
+      - Next Steps: guide/next-steps.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.tabbed
+
+plugins:
+  - search
