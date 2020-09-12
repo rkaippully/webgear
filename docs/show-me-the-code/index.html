@@ -488,7 +488,7 @@
 <h2 id="building-request-handlers">Building Request Handlers<a class="headerlink" href="#building-request-handlers" title="Permanent link">&para;</a></h2>
 <p>A request handler is just a function that takes a request value and produces a response value in a monadic context. This
 is where the business logic of your application lives.</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- The &#39;Has (JSONRequestBody Widget) r&#39; constrait indicates that this handler</span>
+<div class="highlight"><pre><span></span><code><span class="c1">-- The Has (JSONRequestBody Widget) r constraint indicates that this handler</span>
 <span class="c1">-- can only be called if the request body is a valid JSON that can be parsed</span>
 <span class="c1">-- to a Widget value.</span>
 <span class="nf">putWidget</span> <span class="ow">::</span> <span class="kt">Has</span> <span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">)</span> <span class="n">r</span> <span class="ow">=&gt;</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="kt">Widget</span>
@@ -498,9 +498,6 @@ is where the business logic of your application lives.</p>
   <span class="n">return</span> <span class="p">(</span><span class="n">ok200</span> <span class="n">widget</span><span class="p">)</span>
 </code></pre></div>
 
-<p>The <code class="highlight"><span class="kt">Handler</span> <span class="n">req</span> <span class="kt">Widget</span></code> type in the example above is equivalent to the function type
-<code class="highlight"><span class="kt">Monad</span> <span class="n">m</span> <span class="ow">=&gt;</span> <span class="kt">Linked</span> <span class="n">req</span> <span class="kt">Request</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="p">(</span><span class="kt">Response</span> <span class="kt">Widget</span><span class="p">)</span></code> in principle. These type of functions are also known as
-Kleisli arrows; hence the use of <code class="highlight"><span class="kt">Kleisli</span></code> in the handler.</p>
 <h2 id="accessing-request-traits">Accessing Request Traits<a class="headerlink" href="#accessing-request-traits" title="Permanent link">&para;</a></h2>
 <p>Traits are attributes associated with the request. Header values, query parameters, path components, request body are
 all examples of traits.</p>
@@ -534,7 +531,7 @@ accepts an HTTP status code, response headers and the body to generate a respons
 <div class="highlight"><pre><span></span><code><span class="c1">-- matches GET /hello/name:String</span>
 <span class="nf">helloRoute</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="kt">String</span>
 <span class="nf">helloRoute</span> <span class="ow">=</span> <span class="n">method</span> <span class="o">@</span><span class="kt">GET</span>
-             <span class="o">$</span> <span class="n">path</span> <span class="o">@</span><span class="s">&quot;hello&quot;</span> <span class="o">$</span> <span class="n">pathVar</span> <span class="o">@</span><span class="s">&quot;name&quot;</span> <span class="o">@</span><span class="kt">String</span>
+             <span class="o">$</span> <span class="n">path</span> <span class="o">@</span><span class="s">&quot;hello&quot;</span> <span class="o">$</span> <span class="n">pathVar</span> <span class="o">@</span><span class="s">&quot;name&quot;</span> <span class="o">@</span><span class="kt">String</span> <span class="o">$</span> <span class="n">pathEnd</span>
              <span class="o">$</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
                  <span class="kr">let</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">PathVar</span> <span class="s">&quot;name&quot;</span> <span class="kt">String</span><span class="p">))</span> <span class="n">req</span>
                  <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="o">$</span> <span class="s">&quot;Hello, &quot;</span> <span class="o">++</span> <span class="n">name</span>
@@ -565,8 +562,8 @@ v1 and v2 path prefixes.</p>
 
 <h2 id="middlewares">Middlewares<a class="headerlink" href="#middlewares" title="Permanent link">&para;</a></h2>
 <p>Middlewares are handlers that wrap another handler. They usually modify or enhance the behaviour of the inner
-handler. For example, the <code class="highlight"><span class="nf">queryParam</span></code> middleware ensures that the inner handler is invoked only when the request
-contains a query parameter named <code>limit</code>.</p>
+handler. For example, the <code class="highlight"><span class="nf">queryParam</span></code> middleware in the example below ensures that the search handler is invoked
+only when the request contains a query parameter named <code>limit</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="nf">searchWidget</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="n">a</span>
 <span class="nf">searchWidget</span> <span class="ow">=</span> <span class="n">queryParam</span> <span class="o">@</span><span class="s">&quot;limit&quot;</span> <span class="o">@</span><span class="kt">Int</span> <span class="n">searchHandler</span>
 
@@ -587,7 +584,7 @@ value using <code class="highlight"><span class="nf">jsonRequestBody</span></cod
 
 <span class="nf">updateWidgetHandler</span> <span class="ow">::</span> <span class="kt">Has</span> <span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">)</span> <span class="n">r</span> <span class="ow">=&gt;</span> <span class="kt">Handler</span> <span class="n">r</span> <span class="kt">Widget</span>
 <span class="nf">updateWidgetHandler</span> <span class="ow">=</span> <span class="kt">Kleisli</span> <span class="o">$</span> <span class="nf">\</span><span class="n">req</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
-  <span class="kr">let</span> <span class="n">widget</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">))</span> <span class="n">req</span>  <span class="c1">-- widget :: Widget</span>
+  <span class="kr">let</span> <span class="n">widget</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">JSONRequestBody</span> <span class="kt">Widget</span><span class="p">))</span> <span class="n">req</span>   <span class="c1">-- widget :: Widget</span>
   <span class="o">...</span>
   <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="n">widget</span>
 </code></pre></div>

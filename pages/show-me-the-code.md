@@ -6,7 +6,7 @@ A request handler is just a function that takes a request value and produces a r
 is where the business logic of your application lives.
 
 ```hs
--- The 'Has (JSONRequestBody Widget) r' constrait indicates that this handler
+-- The Has (JSONRequestBody Widget) r constraint indicates that this handler
 -- can only be called if the request body is a valid JSON that can be parsed
 -- to a Widget value.
 putWidget :: Has (JSONRequestBody Widget) r => Handler r Widget
@@ -15,10 +15,6 @@ putWidget = Kleisli $ \req -> do
   saveToDB widget
   return (ok200 widget)
 ```
-
-The `#!hs Handler req Widget` type in the example above is equivalent to the function type
-`#!hs Monad m => Linked req Request -> m (Response Widget)` in principle. These type of functions are also known as
-Kleisli arrows; hence the use of `#!hs Kleisli` in the handler.
 
 ## Accessing Request Traits
 Traits are attributes associated with the request. Header values, query parameters, path components, request body are
@@ -61,7 +57,7 @@ You can use regular functions instead of TemplateHaskell QuasiQuoters for routin
 -- matches GET /hello/name:String
 helloRoute :: Handler '[] String
 helloRoute = method @GET
-             $ path @"hello" $ pathVar @"name" @String
+             $ path @"hello" $ pathVar @"name" @String $ pathEnd
              $ Kleisli $ \req -> do
                  let name = get (Proxy @(PathVar "name" String)) req
                  return $ ok200 $ "Hello, " ++ name
@@ -96,8 +92,8 @@ v2Routes = [match| /v2 ]
 
 ## Middlewares
 Middlewares are handlers that wrap another handler. They usually modify or enhance the behaviour of the inner
-handler. For example, the `#!hs queryParam` middleware ensures that the inner handler is invoked only when the request
-contains a query parameter named `limit`.
+handler. For example, the `#!hs queryParam` middleware in the example below ensures that the search handler is invoked
+only when the request contains a query parameter named `limit`.
 
 ```hs
 searchWidget :: Handler '[] a
@@ -124,7 +120,7 @@ updateWidget = jsonRequestBody @Widget
 
 updateWidgetHandler :: Has (JSONRequestBody Widget) r => Handler r Widget
 updateWidgetHandler = Kleisli $ \req -> do
-  let widget = get (Proxy @(JSONRequestBody Widget)) req  -- widget :: Widget
+  let widget = get (Proxy @(JSONRequestBody Widget)) req   -- widget :: Widget
   ...
   return $ ok200 widget
 ```

@@ -16,8 +16,9 @@ type Middleware req req' a' a = Middleware' Router req req' a' a
 ```
 
 You can use any monad of your choice `#!hs m` with a `#!hs Handler'` or `#!hs Middleware'`. However, `#!hs m` must be an
-instance of `#!hs MonadRouter` to make use of the routing features. You could build such an instance for your
-monad. However, it is a lot easier if you can find a way to transform monadic values in `#!hs m` to `#!hs Router`.
+instance of `#!hs MonadRouter` to make use of the routing features. One option is to implement an instance of `#!hs
+MonadRouter` for your monad. However, it'd be a lot easier if there was a way to transform a handler in your monad to a
+handler in the `#!hs Router` monad.
 
 ## Transformations
 There is a function for that!
@@ -35,6 +36,9 @@ For example, if you want to use the `#!hs getWidget` route from the previous sec
 what you would do:
 
 ```hs
+-- This is our monad stack
+type MyMonad a = ReaderT env IO a
+
 getWidget :: Handler' Router req a
 getWidget = method @GET
             $ path @"/v1/widgets"
@@ -42,9 +46,12 @@ getWidget = method @GET
             $ pathEnd
             $ handler getWidgetHandler
 
-handler :: Handler' (ReaderT env IO) req a -> Handler' Router req a
+getWidgetHandler :: Has (PathVar "widgetId" Int) req => Handler' MyMonad req a
+getWidgetHandler = ...
+
+handler :: Handler' MyMonad req a -> Handler' Router req a
 handler = transform readerToRouter
 
-readerToRouter :: ReaderT env IO a -> Router a
+readerToRouter :: MyMonad a -> Router a
 readerToRouter = liftIO . flip runReaderT env
 ```

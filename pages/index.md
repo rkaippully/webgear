@@ -3,7 +3,7 @@ WebGear is a Haskell library to build composable, extensible, and type-Safe HTTP
 
 ## Hello WebGear
 Here is a fully functional WebGear application. If you access <http://localhost:3000/hello/Legolas>, you'd get a `200
-OK` response with body: `Hello, Legolas`.
+OK` response with the body `Hello, Legolas`.
 
 ```hs
 {-# LANGUAGE DataKinds, QuasiQuotes, TypeApplications #-}
@@ -26,17 +26,17 @@ main = run 3000 (toApplication routes)
 WebGear is built on a small set of simple concepts which makes it approachable. You don't need to be a Haskell Guru to
 build APIs with WebGear. Friendly error messages will guide you when you make mistakes.
 
-![Error Messages](/static/webgear-error.png)
+![Error Messages](./static/webgear-error.png)
 
 ## Composability
 APIs are built by composing functions to form handlers and middlewares. Build complex APIs from smaller simpler parts!
 
 ```hs
-putUser = method @PUT
-          $ requestContentTypeHeader @"application/json"
-          $ jsonRequestBody @User
-          $ jsonResponseBody @User
-          $ putUserHandler
+putWidget = method @PUT
+            $ requestContentTypeHeader @"application/json"
+            $ jsonRequestBody @Widget
+            $ jsonResponseBody @Widget
+            $ putWidgetHandler
 ```
 
 ## Extensibility

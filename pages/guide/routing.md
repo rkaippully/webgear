@@ -15,7 +15,7 @@ So, how do we decide which handler gets invoked for a given request? How do we "
 It turns out we can do this using a middleware.
 
 ## Router Monad
-As explained in the [traits](../traits) section, handler are kleisli arrows on the `#!hs Router` monad. However, it is
+As explained in the [traits](../traits) section, handlers are kleisli arrows on the `#!hs Router` monad. However, it is
 useful to look at the `#!hs MonadRouter` type class instead of using this monad directly.
 
 ```hs

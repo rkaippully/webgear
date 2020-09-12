@@ -9,9 +9,9 @@ requests and operations allowed on them. So let us do that first.
 
 ## Requests
 The request parameter to handler functions has the type `#!hs Linked (req :: [Type]) Request`. This might look confusing
-if you are not familiar with type-level programming in Haskell. So here is an explanation. The annotation `#!hs req ::
-[Type]` means that this type parameter is a list of types and not a single type. So `#!hs Linked [Bool, Int] Request` is
-a valid type, but `#!hs Linked Char Request` is not.
+if you are not familiar with type-level programming in Haskell. The annotation `#!hs req :: [Type]` means that this type
+parameter is a list of types and not a single type. So `#!hs Linked [Bool, Int] Request` is a valid type, but `#!hs
+Linked Char Request` is not.
 
 You must be wondering why we need to "link" a request with a list of types. Well, many attributes such as query
 parameters are optional, they may not exist for a given request or may not have the right type. So instead of checking
@@ -21,7 +21,7 @@ successful, we record that fact in this list of types `#!hs req`.
 Such attributes are called traits in WebGear terminology. Query parameters, path variables, headers, HTTP methods are
 all examples of traits.
 
-So how does this work in practice? Here is the modified application supporting a `local` query parameter.
+So how does this work in practice? Here is the modified application supporting a query parameter named `local`.
 
 ```hs
 {-# LANGUAGE DataKinds         #-}
@@ -88,50 +88,51 @@ handler. This is a type-safe access mechanism for trait attributes.
 !!! tip "DataKinds"
     The `#!hs DataKinds` language extension enables promotion of data constructors to type constructors. With this
     extension, we could use some values as types. For example, we already saw types such as `#!hs Linked '[] Request`
-    and `#!hs QueryParam "local" Bool`; both `#!hs '[]` and `#!hs "local"` are used as types here. This extension helps
-    to define expressive APIs in WebGear. Read more about this extension in [GHC
-    documentation](https://downloads.haskell.org/~ghc/8.10.2/docs/html/users_guide/glasgow_exts.html#extension-DataKinds).
+    and `#!hs QueryParam "local" Bool`; both `#!hs '[]` - the empty list - and `#!hs "local"` - a string literal - are
+    used as types here. This extension helps to define expressive APIs in WebGear. Read more about this extension in
+    [GHC documentation](https://downloads.haskell.org/~ghc/8.10.2/docs/html/users_guide/glasgow_exts.html#extension-DataKinds).
 
 ## Defining Traits
 Most of the time, you can just use traits defined by WebGear as mentioned above and be done with it. But you can easily
 define your own traits as well if the traits provided out of the box are insufficient.
 
-All you need to do is define a new data type and have an instance of `#!hs Trait` type class. For example, the trait for
-matching the HTTP method of a request can be defined as:
+All you need to do is define a new data type and have an instance of `#!hs Trait` type class. For example, here is how
+you would implement the `#!hs QueryParam` trait:
 
 ```hs
-{-# LANGUAGE DataKinds, FlexibleInstances, InstanceSigs, KindSignatures,
-             MultiParamTypeClasses, PolyKinds, ScopedTypeVariables,
-             TypeApplications, TypeFamilies #-}
+{-# LANGUAGE DataKinds, FlexibleInstances, InstanceSigs, MultiParamTypeClasses,
+             ScopedTypeVariables, TypeApplications, TypeFamilies #-}
 
-import           Data.String        (fromString)
-import           GHC.TypeLits       (KnownSymbol, Symbol, symbolVal)
-import qualified Network.HTTP.Types as HTTP
-import           WebGear
+import GHC.TypeLits (KnownSymbol, Symbol)
+import WebGear
 
-data MethodMatch (t :: Symbol)
+data QueryParam (name :: Symbol) val
 
-instance (KnownSymbol t, Monad m) => Trait (MethodMatch t) Request m where
-  -- There is nothing interesting to return on success
-  type Attribute (MethodMatch t) Request = ()
-  -- Return the actual method from the request on a mismatch
-  type Absence (MethodMatch t) Request = HTTP.Method
+instance (KnownSymbol name, FromHttpApiData val, Monad m)
+  => Trait (QueryParam name val) Request m where
+  
+  -- Trait attribute retrieved on success
+  type Attribute (QueryParam name val) Request = val
+  -- An error value on failure
+  type Absence (QueryParam name val) Request =
+    Either ParamNotFound ParamParseError
 
-  toAttribute :: Request -> m (Result (MethodMatch t) Request)
-  toAttribute request =
-    let
-      expected = fromString $ symbolVal $ Proxy @t
-      actual = requestMethod request
-    in
-      return $ if expected == actual
-               then Found ()
-               else NotFound actual
+  toAttribute :: Request -> m (Result (QueryParam name val) Request)
+  toAttribute r = return $ do
+    case getRequestParam (Proxy @name) r of
+      Nothing -> NotFound (Left ParamNotFound)
+      Just x  -> case parseQueryParam x of
+                   Left e  -> NotFound (Right $ ParamParseError e)
+                   Right v -> Found v
+
+getRequestParam :: KnownSymbol name => Proxy name -> Request -> Maybe Text
+getRequestParam = ...
 ```
 
 !!! tip "Symbols"
-    If you are not familiar with `#!hs Symbol`, `#!hs symbolVal` etc, they introduce type level string literals. All
-    string literals at type level is of kind `#!hs Symbol`. You can use the `#!hs symbolVal` function to convert them to
-    a `#!hs String` value.
+    If you are not familiar with `#!hs Symbol`, `#!hs KnownSymbol` etc, they introduce type level string literals. All
+    string literals at type level are of kind `#!hs Symbol` and they are instances of `#!hs KnownSymbol` type class. You
+    can use the `#!hs symbolVal` function to convert them to a `#!hs String` value.
 
 The `#!hs Trait` type class defined two associated types. The type `#!hs Attribute` is the trait attribute value when
 the trait is present in the request. The type `#!hs Absence` is used to indicate absence of a trait; this could be some
@@ -151,8 +152,8 @@ returns a `#!hs Found` value. Otherwise, all the type-safety guarantees will be 
 
 This is where linking comes in. These are the functions that let us operate on linked values:
 
-1. `#!hs link :: a -> Linked '[] a` lets us "promote" a regular value to a linked value with no traits proven yet on
-it. Think of this as a first step in starting to work with linked values.
+1. `#!hs link :: a -> Linked '[] a` lets us "promote" a regular value to a linked value with no traits proven on
+   it. Think of this as a first step in starting to work with linked values.
 2. `#!hs unlink :: Linked ts a -> a` is the opposite operation. You use it to extract the value out of a linked value.
 3. `#!hs probe :: Trait t a m => Linked ts a -> m (Either (Absence t a) (Linked (t:ts) a))` grows the type level list of
    traits in a linked value. Given a linked value which has a list of traits already established, this function will

@@ -445,7 +445,7 @@
 <p>WebGear is a Haskell library to build composable, extensible, and type-Safe HTTP APIs.</p>
 <h2 id="hello-webgear">Hello WebGear<a class="headerlink" href="#hello-webgear" title="Permanent link">&para;</a></h2>
 <p>Here is a fully functional WebGear application. If you access <a href="http://localhost:3000/hello/Legolas">http://localhost:3000/hello/Legolas</a>, you'd get a <code>200
-OK</code> response with body: <code>Hello, Legolas</code>.</p>
+OK</code> response with the body <code>Hello, Legolas</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="cm">{-# LANGUAGE DataKinds, QuasiQuotes, TypeApplications #-}</span>
 
 <span class="kr">import</span> <span class="nn">Network.HTTP.Types</span> <span class="p">(</span><span class="kt">StdMethod</span> <span class="p">(</span><span class="kt">GET</span><span class="p">))</span>
@@ -465,14 +465,14 @@ OK</code> response with body: <code>Hello, Legolas</code>.</p>
 <h2 id="developer-friendly">Developer Friendly<a class="headerlink" href="#developer-friendly" title="Permanent link">&para;</a></h2>
 <p>WebGear is built on a small set of simple concepts which makes it approachable. You don't need to be a Haskell Guru to
 build APIs with WebGear. Friendly error messages will guide you when you make mistakes.</p>
-<p><img alt="Error Messages" src="/static/webgear-error.png" /></p>
+<p><img alt="Error Messages" src="static/webgear-error.png" /></p>
 <h2 id="composability">Composability<a class="headerlink" href="#composability" title="Permanent link">&para;</a></h2>
 <p>APIs are built by composing functions to form handlers and middlewares. Build complex APIs from smaller simpler parts!</p>
-<div class="highlight"><pre><span></span><code><span class="nf">putUser</span> <span class="ow">=</span> <span class="n">method</span> <span class="o">@</span><span class="kt">PUT</span>
-          <span class="o">$</span> <span class="n">requestContentTypeHeader</span> <span class="o">@</span><span class="s">&quot;application/json&quot;</span>
-          <span class="o">$</span> <span class="n">jsonRequestBody</span> <span class="o">@</span><span class="kt">User</span>
-          <span class="o">$</span> <span class="n">jsonResponseBody</span> <span class="o">@</span><span class="kt">User</span>
-          <span class="o">$</span> <span class="n">putUserHandler</span>
+<div class="highlight"><pre><span></span><code><span class="nf">putWidget</span> <span class="ow">=</span> <span class="n">method</span> <span class="o">@</span><span class="kt">PUT</span>
+            <span class="o">$</span> <span class="n">requestContentTypeHeader</span> <span class="o">@</span><span class="s">&quot;application/json&quot;</span>
+            <span class="o">$</span> <span class="n">jsonRequestBody</span> <span class="o">@</span><span class="kt">Widget</span>
+            <span class="o">$</span> <span class="n">jsonResponseBody</span> <span class="o">@</span><span class="kt">Widget</span>
+            <span class="o">$</span> <span class="n">putWidgetHandler</span>
 </code></pre></div>
 
 <h2 id="extensibility">Extensibility<a class="headerlink" href="#extensibility" title="Permanent link">&para;</a></h2>
