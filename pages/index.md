@@ -1,6 +1,10 @@
 # Welcome to WebGear
 WebGear is a Haskell library to build composable, extensible, and type-Safe HTTP APIs.
 
+WebGear uses advanced Haskell features to give you type-safe web applications but all that magic is kept carefully under
+the hood. Thus you'll find an easy learning curve even without advanced Haskell knowledge. WebGear also boasts of
+friendly error messages that helps to quickly detect and correct problems with your code.
+
 ## Hello WebGear
 Here is a fully functional WebGear application. If you access <http://localhost:3000/hello/Legolas>, you'd get a `200
 OK` response with the body `Hello, Legolas`.
@@ -13,10 +17,11 @@ import Network.Wai.Handler.Warp
 import WebGear
 
 routes :: Handler '[] String
-routes = [route| GET /hello/name:String |] $ Kleisli $
-           \request -> do
-              let name = get (Proxy @(PathVar "name" String)) request
-              return $ ok200 ("Hello, " ++ name)
+routes = [route| GET /hello/name:String |] $
+           Kleisli $
+             \request -> do
+                let name = get (Proxy @(PathVar "name" String)) request
+                return $ ok200 ("Hello, " ++ name)
 
 main :: IO ()
 main = run 3000 (toApplication routes)

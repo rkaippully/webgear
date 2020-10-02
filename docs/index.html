@@ -443,6 +443,9 @@
                 
                 <h1 id="welcome-to-webgear">Welcome to WebGear<a class="headerlink" href="#welcome-to-webgear" title="Permanent link">&para;</a></h1>
 <p>WebGear is a Haskell library to build composable, extensible, and type-Safe HTTP APIs.</p>
+<p>WebGear uses advanced Haskell features to give you type-safe web applications but all that magic is kept carefully under
+the hood. Thus you'll find an easy learning curve even without advanced Haskell knowledge. WebGear also boasts of
+friendly error messages that helps to quickly detect and correct problems with your code.</p>
 <h2 id="hello-webgear">Hello WebGear<a class="headerlink" href="#hello-webgear" title="Permanent link">&para;</a></h2>
 <p>Here is a fully functional WebGear application. If you access <a href="http://localhost:3000/hello/Legolas">http://localhost:3000/hello/Legolas</a>, you'd get a <code>200
 OK</code> response with the body <code>Hello, Legolas</code>.</p>
@@ -453,10 +456,11 @@ OK</code> response with the body <code>Hello, Legolas</code>.</p>
 <span class="kr">import</span> <span class="nn">WebGear</span>
 
 <span class="nf">routes</span> <span class="ow">::</span> <span class="kt">Handler</span> <span class="kt">&#39;[]</span> <span class="kt">String</span>
-<span class="nf">routes</span> <span class="ow">=</span> <span class="p">[</span><span class="n">route</span><span class="o">|</span> <span class="kt">GET</span> <span class="o">/</span><span class="n">hello</span><span class="o">/</span><span class="n">name</span><span class="kt">:String</span> <span class="o">|</span><span class="p">]</span> <span class="o">$</span> <span class="kt">Kleisli</span> <span class="o">$</span>
-           <span class="nf">\</span><span class="n">request</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
-              <span class="kr">let</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">PathVar</span> <span class="s">&quot;name&quot;</span> <span class="kt">String</span><span class="p">))</span> <span class="n">request</span>
-              <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="p">(</span><span class="s">&quot;Hello, &quot;</span> <span class="o">++</span> <span class="n">name</span><span class="p">)</span>
+<span class="nf">routes</span> <span class="ow">=</span> <span class="p">[</span><span class="n">route</span><span class="o">|</span> <span class="kt">GET</span> <span class="o">/</span><span class="n">hello</span><span class="o">/</span><span class="n">name</span><span class="kt">:String</span> <span class="o">|</span><span class="p">]</span> <span class="o">$</span>
+           <span class="kt">Kleisli</span> <span class="o">$</span>
+             <span class="nf">\</span><span class="n">request</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+                <span class="kr">let</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> <span class="p">(</span><span class="kt">Proxy</span> <span class="o">@</span><span class="p">(</span><span class="kt">PathVar</span> <span class="s">&quot;name&quot;</span> <span class="kt">String</span><span class="p">))</span> <span class="n">request</span>
+                <span class="n">return</span> <span class="o">$</span> <span class="n">ok200</span> <span class="p">(</span><span class="s">&quot;Hello, &quot;</span> <span class="o">++</span> <span class="n">name</span><span class="p">)</span>
 
 <span class="nf">main</span> <span class="ow">::</span> <span class="kt">IO</span> <span class="nb">()</span>
 <span class="nf">main</span> <span class="ow">=</span> <span class="n">run</span> <span class="mi">3000</span> <span class="p">(</span><span class="n">toApplication</span> <span class="n">routes</span><span class="p">)</span>
