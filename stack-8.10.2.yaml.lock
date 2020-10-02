@@ -13,7 +13,7 @@ packages:
     hackage: servant-server-0.18@sha256:ec7f361bc9848968b1fff8091fa2213b721d3f47549421945c6a7ca1702e22e6,5424
 snapshots:
 - completed:
-    size: 528634
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2020/9/6.yaml
-    sha256: 89ea4655110abf21b7c9b541a0ec0bfe6f222f0d995cfefd3d08eb385f49ad02
-  original: nightly-2020-09-06
+    size: 533430
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2020/9/29.yaml
+    sha256: 257d950f082432a4807a9f18fb35c4712470cd534d3e45af9732753e30b967d3
+  original: nightly-2020-09-29
