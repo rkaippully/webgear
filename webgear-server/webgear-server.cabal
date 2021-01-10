@@ -110,7 +110,7 @@ test-suite webgear-server-test
                       -with-rtsopts=-N
   build-depends:      QuickCheck            >=2.13 && <2.15
                     , quickcheck-instances  ==0.3.*
-                    , tasty                 >=1.2 && <1.4
+                    , tasty                 >=1.2 && <1.5
                     , tasty-hunit           ==0.10.*
                     , tasty-quickcheck      ==0.10.*
                     , webgear-server
