@@ -1,4 +1,4 @@
-resolver: lts-16.28
+resolver: nightly-2021-01-11
 
 packages:
 - ./webgear-server
