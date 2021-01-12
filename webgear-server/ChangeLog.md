@@ -2,6 +2,11 @@
 
 ## Unreleased changes
 
+## [0.2.1] - 2021-01-11
+
+### Changed
+- Upgrade to latest version of LTS and deps
+
 ## [0.2.0] - 2020-09-11
 
 ### Added
@@ -21,5 +26,6 @@
 - Documentation
 
 [Unreleased]: https://github.com/rkaippully/webgear/compare/v0.2.0...HEAD
+[0.2.1]: https://github.com/rkaippully/webgear/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rkaippully/webgear/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rkaippully/webgear/releases/tag/v0.1.0

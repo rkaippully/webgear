@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                webgear-examples
-version:             0.2.0
+version:             0.2.1
 description:         Please see the README at <https://github.com/rkaippully/webgear/webgear-examples#readme>
 homepage:            https://github.com/rkaippully/webgear/webgear-examples#readme
 bug-reports:         https://github.com/rkaippully/webgear/issues
