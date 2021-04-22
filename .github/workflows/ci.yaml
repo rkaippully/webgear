@@ -17,7 +17,7 @@ jobs:
           - ubuntu-latest
           - macos-latest
         ghc:
-          - 8.10.3
+          - 8.10.4
           - 8.8.4
           - 8.6.5
         exclude:
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout Source Code
 
-      - uses: rkaippully/haskell-actions/setup@be361d5
+      - uses: haskell/actions/setup@v1
         name: Setup Haskell Build Environment
         with:
           ghc-version: ${{ matrix.ghc }}
@@ -68,7 +68,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         ghc:
-          - 8.10.3
+          - 8.10.4
           - 8.8.4
           - 8.6.5
         exclude:
@@ -84,7 +84,7 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout Source Code
 
-      - uses: rkaippully/haskell-actions/setup@be361d5
+      - uses: haskell/actions/setup@v1
         name: Setup Haskell Build Environment
         with:
           ghc-version: ${{ matrix.ghc }}
