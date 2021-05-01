@@ -60,6 +60,13 @@ jobs:
       - name : Prepare sdist
         run: stack sdist --system-ghc
 
+      - name: Upload to Hackage
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          export HACKAGE_USERNAME="rkaippully"
+          export HACKAGE_PASSWORD="${{ secrets.HACKAGE_TOKEN }}"
+          stack upload --system-ghc webgear-server
+
   cabal-build:
     name: Cabal - ghc-${{ matrix.ghc }} os-${{ matrix.os }}
 
