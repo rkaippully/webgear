@@ -1,11 +1,11 @@
 -- |
--- Copyright        : (c) Raghu Kaippully, 2020
+-- Copyright        : (c) Raghu Kaippully, 2020-2021
 -- License          : MPL-2.0
 -- Maintainer       : rkaippully@gmail.com
 --
 -- Middlewares related to HTTP body.
 module WebGear.Middlewares.Body
-  ( JSONRequestBody
+  ( JSONBody (..)
   , jsonRequestBody
   , jsonResponseBody
   ) where
@@ -19,25 +19,27 @@ import Data.Kind (Type)
 import Data.Text (Text, pack)
 import Data.Text.Encoding (encodeUtf8)
 import Network.HTTP.Types (hContentType)
-
-import WebGear.Trait (Result (..), Trait (..), probe)
+import WebGear.Trait (Linked, Trait (..), probe, unlink)
 import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response (..),
                       ResponseMiddleware', badRequest400, getRequestBodyChunk, setResponseHeader)
 import WebGear.Util (takeWhileM)
 
--- | A 'Trait' for converting a JSON request body into a value.
-data JSONRequestBody (t :: Type)
 
-instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
-  type Attribute (JSONRequestBody t) Request = t
-  type Absence (JSONRequestBody t) Request = Text
+-- | A 'Trait' for converting a JSON body into a value.
+data JSONBody (t :: Type) = JSONBody
 
-  toAttribute :: Request -> m (Result (JSONRequestBody t) Request)
-  toAttribute r = do
-    chunks <- takeWhileM (/= mempty) $ repeat $ liftIO $ getRequestBodyChunk r
+instance (FromJSON t, MonadIO m) => Trait (JSONBody t) ts Request m where
+  type Attribute (JSONBody t) Request = t
+  type Absence (JSONBody t) Request = Text
+
+  tryLink :: JSONBody t
+          -> Linked ts Request
+          -> m (Either Text t)
+  tryLink _ r = do
+    chunks <- takeWhileM (/= mempty) $ repeat $ liftIO $ getRequestBodyChunk $ unlink r
     pure $ case eitherDecode' (fromChunks chunks) of
-             Left e  -> NotFound (pack e)
-             Right t -> Found t
+             Left e  -> Left $ pack e
+             Right t -> Right t
 
 -- | A middleware to parse the request body as JSON and convert it to
 -- a value via a 'FromJSON' instance.
@@ -48,9 +50,9 @@ instance (FromJSON t, MonadIO m) => Trait (JSONRequestBody t) Request m where
 --
 -- Returns a 400 Bad Request response on failure to parse body.
 jsonRequestBody :: forall t m req a. (FromJSON t, MonadRouter m, MonadIO m)
-                => RequestMiddleware' m req (JSONRequestBody t:req) a
+                => RequestMiddleware' m req (JSONBody t:req) a
 jsonRequestBody handler = Kleisli $
-  probe @(JSONRequestBody t) >=> either (errorResponse . mkError) (runKleisli handler)
+  probe JSONBody >=> either (errorResponse . mkError) (runKleisli handler)
   where
     mkError :: Text -> Response ByteString
     mkError e = badRequest400 $ fromStrict $ encodeUtf8 $ "Error parsing request body: " <> e

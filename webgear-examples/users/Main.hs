@@ -16,6 +16,7 @@ import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.Reader (MonadReader (..), ReaderT, runReaderT)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.ByteString.Lazy (ByteString)
+import qualified Data.HashMap.Strict as HM
 import Data.Hashable (Hashable)
 import Data.IORef (IORef, modifyIORef, newIORef, readIORef)
 import Data.Maybe (isJust)
@@ -25,13 +26,10 @@ import Data.Time.Calendar (Day)
 import GHC.Generics (Generic)
 import Network.HTTP.Types (StdMethod (..))
 import Network.Wai (Application)
-
+import qualified Network.Wai.Handler.Warp as Warp
 import WebGear.Middlewares
 import WebGear.Trait
 import WebGear.Types
-
-import qualified Data.HashMap.Strict as HM
-import qualified Network.Wai.Handler.Warp as Warp
 
 
 --------------------------------------------------------------------------------
@@ -82,6 +80,17 @@ removeUser store@(UserStore ref) uid = liftIO $ do
 --------------------------------------------------------------------------------
 type IntUserId = PathVar "userId" Int
 
+type Auth = BasicAuth Router () Credentials
+
+authConfig :: BasicAuthConfig Router () Credentials
+authConfig = BasicAuthConfig
+  { basicAuthRealm   = "Wakanda"
+  , toBasicAttribute = \creds -> pure $
+                         if creds == Credentials "panther" "forever"
+                         then Right creds
+                         else Left ()
+  }
+
 userRoutes :: (forall req a. Handler' (ReaderT UserStore IO) req a -> Handler req a)
            -> Handler '[] ByteString
 userRoutes handler = allRoutes
@@ -96,7 +105,7 @@ userRoutes handler = allRoutes
 
     -- | Routes that require HTTP basic authentication
     protectedRoutes :: Has IntUserId req => Handler req ByteString
-    protectedRoutes = basicAuth "Wakanda" checkCreds
+    protectedRoutes = basicAuth authConfig
                       $ putUser <|> deleteUser
 
     getUser :: Has IntUserId req => Handler req ByteString
@@ -104,14 +113,14 @@ userRoutes handler = allRoutes
               $ jsonResponseBody @User
               $ handler getUserHandler
 
-    putUser :: Have [IntUserId, BasicAuth] req => Handler req ByteString
+    putUser :: Have [Auth, IntUserId] req => Handler req ByteString
     putUser = method @PUT
               $ requestContentTypeHeader @"application/json"
               $ jsonRequestBody @User
               $ jsonResponseBody @User
               $ handler putUserHandler
 
-    deleteUser :: Have [IntUserId, BasicAuth] req => Handler req ByteString
+    deleteUser :: Have [Auth, IntUserId] req => Handler req ByteString
     deleteUser = method @DELETE
                  $ handler deleteUserHandler
 
@@ -128,12 +137,12 @@ getUserHandler = Kleisli $ \request -> do
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
-                  , Have [IntUserId, JSONRequestBody User, BasicAuth] req
+                  , Have [Auth, IntUserId, JSONBody User]  req
                   )
                => Handler' m req User
 putUserHandler = Kleisli $ \request -> do
   let uid  = get (Proxy @IntUserId) request
-      user = get (Proxy @(JSONRequestBody User)) request
+      user = get (Proxy @(JSONBody User)) request
       user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
@@ -142,7 +151,7 @@ putUserHandler = Kleisli $ \request -> do
 
 deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
-                     , Have [IntUserId, BasicAuth] req
+                     , Have [Auth, IntUserId] req
                      )
                   => Handler' m req ByteString
 deleteUserHandler = Kleisli $ \request -> do
@@ -153,12 +162,9 @@ deleteUserHandler = Kleisli $ \request -> do
     then logActivity request "deleted" >> pure noContent204
     else pure notFound404
 
-checkCreds :: Monad m => Credentials -> m Bool
-checkCreds creds = pure $ creds == Credentials "panther" "forever"
-
-logActivity :: (MonadIO m, Has BasicAuth req) => Linked req Request -> String -> m ()
+logActivity :: (MonadIO m, Has Auth req) => Linked req Request -> String -> m ()
 logActivity request msg = do
-  let name = credentialsUsername $ get (Proxy @BasicAuth) request
+  let name = credentialsUsername $ get (Proxy @Auth) request
   liftIO $ putStrLn $ msg <> ": by " <> show name
 
 

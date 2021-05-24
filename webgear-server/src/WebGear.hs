@@ -24,6 +24,9 @@ module WebGear
     -- * Middlewares
     -- $middlewares
 
+    -- * Handlers
+    -- $handlers
+
     -- * Routing
     -- $routing
 
@@ -41,6 +44,7 @@ module WebGear
   , module Data.Text
   , module Web.HttpApiData
   , module WebGear.Middlewares
+  , module WebGear.Handlers.Dir
   , module WebGear.Trait
   , module WebGear.Types
   ) where
@@ -55,6 +59,7 @@ import Web.HttpApiData (FromHttpApiData (..))
 
 import qualified Network.Wai as Wai
 
+import WebGear.Handlers.Dir
 import WebGear.Middlewares
 import WebGear.Trait
 import WebGear.Types
@@ -189,6 +194,11 @@ import WebGear.Types
 --           $ 'jsonResponseBody' \@User
 --           $ putUserHandler
 -- @
+--
+--
+-- $handlers
+--
+-- WebGear provides some standard handlers.
 --
 --
 -- $routing

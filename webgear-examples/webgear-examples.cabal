@@ -32,11 +32,6 @@ executable hello
                       -Wincomplete-record-updates
                       -Wincomplete-uni-patterns
                       -Wredundant-constraints
-
-  if impl(ghc >= 8.8.1)
-    ghc-options:      -fwrite-ide-info
-                      -hiedir=.hie
-
   main-is:            Main.hs
   hs-source-dirs:     hello
 
@@ -62,10 +57,38 @@ executable users
                       -Wincomplete-record-updates
                       -Wincomplete-uni-patterns
                       -Wredundant-constraints
-
-  if impl(ghc >= 8.8.1)
-    ghc-options:      -fwrite-ide-info
-                      -hiedir=.hie
-
   main-is:            Main.hs
   hs-source-dirs:     users
+
+executable realworld
+  default-language:   Haskell2010
+  build-depends:      aeson                 >=1.4 && <1.6
+                    , base                  >=4.12.0.0 && <5
+                    , bytestring            ==0.10.*
+                    , cryptonite            >=0.25
+                    , sqlite-simple         >=0.4.16.0
+                    , http-types            ==0.12.*
+                    , jose                  >=0.8.2.0
+                    , lens                  >=4.17.1
+                    , monad-time            ==0.3.1.0
+                    , mtl                   ==2.2.*
+                    , safe-exceptions       ==0.1.*
+                    , text                  ==1.2.*
+                    , time                  >=1.8.0.2 && <1.10
+                    , wai                   ==3.2.*
+                    , warp                  ==3.3.*
+                    , webgear-server
+  ghc-options:        -threaded
+                      -rtsopts
+                      -with-rtsopts=-N
+                      -Wall
+                      -Wno-unticked-promoted-constructors
+                      -Wincomplete-record-updates
+                      -Wincomplete-uni-patterns
+                      -Wredundant-constraints
+  hs-source-dirs:     realworld
+  main-is:            Main.hs
+  other-modules:      Types
+                    , Model
+                    , API.Util
+                    , API.User

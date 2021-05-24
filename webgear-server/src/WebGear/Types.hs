@@ -1,5 +1,5 @@
 -- |
--- Copyright        : (c) Raghu Kaippully, 2020
+-- Copyright        : (c) Raghu Kaippully, 2020-2021
 -- License          : MPL-2.0
 -- Maintainer       : rkaippully@gmail.com
 --
@@ -74,6 +74,7 @@ module WebGear.Types
   , httpVersionNotSupported505
   , networkAuthenticationRequired511
 
+    -- * Handlers and Middlewares
   , Handler'
   , Handler
   , Middleware'
@@ -83,6 +84,7 @@ module WebGear.Types
   , ResponseMiddleware'
   , ResponseMiddleware
 
+    -- * Routing
   , Router (..)
   , MonadRouter (..)
   , PathInfo (..)
@@ -90,16 +92,23 @@ module WebGear.Types
   , transform
   , runRoute
   , toApplication
+
+    -- * Modifiers
+  , Existence (..)
+  , ParseStyle (..)
   ) where
 
 import Control.Applicative (Alternative)
 import Control.Arrow (Kleisli (..))
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import Control.Monad (MonadPlus)
 import Control.Monad.Except (ExceptT, MonadError, catchError, runExceptT, throwError)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Strict (MonadState, StateT, evalStateT)
 import Data.ByteString (ByteString)
 import Data.ByteString.Conversion.To (ToByteString, toByteString)
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.HashMap.Strict as HM
 import Data.List (find)
 import Data.Maybe (fromMaybe)
 import Data.Semigroup (Semigroup (..), stimesIdempotent)
@@ -107,16 +116,13 @@ import Data.String (fromString)
 import Data.Text (Text)
 import Data.Version (showVersion)
 import GHC.Exts (fromList)
+import qualified Network.HTTP.Types as HTTP
 import Network.Wai (Request, getRequestBodyChunk, httpVersion, isSecure, pathInfo, queryString,
                     remoteHost, requestBodyLength, requestHeaders, requestMethod)
-
-import Paths_webgear_server (version)
-import WebGear.Trait (Linked, link)
-
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.HashMap.Strict as HM
-import qualified Network.HTTP.Types as HTTP
 import qualified Network.Wai as Wai
+import Paths_webgear_server (version)
+import WebGear.Modifiers (Existence (..), ParseStyle (..))
+import WebGear.Trait (Linked, linkzero)
 
 
 -- | Get the value of a request header
@@ -416,6 +422,7 @@ newtype Router a = Router
                    , MonadError RouteError
                    , MonadState PathInfo
                    , MonadIO
+                   , MonadThrow, MonadCatch
                    )
 
 -- | HTTP request routing with short circuiting behavior.
@@ -453,7 +460,7 @@ runRoute route req = waiResponse . addServerHeader . either routeErrorToResponse
                 $ flip evalStateT (PathInfo $ pathInfo req)
                 $ unRouter
                 $ runKleisli route
-                $ link req
+                $ linkzero req
 
     routeErrorToResponse :: RouteError -> Response LBS.ByteString
     routeErrorToResponse RouteMismatch     = notFound404

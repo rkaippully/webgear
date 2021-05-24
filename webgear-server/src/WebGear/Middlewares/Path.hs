@@ -1,14 +1,14 @@
 -- |
--- Copyright        : (c) Raghu Kaippully, 2020
+-- Copyright        : (c) Raghu Kaippully, 2020-2021
 -- License          : MPL-2.0
 -- Maintainer       : rkaippully@gmail.com
 --
 -- Middlewares related to route paths.
 module WebGear.Middlewares.Path
-  ( Path
-  , PathVar
+  ( Path (..)
+  , PathVar (..)
   , PathVarError (..)
-  , PathEnd
+  , PathEnd (..)
   , path
   , pathVar
   , pathEnd
@@ -21,6 +21,7 @@ import Control.Monad ((>=>))
 import Control.Monad.State.Strict (MonadState (..))
 import Data.Foldable (toList)
 import Data.Function ((&))
+import qualified Data.List as List
 import Data.List.NonEmpty (NonEmpty (..), filter)
 import Data.Proxy (Proxy (..))
 import Data.Text (Text, pack)
@@ -29,32 +30,30 @@ import Language.Haskell.TH.Quote (QuasiQuoter (..))
 import Language.Haskell.TH.Syntax (Exp (..), Q, TyLit (..), Type (..), mkName)
 import Prelude hiding (drop, filter, take)
 import Web.HttpApiData (FromHttpApiData (..))
-
 import WebGear.Middlewares.Method (method)
-import WebGear.Trait (Result (..), Trait (..), probe)
+import WebGear.Trait (Linked, Trait (..), probe)
 import WebGear.Types (MonadRouter (..), PathInfo (..), Request, RequestMiddleware')
 import WebGear.Util (splitOn)
-
-import qualified Data.List as List
 
 
 -- | A path component which is literally matched against the request
 -- but discarded after that.
-data Path (s :: Symbol)
+data Path (s :: Symbol) = Path
 
-instance (KnownSymbol s, MonadState PathInfo m) => Trait (Path s) Request m where
+instance (KnownSymbol s, MonadState PathInfo m) => Trait (Path s) ts Request m where
   type Attribute (Path s) Request = ()
   type Absence (Path s) Request = ()
 
-  toAttribute :: Request -> m (Result (Path s) Request)
-  toAttribute _ = do
+  tryLink :: Path s
+          -> Linked ts Request
+          -> m (Either () ())
+  tryLink _ _ = do
     PathInfo actualPath <- get
     case List.stripPrefix expectedPath actualPath of
-      Nothing   -> pure $ NotFound ()
+      Nothing   -> pure $ Left ()
       Just rest -> do
         put $ PathInfo rest
-        pure $ Found ()
-
+        pure $ Right ()
     where
       expectedPath = Proxy @s
                      & symbolVal
@@ -66,40 +65,44 @@ instance (KnownSymbol s, MonadState PathInfo m) => Trait (Path s) Request m wher
 -- | A path variable that is extracted and converted to a value of
 -- type @val@. The @tag@ is usually a type-level symbol (string) to
 -- uniquely identify this variable.
-data PathVar tag val
+data PathVar tag val = PathVar
 
 -- | Failure to extract a 'PathVar'
 data PathVarError = PathVarNotFound | PathVarParseError Text
   deriving (Eq, Show, Read)
 
-instance (FromHttpApiData val, MonadState PathInfo m) => Trait (PathVar tag val) Request m where
+instance (FromHttpApiData val, MonadState PathInfo m) => Trait (PathVar tag val) ts Request m where
   type Attribute (PathVar tag val) Request = val
   type Absence (PathVar tag val) Request = PathVarError
 
-  toAttribute :: Request -> m (Result (PathVar tag val) Request)
-  toAttribute _ = do
+  tryLink :: PathVar tag val
+          -> Linked ts Request
+          -> m (Either PathVarError val)
+  tryLink _ _ = do
     PathInfo actualPath <- get
     case actualPath of
-      []     -> pure $ NotFound PathVarNotFound
+      []     -> pure $ Left PathVarNotFound
       (x:xs) -> case parseUrlPiece @val x of
-        Left e  -> pure $ NotFound $ PathVarParseError e
+        Left e  -> pure $ Left $ PathVarParseError e
         Right v -> do
           put $ PathInfo xs
-          pure $ Found v
+          pure $ Right v
 
 -- | Trait to indicate that no more path components are present in the request
-data PathEnd
+data PathEnd = PathEnd
 
-instance MonadState PathInfo m => Trait PathEnd Request m where
+instance MonadState PathInfo m => Trait PathEnd ts Request m where
   type Attribute PathEnd Request = ()
   type Absence PathEnd Request = ()
 
-  toAttribute :: Request -> m (Result PathEnd Request)
-  toAttribute _ = do
+  tryLink :: PathEnd
+          -> Linked ts Request
+          -> m (Either () ())
+  tryLink _ _ = do
     PathInfo actualPath <- get
     pure $ if null actualPath
-           then Found ()
-           else NotFound ()
+           then Right ()
+           else Left ()
 
 
 -- | A middleware that literally matches path @s@.
@@ -116,7 +119,7 @@ instance MonadState PathInfo m => Trait PathEnd Request m where
 path :: forall s ts m a. (KnownSymbol s, MonadRouter m)
      => RequestMiddleware' m ts (Path s:ts) a
 path handler = Kleisli $
-  probe @(Path s) >=> either (const rejectRoute) (runKleisli handler)
+  probe Path >=> either (const rejectRoute) (runKleisli handler)
 
 -- | A middleware that captures a path variable from a single path
 -- component.
@@ -134,12 +137,12 @@ path handler = Kleisli $
 pathVar :: forall tag val ts m a. (FromHttpApiData val, MonadRouter m)
         => RequestMiddleware' m ts (PathVar tag val:ts) a
 pathVar handler = Kleisli $
-  probe @(PathVar tag val) >=> either (const rejectRoute) (runKleisli handler)
+  probe PathVar >=> either (const rejectRoute) (runKleisli handler)
 
 -- | A middleware that verifies that end of path is reached.
 pathEnd :: MonadRouter m => RequestMiddleware' m ts (PathEnd:ts) a
 pathEnd handler = Kleisli $
-  probe @PathEnd >=> either (const rejectRoute) (runKleisli handler)
+  probe PathEnd >=> either (const rejectRoute) (runKleisli handler)
 
 -- | Produces middleware(s) to match an optional HTTP method and some
 -- path components.
@@ -220,8 +223,7 @@ toMatchExp s = case List.words s of
                    & filter (/= "")
                    & fmap (splitOn ':')
                    & List.foldr joinPath []
-                   & fmap toPathExp
-                   & sequence
+                   & mapM toPathExp
 
     joinPath :: NonEmpty String -> [NonEmpty String] -> [NonEmpty String]
     joinPath p []                    = [p]

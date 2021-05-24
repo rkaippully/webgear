@@ -64,12 +64,12 @@ getUserHandler = Kleisli $ \request -> do
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
-                  , Have [IntUserId, JSONRequestBody User] req
+                  , Have [IntUserId, JSONBody User] req
                   )
                => Handler' m req User
 putUserHandler = Kleisli $ \request -> do
   let uid   = get (Proxy @IntUserId) request
-      user  = get (Proxy @(JSONRequestBody User)) request
+      user  = get (Proxy @(JSONBody User)) request
       user' = user { userId = UserId uid }
   store <- ask
   addUser store user'

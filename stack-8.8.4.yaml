@@ -1,6 +1,6 @@
 resolver: lts-16.31
 
 packages:
-- ./webgear-server
-- ./webgear-examples
-- ./webgear-benchmarks
+  - ./webgear-server
+  - ./webgear-examples
+  - ./webgear-benchmarks
