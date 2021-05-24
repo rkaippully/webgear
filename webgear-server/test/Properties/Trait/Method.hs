@@ -9,7 +9,6 @@ import Test.QuickCheck (Arbitrary (arbitrary), Property, allProperties, elements
                         (=/=), (===))
 import Test.Tasty (TestTree)
 import Test.Tasty.QuickCheck (testProperties)
-
 import WebGear.Middlewares.Method
 import WebGear.Trait
 import WebGear.Types
@@ -24,11 +23,11 @@ instance Arbitrary MethodWrapper where
 prop_methodMatch :: Property
 prop_methodMatch = property $ \(MethodWrapper v) ->
   let
-    req = defaultRequest { requestMethod = renderStdMethod v }
+    req = linkzero $ defaultRequest { requestMethod = renderStdMethod v }
   in
-    case runIdentity (toAttribute @(Method GET) req) of
-      Found _    -> v === GET
-      NotFound e ->
+    case runIdentity (tryLink (Method :: Method GET) req) of
+      Right _ -> v === GET
+      Left e  ->
         expectedMethod e === methodGet .&&. actualMethod e =/= methodGet
 
 

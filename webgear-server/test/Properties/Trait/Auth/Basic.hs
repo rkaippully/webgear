@@ -4,7 +4,8 @@ module Properties.Trait.Auth.Basic
 
 import Data.ByteString.Base64 (encode)
 import Data.ByteString.Char8 (elem)
-import Data.Functor.Identity (runIdentity)
+import Data.Either (fromRight)
+import Data.Functor.Identity (Identity, runIdentity)
 import Network.Wai (defaultRequest)
 import Prelude hiding (elem)
 import Test.QuickCheck (Discard (..), Property, allProperties, counterexample, property, (.&&.),
@@ -12,8 +13,9 @@ import Test.QuickCheck (Discard (..), Property, allProperties, counterexample, p
 import Test.QuickCheck.Instances ()
 import Test.Tasty (TestTree)
 import Test.Tasty.QuickCheck (testProperties)
-
 import WebGear.Middlewares.Auth.Basic
+import WebGear.Middlewares.Auth.Util (AuthorizationHeader)
+import WebGear.Middlewares.Header (Header' (Header'))
 import WebGear.Trait
 import WebGear.Types
 
@@ -26,13 +28,25 @@ prop_basicAuth = property f
       | otherwise =
           let
             hval = "Basic " <> encode (username <> ":" <> password)
-            req = defaultRequest { requestHeaders = [("Authorization", hval)] }
+
+            req :: Linked '[AuthorizationHeader "Basic"] Request
+            req = fromRight undefined
+                  $ runIdentity
+                  $ probe Header'
+                  $ linkzero
+                  $ defaultRequest { requestHeaders = [("Authorization", hval)] }
+
+            toBasicAttribute :: Credentials -> Identity (Either () Credentials)
+            toBasicAttribute = pure . Right
+
+            authCfg :: BasicAuth Identity () Credentials
+            authCfg = BasicAuth'{..}
           in
-            case runIdentity (toAttribute @BasicAuth req) of
-              Found creds ->
+            case runIdentity (tryLink authCfg req) of
+              Right creds ->
                 credentialsUsername creds === Username username
                 .&&. credentialsPassword creds === Password password
-              NotFound e  ->
+              Left e  ->
                 counterexample ("Unexpected failure: " <> show e) (property False)
 
 

@@ -8,7 +8,7 @@
 -- Basic authentication support.
 --
 module WebGear.Middlewares.Auth.Basic
-  ( BasicAuth'
+  ( BasicAuth' (..)
   , BasicAuth
   , BasicAuthConfig (..)
   , Realm (..)
