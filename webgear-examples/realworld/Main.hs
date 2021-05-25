@@ -9,7 +9,7 @@ module Main where
 import qualified API.User as User
 import Control.Monad.Reader (runReaderT)
 import qualified Crypto.JWT as JWT
-import Database.SQLite.Simple (Connection)
+import Database.Groundhog.Sqlite (Sqlite)
 import Model (withDBConn)
 import Network.HTTP.Types (StdMethod (..))
 import qualified Network.Wai as Wai
@@ -31,8 +31,7 @@ allRoutes = do
   <|> [route| GET  /api/user        |] User.current
   <|> [route| PUT  /api/user        |] User.update
 
-
-application :: Connection -> JWT.JWK -> Wai.Application
+application :: Sqlite -> JWT.JWK -> Wai.Application
 application conn jwk = toApplication $ transform appToRouter allRoutes
   where
     appToRouter :: AppM a -> Router a

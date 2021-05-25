@@ -11,13 +11,13 @@ import Control.Monad.Reader (MonadPlus, MonadReader, ReaderT (..), asks, lift)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad.Time (MonadTime (..))
 import qualified Crypto.JWT as JWT
-import Database.SQLite.Simple (Connection)
+import Database.Groundhog.Sqlite (Sqlite)
 import WebGear
 
 
-newtype AppM a = AppM { unAppM :: ReaderT (Connection, JWT.JWK) Router a }
+newtype AppM a = AppM { unAppM :: ReaderT (Sqlite, JWT.JWK) Router a }
   deriving newtype ( Functor, Applicative, Alternative, Monad, MonadPlus, MonadThrow, MonadCatch
-                   , MonadReader (Connection, JWT.JWK), MonadError RouteError, MonadState PathInfo, MonadIO)
+                   , MonadReader (Sqlite, JWT.JWK), MonadError RouteError, MonadState PathInfo, MonadIO)
 
 instance MonadRouter AppM where
   rejectRoute = AppM $ lift rejectRoute
@@ -31,7 +31,7 @@ instance MonadTime AppM where
 instance JWT.MonadRandom AppM where
   getRandomBytes = liftIO . JWT.getRandomBytes
 
-askConnection :: AppM Connection
+askConnection :: AppM Sqlite
 askConnection = asks fst
 
 askJWK :: AppM JWT.JWK

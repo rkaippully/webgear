@@ -5,12 +5,26 @@
 
 packages:
 - completed:
-    hackage: sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
+    hackage: groundhog-0.11.0@sha256:ccc8b7ec204d3f93fb0113f8feaab5f0f16663003bb95162b6c318fc85a466e2,2500
     pantry-tree:
-      size: 1930
-      sha256: e58b9955e483d51ee0966f8ba4384305d871480e2a38b32ee0fcd4573d74cf95
+      size: 883
+      sha256: 16c3f86c0c3fa8286ff2f311422bc5b3d30d76aebed9185e7ae2d7ad7adb2256
   original:
-    hackage: sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
+    hackage: groundhog-0.11.0@sha256:ccc8b7ec204d3f93fb0113f8feaab5f0f16663003bb95162b6c318fc85a466e2,2500
+- completed:
+    hackage: groundhog-sqlite-0.11.0@sha256:c64c2502f9317ae5c238bb105a8002543b354ab77140109b793924816eab0814,1338
+    pantry-tree:
+      size: 281
+      sha256: ed45281f6bab57f6af50a7fb30e2faaa44a6b9bf99f09836f57bb59466b3a4e0
+  original:
+    hackage: groundhog-sqlite-0.11.0@sha256:c64c2502f9317ae5c238bb105a8002543b354ab77140109b793924816eab0814,1338
+- completed:
+    hackage: groundhog-th-0.11@sha256:f529867d89bd8f9d317d354abaa7b5639135069ead6896a007b2e1e9d76d03ac,1338
+    pantry-tree:
+      size: 422
+      sha256: 213e1dd29276632a8cf99ba10f95d76153cef5a7b227d5b0952790dcaba1a7c9
+  original:
+    hackage: groundhog-th-0.11@sha256:f529867d89bd8f9d317d354abaa7b5639135069ead6896a007b2e1e9d76d03ac,1338
 - completed:
     hackage: direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
     pantry-tree:

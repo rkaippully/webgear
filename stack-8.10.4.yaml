@@ -4,3 +4,8 @@ packages:
   - ./webgear-server
   - ./webgear-examples
   - ./webgear-benchmarks
+
+extra-deps:
+  - groundhog-0.11.0@sha256:ccc8b7ec204d3f93fb0113f8feaab5f0f16663003bb95162b6c318fc85a466e2,2500
+  - groundhog-th-0.11@sha256:f529867d89bd8f9d317d354abaa7b5639135069ead6896a007b2e1e9d76d03ac,1338
+  - groundhog-sqlite-0.11.0@sha256:c64c2502f9317ae5c238bb105a8002543b354ab77140109b793924816eab0814,1338

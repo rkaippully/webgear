@@ -66,7 +66,9 @@ executable realworld
                     , base                  >=4.12.0.0 && <5
                     , bytestring            ==0.10.*
                     , cryptonite            >=0.25
-                    , sqlite-simple         >=0.4.16.0
+                    , groundhog             >=0.10.0
+                    , groundhog-th          >=0.10.2
+                    , groundhog-sqlite      >=0.10.0
                     , http-types            ==0.12.*
                     , jose                  >=0.8.2.0
                     , lens                  >=4.17.1
@@ -89,6 +91,7 @@ executable realworld
   hs-source-dirs:     realworld
   main-is:            Main.hs
   other-modules:      Types
+                    , Entities
                     , Model
                     , API.Util
                     , API.User

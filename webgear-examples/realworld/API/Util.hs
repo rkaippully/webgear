@@ -8,14 +8,13 @@ module API.Util where
 
 import Control.Lens (view)
 import qualified Crypto.JWT as JWT
-import Model
 import Text.Read (readMaybe)
 import Types
 import WebGear
 
 
-type RequiredAuth = JWTAuth' Required "token" AppM () PrimaryKey
-type OptionalAuth = JWTAuth' Optional "token" AppM () PrimaryKey
+type RequiredAuth = JWTAuth' Required "token" AppM () Int
+type OptionalAuth = JWTAuth' Optional "token" AppM () Int
 
 -- Middleware for JWT authentication with "token" scheme
 requiredJWTAuth :: RequestMiddleware' AppM req (RequiredAuth : req) a
@@ -27,7 +26,7 @@ requiredJWTAuth handler = Kleisli $ \request -> do
     jwtAuthRealm = "realworld"
     jwtValidationSettings = JWT.defaultJWTValidationSettings $ const True
 
-    toJWTAttribute :: JWT.ClaimsSet -> AppM (Either () PrimaryKey)
+    toJWTAttribute :: JWT.ClaimsSet -> AppM (Either () Int)
     toJWTAttribute claims = pure $
       case view JWT.claimSub claims >>= readMaybe . unpack . view JWT.string of
         Nothing  -> Left ()
