@@ -36,7 +36,7 @@ import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import WebGear.Middlewares.Auth.Util (AuthToken (..), AuthorizationHeader, Realm (..),
                                       authorizationHeader, respondUnauthorized)
 import WebGear.Modifiers (Existence (..))
-import WebGear.Trait (Has (..), Linked, Trait (..), transcribe)
+import WebGear.Trait (HasTrait (..), Linked, Trait (..), pick, transcribe)
 import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response, forbidden403)
 
 
@@ -70,7 +70,7 @@ data JWTAuthError e = JWTAuthHeaderMissing
 parseJWT :: AuthToken scheme -> Either JWT.JWTError JWT.SignedJWT
 parseJWT AuthToken{..} = JWT.decodeCompact $ fromStrict authToken
 
-instance (Has (AuthorizationHeader scheme) ts, MonadIO m, MonadTime m) => Trait (JWTAuth' Required scheme m e a) ts Request m where
+instance (HasTrait (AuthorizationHeader scheme) ts, MonadIO m, MonadTime m) => Trait (JWTAuth' Required scheme m e a) ts Request m where
   type Attribute (JWTAuth' Required scheme m e a) Request = a
   type Absence (JWTAuth' Required scheme m e a) Request = JWTAuthError e
 
@@ -78,7 +78,7 @@ instance (Has (AuthorizationHeader scheme) ts, MonadIO m, MonadTime m) => Trait 
           -> Linked ts Request
           -> m (Either (JWTAuthError e) a)
   tryLink JWTAuth'{..} r =
-    case get (Proxy @(AuthorizationHeader scheme)) r of
+    case pick @(AuthorizationHeader scheme) (from r) of
       Nothing            -> pure $ Left JWTAuthHeaderMissing
       Just (Left _)      -> pure $ Left JWTAuthSchemeMismatch
       Just (Right token) -> either (pure . Left . JWTAuthTokenBadFormat) validateJWT (parseJWT token)
@@ -88,7 +88,7 @@ instance (Has (AuthorizationHeader scheme) ts, MonadIO m, MonadTime m) => Trait 
         claims <- withExceptT JWTAuthTokenBadFormat $ JWT.verifyClaims jwtValidationSettings jwkSet jwt
         lift (toJWTAttribute claims) >>= either (throwError . JWTAuthAttributeError) pure
 
-instance (Has (AuthorizationHeader scheme) ts, MonadIO m, MonadTime m) => Trait (JWTAuth' Optional scheme m e a) ts Request m where
+instance (HasTrait (AuthorizationHeader scheme) ts, MonadIO m, MonadTime m) => Trait (JWTAuth' Optional scheme m e a) ts Request m where
   type Attribute (JWTAuth' Optional scheme m e a) Request = Either (JWTAuthError e) a
   type Absence (JWTAuth' Optional scheme m e a) Request = Void
 

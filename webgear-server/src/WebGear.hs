@@ -44,7 +44,7 @@ module WebGear
   , module Data.Text
   , module Web.HttpApiData
   , module WebGear.Middlewares
-  , module WebGear.Handlers.Dir
+  , module WebGear.Handlers.Static
   , module WebGear.Trait
   , module WebGear.Types
   ) where
@@ -59,7 +59,7 @@ import Web.HttpApiData (FromHttpApiData (..))
 
 import qualified Network.Wai as Wai
 
-import WebGear.Handlers.Dir
+import WebGear.Handlers.Static
 import WebGear.Middlewares
 import WebGear.Trait
 import WebGear.Types

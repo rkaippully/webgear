@@ -27,13 +27,12 @@ import Data.Bifunctor (first)
 import Data.ByteString (ByteString)
 import Data.ByteString.Base64 (decodeLenient)
 import Data.ByteString.Char8 (intercalate, split)
-import Data.Proxy (Proxy (..))
 import Data.String (IsString)
 import Data.Void (Void, absurd)
 import WebGear.Middlewares.Auth.Util (AuthToken (..), AuthorizationHeader, Realm (..),
                                       authorizationHeader, respondUnauthorized)
 import WebGear.Modifiers (Existence (..))
-import WebGear.Trait (Has (..), Linked, Trait (..), transcribe)
+import WebGear.Trait (HasTrait (..), Linked, Trait (..), pick, transcribe)
 import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response, forbidden403)
 
 
@@ -79,7 +78,7 @@ parseCreds AuthToken{..} =
     u:ps -> pure $ Credentials (Username u) (Password $ intercalate ":" ps)
 
 
-instance (Has (AuthorizationHeader "Basic") ts, Monad m) => Trait (BasicAuth' Required m e a) ts Request m where
+instance (HasTrait (AuthorizationHeader "Basic") ts, Monad m) => Trait (BasicAuth' Required m e a) ts Request m where
   type Attribute (BasicAuth' Required m e a) Request = a
   type Absence (BasicAuth' Required m e a) Request = BasicAuthError e
 
@@ -87,7 +86,7 @@ instance (Has (AuthorizationHeader "Basic") ts, Monad m) => Trait (BasicAuth' Re
           -> Linked ts Request
           -> m (Either (BasicAuthError e) a)
   tryLink BasicAuth'{..} r =
-    case get (Proxy @(AuthorizationHeader "Basic")) r of
+    case pick @(AuthorizationHeader "Basic") (from r) of
       Nothing            -> pure $ Left BasicAuthHeaderMissing
       Just (Left _)      -> pure $ Left BasicAuthSchemeMismatch
       Just (Right token) -> either (pure . Left) validateCreds (parseCreds token)
@@ -95,7 +94,7 @@ instance (Has (AuthorizationHeader "Basic") ts, Monad m) => Trait (BasicAuth' Re
       validateCreds :: Credentials -> m (Either (BasicAuthError e) a)
       validateCreds creds = first BasicAuthAttributeError <$> toBasicAttribute creds
 
-instance (Has (AuthorizationHeader "Basic") ts, Monad m) => Trait (BasicAuth' Optional m e a) ts Request m where
+instance (HasTrait (AuthorizationHeader "Basic") ts, Monad m) => Trait (BasicAuth' Optional m e a) ts Request m where
   type Attribute (BasicAuth' Optional m e a) Request = Either (BasicAuthError e) a
   type Absence (BasicAuth' Optional m e a) Request = Void
 

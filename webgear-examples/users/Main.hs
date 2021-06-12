@@ -1,27 +1,31 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE DerivingVia           #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingVia                #-}
+{-# LANGUAGE DuplicateRecordFields      #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE TypeApplications           #-}
 
 module Main where
 
 import Control.Applicative (Alternative (..))
 import Control.Arrow (Kleisli (..))
+import Control.Monad (MonadPlus)
+import Control.Monad.Except (MonadError)
 import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.Reader (MonadReader (..), ReaderT, runReaderT)
+import Control.Monad.Reader (MonadReader (..), ReaderT (..))
+import Control.Monad.State.Strict (MonadState)
+import Control.Monad.Trans (lift)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.HashMap.Strict as HM
 import Data.Hashable (Hashable)
 import Data.IORef (IORef, modifyIORef, newIORef, readIORef)
 import Data.Maybe (isJust)
-import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import Data.Time.Calendar (Day)
 import GHC.Generics (Generic)
@@ -80,10 +84,9 @@ removeUser store@(UserStore ref) uid = liftIO $ do
 -- Routes of the API
 --------------------------------------------------------------------------------
 type IntUserId = PathVar "userId" Int
+type Auth = BasicAuth App () Credentials
 
-type Auth = BasicAuth Router () Credentials
-
-authConfig :: BasicAuthConfig Router () Credentials
+authConfig :: BasicAuthConfig App () Credentials
 authConfig = BasicAuthConfig
   { basicAuthRealm   = "Wakanda"
   , toBasicAttribute = \creds -> pure $
@@ -92,58 +95,64 @@ authConfig = BasicAuthConfig
                          else Left ()
   }
 
-userRoutes :: (forall req a. Handler' (ReaderT UserStore IO) req a -> Handler req a)
-           -> Handler '[] ByteString
-userRoutes handler = allRoutes
-  where
-    allRoutes :: Handler '[] ByteString
-    allRoutes = [match| /v1/users/userId:Int |]   -- non-TH version: path @"/v1/users" . pathVar @"userId" @Int
-                (publicRoutes <|> protectedRoutes)
+-- The route handlers run in the App monad
+newtype App a = App { unApp :: ReaderT UserStore Router a }
+  deriving newtype ( Functor, Applicative, Alternative, Monad, MonadPlus
+                   , MonadIO , MonadReader UserStore, MonadError RouteError, MonadState PathInfo)
 
-    -- | Routes accessible without any authentication
-    publicRoutes :: Has IntUserId req => Handler req ByteString
-    publicRoutes = getUser
+instance MonadRouter App where
+  rejectRoute = App $ lift rejectRoute
+  errorResponse = App . lift . errorResponse
+  catchErrorResponse (App (ReaderT action)) handler = App $ ReaderT $ \r ->
+    catchErrorResponse (action r) (flip runReaderT r . unApp . handler)
 
-    -- | Routes that require HTTP basic authentication
-    protectedRoutes :: Has IntUserId req => Handler req ByteString
-    protectedRoutes = basicAuth authConfig
-                      $ putUser <|> deleteUser
+userRoutes :: Handler' App '[] ByteString
+userRoutes = [match| /v1/users/userId:Int |]   -- non-TH version: path @"/v1/users" . pathVar @"userId" @Int
+               (publicRoutes <|> protectedRoutes)
 
-    getUser :: Has IntUserId req => Handler req ByteString
-    getUser = method @GET
-              $ jsonResponseBody @User
-              $ handler getUserHandler
+-- | Routes accessible without any authentication
+publicRoutes :: HasTrait IntUserId req => Handler' App req ByteString
+publicRoutes = getUser
 
-    putUser :: Have [Auth, IntUserId] req => Handler req ByteString
-    putUser = method @PUT
-              $ requestContentTypeHeader @"application/json"
-              $ jsonRequestBody @User
-              $ jsonResponseBody @User
-              $ handler putUserHandler
+-- | Routes that require HTTP basic authentication
+protectedRoutes :: HasTrait IntUserId req => Handler' App req ByteString
+protectedRoutes = basicAuth authConfig
+                  $ putUser <|> deleteUser
 
-    deleteUser :: Have [Auth, IntUserId] req => Handler req ByteString
-    deleteUser = method @DELETE
-                 $ handler deleteUserHandler
+getUser :: HasTrait IntUserId req => Handler' App req ByteString
+getUser = method @GET
+          $ jsonResponseBody @User
+          $ getUserHandler
+
+putUser :: HaveTraits [Auth, IntUserId] req => Handler' App req ByteString
+putUser = method @PUT
+          $ requestContentTypeHeader @"application/json"
+          $ jsonRequestBody @User
+          $ jsonResponseBody @User
+          $ putUserHandler
+
+deleteUser :: HaveTraits [Auth, IntUserId] req => Handler' App req ByteString
+deleteUser = method @DELETE deleteUserHandler
 
 getUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
-                  , Has IntUserId req
+                  , HasTrait IntUserId req
                   )
                => Handler' m req User
 getUserHandler = Kleisli $ \request -> do
-  let uid = get (Proxy @IntUserId) request
+  let uid = pick @IntUserId $ from request
   store <- ask
   user <- lookupUser store (UserId uid)
   pure $ maybe notFound404 ok200 user
 
 putUserHandler :: ( MonadReader UserStore m
                   , MonadIO m
-                  , Have [Auth, IntUserId, JSONBody User]  req
+                  , HaveTraits [Auth, IntUserId, JSONBody User]  req
                   )
                => Handler' m req User
 putUserHandler = Kleisli $ \request -> do
-  let uid  = get (Proxy @IntUserId) request
-      user = get (Proxy @(JSONBody User)) request
+  let uid  = pick @IntUserId $ from request
+      user = pick @(JSONBody User) $ from request
       user'       = user { userId = UserId uid }
   store <- ask
   addUser store user'
@@ -152,20 +161,20 @@ putUserHandler = Kleisli $ \request -> do
 
 deleteUserHandler :: ( MonadReader UserStore m
                      , MonadIO m
-                     , Have [Auth, IntUserId] req
+                     , HaveTraits [Auth, IntUserId] req
                      )
                   => Handler' m req ByteString
 deleteUserHandler = Kleisli $ \request -> do
-  let uid = get (Proxy @IntUserId) request
+  let uid = pick @IntUserId $ from request
   store <- ask
   found <- removeUser store (UserId uid)
   if found
     then logActivity request "deleted" >> pure noContent204
     else pure notFound404
 
-logActivity :: (MonadIO m, Has Auth req) => Linked req Request -> String -> m ()
+logActivity :: (MonadIO m, HasTrait Auth req) => Linked req Request -> String -> m ()
 logActivity request msg = do
-  let name = credentialsUsername $ get (Proxy @Auth) request
+  let name = credentialsUsername $ pick @Auth $ from request
   liftIO $ putStrLn $ msg <> ": by " <> show name
 
 
@@ -173,10 +182,10 @@ logActivity request msg = do
 -- | The application server
 --------------------------------------------------------------------------------
 application :: UserStore -> Application
-application store req cont = runRoute (userRoutes $ transform appToRouter) req >>= cont
+application store = toApplication $ transform appToRouter userRoutes
   where
-    appToRouter :: ReaderT UserStore IO a -> Router a
-    appToRouter = liftIO . flip runReaderT store
+    appToRouter :: App a -> Router a
+    appToRouter = flip runReaderT store . unApp
 
 main :: IO ()
 main = do

@@ -66,20 +66,27 @@ executable realworld
                     , base                  >=4.12.0.0 && <5
                     , bytestring            ==0.10.*
                     , cryptonite            >=0.25
-                    , groundhog             >=0.10.0
-                    , groundhog-th          >=0.10.2
-                    , groundhog-sqlite      >=0.10.0
+                    , esqueleto             >=3.0.0 && <3.5
                     , http-types            ==0.12.*
                     , jose                  >=0.8.2.0
                     , lens                  >=4.17.1
+                    , monad-logger          >=0.3.31 && <0.4
                     , monad-time            ==0.3.1.0
                     , mtl                   ==2.2.*
+                    , persistent            >=2.9.2 && <2.12
+                    , persistent-sqlite     >=2.9.3 && <2.12
+                    , persistent-template   >=2.6.0 && <2.10
+                    , random                ==1.1.*
+                    , relude                >=0.5.0 && <0.8
+                    , resource-pool         ==0.2.*
                     , safe-exceptions       ==0.1.*
                     , text                  ==1.2.*
                     , time                  >=1.8.0.2 && <1.10
+                    , uri-encode            ==1.5.*
                     , wai                   ==3.2.*
                     , warp                  ==3.3.*
                     , webgear-server
+  default-extensions: NoImplicitPrelude
   ghc-options:        -threaded
                       -rtsopts
                       -with-rtsopts=-N
@@ -90,8 +97,17 @@ executable realworld
                       -Wredundant-constraints
   hs-source-dirs:     realworld
   main-is:            Main.hs
-  other-modules:      Types
-                    , Entities
-                    , Model
-                    , API.Util
+  other-modules:      API.Article
+                    , API.Comment
+                    , API.Profile
+                    , API.Tag
                     , API.User
+                    , API.Common
+                    , Model.Entities
+                    , Model.Article
+                    , Model.Comment
+                    , Model.Profile
+                    , Model.Tag
+                    , Model.User
+                    , Model.Common
+

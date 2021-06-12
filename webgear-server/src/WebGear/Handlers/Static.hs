@@ -4,8 +4,9 @@
 -- Maintainer       : rkaippully@gmail.com
 --
 -- Handler serving static resources
-module WebGear.Handlers.Dir
-  ( dir
+module WebGear.Handlers.Static
+  ( serveDir
+  , serveFile
   ) where
 
 import Control.Arrow (Kleisli (..))
@@ -23,11 +24,11 @@ import qualified Data.Text as Text
 import qualified Network.Mime as Mime
 
 
-dir :: (MonadRouter m, MonadIO m)
-    => FilePath          -- ^ directory to serve
-    -> Maybe FilePath    -- ^ index filename for the root directory
-    -> Handler' m req LBS.ByteString
-dir root index = Kleisli $ \_req -> do
+serveDir :: (MonadRouter m, MonadIO m)
+         => FilePath          -- ^ directory to serve
+         -> Maybe FilePath    -- ^ index filename for the root directory
+         -> Handler' m req LBS.ByteString
+serveDir root index = Kleisli $ \_req -> do
   PathInfo restPath <- get
   case restPath of
     [] -> serveIndex

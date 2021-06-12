@@ -3,31 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: groundhog-0.11.0@sha256:ccc8b7ec204d3f93fb0113f8feaab5f0f16663003bb95162b6c318fc85a466e2,2500
-    pantry-tree:
-      size: 883
-      sha256: 16c3f86c0c3fa8286ff2f311422bc5b3d30d76aebed9185e7ae2d7ad7adb2256
-  original:
-    hackage: groundhog-0.11.0@sha256:ccc8b7ec204d3f93fb0113f8feaab5f0f16663003bb95162b6c318fc85a466e2,2500
-- completed:
-    hackage: groundhog-th-0.11@sha256:f529867d89bd8f9d317d354abaa7b5639135069ead6896a007b2e1e9d76d03ac,1338
-    pantry-tree:
-      size: 422
-      sha256: 213e1dd29276632a8cf99ba10f95d76153cef5a7b227d5b0952790dcaba1a7c9
-  original:
-    hackage: groundhog-th-0.11@sha256:f529867d89bd8f9d317d354abaa7b5639135069ead6896a007b2e1e9d76d03ac,1338
-- completed:
-    hackage: groundhog-sqlite-0.11.0@sha256:c64c2502f9317ae5c238bb105a8002543b354ab77140109b793924816eab0814,1338
-    pantry-tree:
-      size: 281
-      sha256: ed45281f6bab57f6af50a7fb30e2faaa44a6b9bf99f09836f57bb59466b3a4e0
-  original:
-    hackage: groundhog-sqlite-0.11.0@sha256:c64c2502f9317ae5c238bb105a8002543b354ab77140109b793924816eab0814,1338
+packages: []
 snapshots:
 - completed:
-    size: 567037
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
-    sha256: d7d8d5106e53d1669964bd8bd2b0f88a5ad192d772f5376384b76738fd992311
-  original: lts-17.9
+    size: 567679
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/15.yaml
+    sha256: 72e87841a0ab5b72f6f018e8ee692fd972b7bb32a944990f028e10d6eb528e63
+  original: lts-17.15

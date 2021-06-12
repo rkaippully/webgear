@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Copyright        : (c) Raghu Kaippully, 2020-2021
@@ -29,14 +30,15 @@ module WebGear.Trait
   , transcribe
 
     -- * Retrive trait attributes from linked values
-  , Has (..)
-  , Have
+  , HasTrait (..)
+  , pick
+  , HaveTraits
 
   , MissingTrait
   ) where
 
 import Data.Kind (Constraint, Type)
-import Data.Proxy (Proxy (..))
+import Data.Tagged (Tagged (..), untag)
 import GHC.TypeLits (ErrorMessage (..), TypeError)
 
 
@@ -98,24 +100,33 @@ transcribe t2 l@Linked{..} = fmap link <$> tryLink t2 l
 
 -- | Constraint that proves that the trait @t@ is present in the list
 -- of traits @ts@.
-class Has t ts where
+class HasTrait t ts where
   -- | Get the attribute associated with @t@ from a linked value
-  get :: Proxy t -> Linked ts a -> Attribute t a
+  from :: Linked ts a -> Tagged t (Attribute t a)
 
-instance Has t (t:ts) where
-  get :: Proxy t -> Linked (t:ts) a -> Attribute t a
-  get _ (Linked (lv, _) _) = lv
+instance HasTrait t (t:ts) where
+  from :: Linked (t:ts) a -> Tagged t (Attribute t a)
+  from (Linked (lv, _) _) = Tagged lv
 
-instance {-# OVERLAPPABLE #-} Has t ts => Has t (t':ts) where
-  get :: Proxy t -> Linked (t':ts) a -> Attribute t a
-  get _ l = get (Proxy @t) (rightLinked l)
+instance {-# OVERLAPPABLE #-} HasTrait t ts => HasTrait t (t':ts) where
+  from :: Linked (t':ts) a -> Tagged t (Attribute t a)
+  from l = from $ rightLinked l
     where
       rightLinked :: Linked (q:qs) b -> Linked qs b
       rightLinked (Linked (_, rv) a) = Linked rv a
 
+-- | Retrieve a trait.
+--
+-- @pick@ provides a good DSL to retrieve a trait from a linked value
+-- like this:
+--
+-- > pick @t $ from val
+pick :: Tagged t a -> a
+pick = untag
+
 -- For better type errors
-instance TypeError (MissingTrait t) => Has t '[] where
-   get = undefined
+instance TypeError (MissingTrait t) => HasTrait t '[] where
+   from = undefined
 
 -- | Type error for nicer UX of missing traits
 type MissingTrait t = Text "The request doesn't have the trait ‘" :<>: ShowType t :<>: Text "’."
@@ -130,6 +141,6 @@ type MissingTrait t = Text "The request doesn't have the trait ‘" :<>: ShowTyp
 
 -- | Constraint that proves that all the traits in the list @ts@ are
 -- also present in the list @qs@.
-type family Have ts qs :: Constraint where
-  Have '[]    qs = ()
-  Have (t:ts) qs = (Has t qs, Have ts qs)
+type family HaveTraits ts qs :: Constraint where
+  HaveTraits '[]    qs = ()
+  HaveTraits (t:ts) qs = (HasTrait t qs, HaveTraits ts qs)

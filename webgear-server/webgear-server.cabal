@@ -59,6 +59,7 @@ common webgear-common
                     , mtl                   ==2.2.*
                     , network               >=2.8 && <3.2
                     , safe-exceptions       ==0.1.*
+                    , tagged                ==0.8.*
                     , template-haskell      >=2.14.0.0 && <3
                     , text                  ==1.2.*
                     , unordered-containers  ==0.2.*
@@ -84,7 +85,7 @@ library
                     , WebGear.Middlewares.Method
                     , WebGear.Middlewares.Params
                     , WebGear.Middlewares.Path
-                    , WebGear.Handlers.Dir
+                    , WebGear.Handlers.Static
   other-modules:      Paths_webgear_server
                     , WebGear.Util
   autogen-modules:    Paths_webgear_server
