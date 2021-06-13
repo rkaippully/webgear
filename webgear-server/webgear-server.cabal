@@ -53,10 +53,13 @@ common webgear-common
                     , bytestring            >=0.10.8.2 && <0.12
                     , bytestring-conversion ==0.3.*
                     , case-insensitive      ==1.2.*
+                    , filepath              ==1.4.*
                     , http-api-data         ==0.4.*
                     , http-types            ==0.12.*
                     , mtl                   ==2.2.*
                     , network               >=2.8 && <3.2
+                    , safe-exceptions       ==0.1.*
+                    , tagged                ==0.8.*
                     , template-haskell      >=2.14.0.0 && <3
                     , text                  ==1.2.*
                     , unordered-containers  ==0.2.*
@@ -66,10 +69,6 @@ common webgear-common
                       -Wincomplete-record-updates
                       -Wincomplete-uni-patterns
                       -Wredundant-constraints
-
-  if impl(ghc >= 8.8.1)
-    ghc-options:      -fwrite-ide-info
-                      -hiedir=.hie
                       
 library
   import:             webgear-common
@@ -79,15 +78,21 @@ library
                     , WebGear.Types
                     , WebGear.Middlewares
                     , WebGear.Middlewares.Auth.Basic
+                    , WebGear.Middlewares.Auth.JWT
+                    , WebGear.Middlewares.Auth.Util
                     , WebGear.Middlewares.Body
                     , WebGear.Middlewares.Header
                     , WebGear.Middlewares.Method
                     , WebGear.Middlewares.Params
                     , WebGear.Middlewares.Path
+                    , WebGear.Handlers.Static
   other-modules:      Paths_webgear_server
                     , WebGear.Util
   autogen-modules:    Paths_webgear_server
   hs-source-dirs:     src
+  build-depends:      mime-types           ==0.1.*
+                    , monad-time           ==0.3.1.0
+                    , jose                 >=0.8.2.0 && <0.9
 
 test-suite webgear-server-test
   import:             webgear-common

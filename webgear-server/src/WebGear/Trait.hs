@@ -1,6 +1,7 @@
+{-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
--- Copyright        : (c) Raghu Kaippully, 2020
+-- Copyright        : (c) Raghu Kaippully, 2020-2021
 -- License          : MPL-2.0
 -- Maintainer       : rkaippully@gmail.com
 --
@@ -20,30 +21,30 @@
 module WebGear.Trait
   ( -- * Core Types
     Trait (..)
-  , Result (..)
   , Linked
 
     -- * Linking values with attributes
-  , link
+  , linkzero
   , unlink
   , probe
-  , remove
+  , transcribe
 
     -- * Retrive trait attributes from linked values
-  , Has (..)
-  , Have
+  , HasTrait (..)
+  , pick
+  , HaveTraits
 
   , MissingTrait
   ) where
 
 import Data.Kind (Constraint, Type)
-import Data.Proxy (Proxy (..))
+import Data.Tagged (Tagged (..), untag)
 import GHC.TypeLits (ErrorMessage (..), TypeError)
 
 
 -- | A trait is an optional attribute @t@ associated with a value
 -- @a@.
-class Monad m => Trait t a m where
+class Monad m => Trait (t :: Type) (ts :: [Type]) a m where
   -- | Type of the associated attribute when the trait holds for a
   -- value
   type Attribute t a :: Type
@@ -52,96 +53,86 @@ class Monad m => Trait t a m where
   -- value. This could be an error message, parse error etc.
   type Absence t a :: Type
 
-  -- | Attempt to deduce the trait attribute from the value @a@. It is
-  -- possible that deducing a trait's presence can alter the value,
-  -- hence this function returns a possibly updated value along with
-  -- the trait attribute on success.
-  toAttribute :: a -> m (Result t a)
+  -- | Attempt to deduce the trait attribute from the value @a@.
+  tryLink :: t -> Linked ts a -> m (Either (Absence t a) (Attribute t a))
 
 
--- | The result of 'toAttribute' - either a successful deduction of an
--- attribute or an error.
-data Result t a = NotFound (Absence t a)
-                | Found (Attribute t a)
-
--- | A trivial derivable trait that is always present and whose
--- attribute does not carry any meaningful information.
-instance Monad m => Trait '[] a m where
-  type Attribute '[] a = ()
-  type Absence '[] a = ()
-
-  toAttribute :: a -> m (Result '[] a)
-  toAttribute = const $ pure $ Found ()
-
--- | Combination of many derivable traits all of which are present for
--- a value.
-instance (Trait t a m, Trait ts a m, Monad m) => Trait (t:ts) a m where
-  type Attribute (t:ts) a = (Attribute t a, Attribute ts a)
-  type Absence (t:ts) a = Either (Result t a) (Result ts a)
-
-  toAttribute :: a -> m (Result (t:ts) a)
-  toAttribute a = toAttribute @t a >>= \case
-    e@(NotFound _) -> pure $ NotFound $ Left e
-    Found l        -> toAttribute @ts a >>= \case
-      e@(NotFound _) -> pure $ NotFound $ Right e
-      Found r        -> pure $ Found (l, r)
-
+type family LinkedAttributes (ts :: [Type]) (a :: Type) where
+  LinkedAttributes '[] a = ()
+  LinkedAttributes (t:ts) a = (Attribute t a, LinkedAttributes ts a)
 
 -- | A value linked with a type-level list of traits.
 data Linked (ts :: [Type]) a = Linked
-    { linkAttribute :: !(Attribute ts a)
-    , unlink        :: !a                 -- ^ Retrive the value from a linked value
+    { linkAttribute :: !(LinkedAttributes ts a)
+    , unlink        :: !a  -- ^ Retrive the value from a linked value
     }
 
 -- | Wrap a value with an empty list of traits.
-link :: a -> Linked '[] a
-link = Linked ()
+linkzero :: a -> Linked '[] a
+linkzero = Linked ()
 
 -- | Attempt to link an additional trait with an already linked value
 -- via the 'toAttribute' operation. This can fail indicating an
 -- 'Absence' of the trait.
-probe :: forall t ts a m. Trait t a m
-      => Linked ts a
+probe :: forall t ts a m. Trait t ts a m
+      => t
+      -> Linked ts a
       -> m (Either (Absence t a) (Linked (t:ts) a))
-probe l = do
-  v <- toAttribute @t (unlink l)
-  pure $ mkLinked v l
+probe t l@Linked{..} = fmap link <$> tryLink t l
   where
-    mkLinked :: Result t a -> Linked ts a -> Either (Absence t a) (Linked (t:ts) a)
-    mkLinked (Found left) lv = Right $ Linked (left, linkAttribute lv) (unlink lv)
-    mkLinked (NotFound e) _  = Left e
+    link :: Attribute t a -> Linked (t:ts) a
+    link attr = Linked {linkAttribute = (attr, linkAttribute), ..}
 
--- | Remove the leading trait from the type-level list of traits
-remove :: Linked (t:ts) a -> Linked ts a
-remove l = Linked (snd $ linkAttribute l) (unlink l)
+-- | Reencode one trait to another.
+--
+-- Like 'probe', but instead of adding a new trait to the trait list,
+-- uses the first trait in the list to probe the presence of a new
+-- trait and replaces the old trait with the new one.
+transcribe :: forall t2 t1 ts a m. Trait t2 (t1:ts) a m
+           => t2
+           -> Linked (t1:ts) a
+           -> m (Either (Absence t2 a) (Linked (t2:ts) a))
+transcribe t2 l@Linked{..} = fmap link <$> tryLink t2 l
+  where
+    link :: Attribute t2 a -> Linked (t2:ts) a
+    link attr = Linked {linkAttribute = (attr, snd linkAttribute), ..}
 
 
 -- | Constraint that proves that the trait @t@ is present in the list
 -- of traits @ts@.
-class Has t ts where
+class HasTrait t ts where
   -- | Get the attribute associated with @t@ from a linked value
-  get :: Proxy t -> Linked ts a -> Attribute t a
+  from :: Linked ts a -> Tagged t (Attribute t a)
 
-instance Has t (t:ts) where
-  get :: Proxy t -> Linked (t:ts) a -> Attribute t a
-  get _ (Linked (lv, _) _) = lv
+instance HasTrait t (t:ts) where
+  from :: Linked (t:ts) a -> Tagged t (Attribute t a)
+  from (Linked (lv, _) _) = Tagged lv
 
-instance {-# OVERLAPPABLE #-} Has t ts => Has t (t':ts) where
-  get :: Proxy t -> Linked (t':ts) a -> Attribute t a
-  get _ l = get (Proxy @t) (rightLinked l)
+instance {-# OVERLAPPABLE #-} HasTrait t ts => HasTrait t (t':ts) where
+  from :: Linked (t':ts) a -> Tagged t (Attribute t a)
+  from l = from $ rightLinked l
     where
       rightLinked :: Linked (q:qs) b -> Linked qs b
       rightLinked (Linked (_, rv) a) = Linked rv a
 
+-- | Retrieve a trait.
+--
+-- @pick@ provides a good DSL to retrieve a trait from a linked value
+-- like this:
+--
+-- > pick @t $ from val
+pick :: Tagged t a -> a
+pick = untag
+
 -- For better type errors
-instance TypeError (MissingTrait t) => Has t '[] where
-   get = undefined
+instance TypeError (MissingTrait t) => HasTrait t '[] where
+   from = undefined
 
 -- | Type error for nicer UX of missing traits
 type MissingTrait t = Text "The request doesn't have the trait ‘" :<>: ShowType t :<>: Text "’."
                       :$$: Text ""
                       :$$: Text "Did you use a wrong trait type?"
-                      :$$: Text "For e.g., ‘PathVar \"foo\" Int’ instead of ‘PathVar \"foo\" String’?"
+                      :$$: Text "For e.g., ‘QueryParam \"foo\" Int’ instead of ‘QueryParam \"foo\" String’?"
                       :$$: Text ""
                       :$$: Text "Or did you forget to apply an appropriate middleware?"
                       :$$: Text "For e.g. The trait ‘JSONRequestBody Foo’ can be used with ‘jsonRequestBody @Foo’ middleware."
@@ -150,6 +141,6 @@ type MissingTrait t = Text "The request doesn't have the trait ‘" :<>: ShowTyp
 
 -- | Constraint that proves that all the traits in the list @ts@ are
 -- also present in the list @qs@.
-type family Have ts qs :: Constraint where
-  Have '[]    qs = ()
-  Have (t:ts) qs = (Has t qs, Have ts qs)
+type family HaveTraits ts qs :: Constraint where
+  HaveTraits '[]    qs = ()
+  HaveTraits (t:ts) qs = (HasTrait t qs, HaveTraits ts qs)

@@ -1,6 +1,6 @@
-resolver: lts-17.9
+resolver: lts-17.15
 
 packages:
-- ./webgear-server
-- ./webgear-examples
-- ./webgear-benchmarks
+  - ./webgear-server
+  - ./webgear-examples
+  - ./webgear-benchmarks

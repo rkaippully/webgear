@@ -1,11 +1,11 @@
 -- |
--- Copyright        : (c) Raghu Kaippully, 2020
+-- Copyright        : (c) Raghu Kaippully, 2020-2021
 -- License          : MPL-2.0
 -- Maintainer       : rkaippully@gmail.com
 --
 -- Middlewares related to HTTP methods.
 module WebGear.Middlewares.Method
-  ( Method
+  ( Method (..)
   , IsStdMethod (..)
   , MethodMismatch (..)
   , method
@@ -14,15 +14,13 @@ module WebGear.Middlewares.Method
 import Control.Arrow (Kleisli (..))
 import Control.Monad ((>=>))
 import Data.Proxy (Proxy (..))
-
-import WebGear.Trait (Result (..), Trait (..), probe)
-import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', requestMethod)
-
 import qualified Network.HTTP.Types as HTTP
+import WebGear.Trait (Linked, Trait (..), probe, unlink)
+import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', requestMethod)
 
 
 -- | A 'Trait' for capturing the HTTP method of a request
-data Method (t :: HTTP.StdMethod)
+data Method (t :: HTTP.StdMethod) = Method
 
 -- | Failure to match method against an expected value
 data MethodMismatch = MethodMismatch
@@ -30,19 +28,23 @@ data MethodMismatch = MethodMismatch
   , actualMethod   :: HTTP.Method
   }
 
-instance (IsStdMethod t, Monad m) => Trait (Method t) Request m where
-  type Attribute (Method t) Request = ()
+instance (IsStdMethod t, Monad m) => Trait (Method t) ts Request m where
+  type Attribute (Method t) Request = HTTP.StdMethod
   type Absence (Method t) Request = MethodMismatch
 
-  toAttribute :: Request -> m (Result (Method t) Request)
-  toAttribute r =
+  tryLink :: Method t
+          -> Linked ts Request
+          -> m (Either MethodMismatch HTTP.StdMethod)
+  tryLink _ r =
     let
-      expected = HTTP.renderStdMethod $ toStdMethod $ Proxy @t
-      actual = requestMethod r
+      m = toStdMethod $ Proxy @t
+      expected = HTTP.renderStdMethod m
+      actual = requestMethod $ unlink r
     in
-      pure $ if expected == actual
-             then Found ()
-             else NotFound $ MethodMismatch expected actual
+      pure $
+        if expected == actual
+        then Right m
+        else Left $ MethodMismatch expected actual
 
 
 -- | A typeclass to map a 'HTTP.StdMethod' from type level to term
@@ -82,4 +84,4 @@ instance IsStdMethod HTTP.PATCH where
 -- and path needs to be matched.
 method :: forall t m req a. (IsStdMethod t, MonadRouter m)
        => RequestMiddleware' m req (Method t:req) a
-method handler = Kleisli $ probe @(Method t) >=> either (const rejectRoute) (runKleisli handler)
+method handler = Kleisli $ probe Method >=> either (const rejectRoute) (runKleisli handler)

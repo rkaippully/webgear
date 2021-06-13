@@ -1,5 +1,5 @@
 -- |
--- Copyright        : (c) Raghu Kaippully, 2020
+-- Copyright        : (c) Raghu Kaippully, 2020-2021
 -- License          : MPL-2.0
 -- Maintainer       : rkaippully@gmail.com
 --
@@ -8,7 +8,7 @@
 module WebGear.Middlewares.Params
   ( -- * Traits
     QueryParam
-  , QueryParam'
+  , QueryParam' (..)
   , ParamNotFound (..)
   , ParamParseError (..)
 
@@ -21,6 +21,7 @@ module WebGear.Middlewares.Params
 
 import Control.Arrow (Kleisli (..))
 import Control.Monad ((>=>))
+import qualified Data.ByteString.Lazy as LBS
 import Data.List (find)
 import Data.Proxy (Proxy (..))
 import Data.String (fromString)
@@ -30,13 +31,10 @@ import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import Network.HTTP.Types (queryToQueryText)
 import Text.Printf (printf)
 import Web.HttpApiData (FromHttpApiData (..))
-
 import WebGear.Modifiers (Existence (..), ParseStyle (..))
-import WebGear.Trait (Result (..), Trait (..), probe)
+import WebGear.Trait (Linked, Trait (..), probe, unlink)
 import WebGear.Types (MonadRouter (..), Request, RequestMiddleware', Response (..), badRequest400,
                       queryString)
-
-import qualified Data.ByteString.Lazy as LBS
 
 
 -- | Capture a query parameter with a specified @name@ and convert it
@@ -48,7 +46,7 @@ type QueryParam (name :: Symbol) val = QueryParam' Required Strict name val
 -- @e@ denotes whether the query parameter is required to be
 -- present. The parse style parameter @p@ determines whether the
 -- conversion is applied strictly or leniently.
-data QueryParam' (e :: Existence) (p :: ParseStyle) (name :: Symbol) val
+data QueryParam' (e :: Existence) (p :: ParseStyle) (name :: Symbol) val = QueryParam'
 
 -- | Indicates a missing query parameter
 data ParamNotFound = ParamNotFound
@@ -59,51 +57,59 @@ newtype ParamParseError = ParamParseError Text
   deriving stock (Read, Show, Eq)
 
 deriveRequestParam :: (KnownSymbol name, FromHttpApiData val)
-                    => Proxy name -> Request -> (Maybe (Either Text val) -> r) -> r
+                    => Proxy name -> Linked ts Request -> (Maybe (Either Text val) -> r) -> r
 deriveRequestParam proxy req cont =
   let name = fromString $ symbolVal proxy
-      params = queryToQueryText $ queryString req
+      params = queryToQueryText $ queryString $ unlink req
   in cont $ parseQueryParam <$> (find ((== name) . fst) params >>= snd)
 
-instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Required Strict name val) Request m where
+instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Required Strict name val) ts Request m where
   type Attribute (QueryParam' Required Strict name val) Request = val
   type Absence (QueryParam' Required Strict name val) Request = Either ParamNotFound ParamParseError
 
-  toAttribute :: Request -> m (Result (QueryParam' Required Strict name val) Request)
-  toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> NotFound (Left ParamNotFound)
-    Just (Left e)  -> NotFound (Right $ ParamParseError e)
-    Just (Right x) -> Found x
+  tryLink :: QueryParam' Required Strict name val
+          -> Linked ts Request
+          -> m (Either (Either ParamNotFound ParamParseError) val)
+  tryLink _ r = pure $ deriveRequestParam (Proxy @name) r $ \case
+    Nothing        -> Left $ Left ParamNotFound
+    Just (Left e)  -> Left $ Right $ ParamParseError e
+    Just (Right x) -> Right x
 
-instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Strict name val) Request m where
+instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Strict name val) ts Request m where
   type Attribute (QueryParam' Optional Strict name val) Request = Maybe val
   type Absence (QueryParam' Optional Strict name val) Request = ParamParseError
 
-  toAttribute :: Request -> m (Result (QueryParam' Optional Strict name val) Request)
-  toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Found Nothing
-    Just (Left e)  -> NotFound $ ParamParseError e
-    Just (Right x) -> Found (Just x)
+  tryLink :: QueryParam' Optional Strict name val
+          -> Linked ts Request
+          -> m (Either ParamParseError (Maybe val))
+  tryLink _ r = pure $ deriveRequestParam (Proxy @name) r $ \case
+    Nothing        -> Right Nothing
+    Just (Left e)  -> Left $ ParamParseError e
+    Just (Right x) -> Right $ Just x
 
-instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Required Lenient name val) Request m where
+instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Required Lenient name val) ts Request m where
   type Attribute (QueryParam' Required Lenient name val) Request = Either Text val
   type Absence (QueryParam' Required Lenient name val) Request = ParamNotFound
 
-  toAttribute :: Request -> m (Result (QueryParam' Required Lenient name val) Request)
-  toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> NotFound ParamNotFound
-    Just (Left e)  -> Found (Left e)
-    Just (Right x) -> Found (Right x)
+  tryLink :: QueryParam' Required Lenient name val
+          -> Linked ts Request
+          -> m (Either ParamNotFound (Either Text val))
+  tryLink _ r = pure $ deriveRequestParam (Proxy @name) r $ \case
+    Nothing        -> Left ParamNotFound
+    Just (Left e)  -> Right $ Left e
+    Just (Right x) -> Right $ Right x
 
-instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Lenient name val) Request m where
+instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' Optional Lenient name val) ts Request m where
   type Attribute (QueryParam' Optional Lenient name val) Request = Maybe (Either Text val)
   type Absence (QueryParam' Optional Lenient name val) Request = Void
 
-  toAttribute :: Request -> m (Result (QueryParam' Optional Lenient name val) Request)
-  toAttribute r = pure $ deriveRequestParam (Proxy @name) r $ \case
-    Nothing        -> Found Nothing
-    Just (Left e)  -> Found (Just (Left e))
-    Just (Right x) -> Found (Just (Right x))
+  tryLink :: QueryParam' Optional Lenient name val
+          -> Linked ts Request
+          -> m (Either Void (Maybe (Either Text val)))
+  tryLink _ r = pure $ deriveRequestParam (Proxy @name) r $ \case
+    Nothing        -> Right Nothing
+    Just (Left e)  -> Right $ Just $ Left e
+    Just (Right x) -> Right $ Just $ Right x
 
 
 -- | A middleware to extract a query parameter and convert it to a
@@ -118,7 +124,8 @@ instance (KnownSymbol name, FromHttpApiData val, Monad m) => Trait (QueryParam' 
 -- not found or could not be parsed.
 queryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
            => RequestMiddleware' m req (QueryParam name val:req) a
-queryParam handler = Kleisli $ probe @(QueryParam name val) >=> either (errorResponse . mkError) (runKleisli handler)
+queryParam handler = Kleisli $
+  probe QueryParam' >=> either (errorResponse . mkError) (runKleisli handler)
   where
     paramName :: String
     paramName = symbolVal $ Proxy @name
@@ -141,7 +148,8 @@ queryParam handler = Kleisli $ probe @(QueryParam name val) >=> either (errorRes
 -- returned if the query parameter could not be parsed.
 optionalQueryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
                    => RequestMiddleware' m req (QueryParam' Optional Strict name val:req) a
-optionalQueryParam handler = Kleisli $ probe @(QueryParam' Optional Strict name val) >=> either (errorResponse . mkError) (runKleisli handler)
+optionalQueryParam handler = Kleisli $
+  probe QueryParam' >=> either (errorResponse . mkError) (runKleisli handler)
   where
     paramName :: String
     paramName = symbolVal $ Proxy @name
@@ -163,7 +171,7 @@ optionalQueryParam handler = Kleisli $ probe @(QueryParam' Optional Strict name 
 lenientQueryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
                   => RequestMiddleware' m req (QueryParam' Required Lenient name val:req) a
 lenientQueryParam handler = Kleisli $
-  probe @(QueryParam' Required Lenient name val) >=> either (errorResponse . mkError) (runKleisli handler)
+  probe QueryParam' >=> either (errorResponse . mkError) (runKleisli handler)
   where
     paramName :: String
     paramName = symbolVal $ Proxy @name
@@ -183,4 +191,4 @@ lenientQueryParam handler = Kleisli $
 optionalLenientQueryParam :: forall name val m req a. (KnownSymbol name, FromHttpApiData val, MonadRouter m)
                           => RequestMiddleware' m req (QueryParam' Optional Lenient name val:req) a
 optionalLenientQueryParam handler = Kleisli $
-  probe @(QueryParam' Optional Lenient name val) >=> either absurd (runKleisli handler)
+  probe QueryParam' >=> either absurd (runKleisli handler)

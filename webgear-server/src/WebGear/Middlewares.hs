@@ -12,9 +12,11 @@ module WebGear.Middlewares
   , module WebGear.Middlewares.Body
   , module WebGear.Middlewares.Params
   , module WebGear.Middlewares.Auth.Basic
+  , module WebGear.Middlewares.Auth.JWT
   ) where
 
 import WebGear.Middlewares.Auth.Basic
+import WebGear.Middlewares.Auth.JWT
 import WebGear.Middlewares.Body
 import WebGear.Middlewares.Header
 import WebGear.Middlewares.Method

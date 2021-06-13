@@ -20,6 +20,11 @@ cradle:
         cradle:
           stack:
             component: "webgear-examples:exe:users"
+    - path: "./webgear-examples/realworld"
+      config:
+        cradle:
+          stack:
+            component: "webgear-examples:exe:realworld"
     - path: "./webgear-benchmarks/src/users"
       config:
         cradle:

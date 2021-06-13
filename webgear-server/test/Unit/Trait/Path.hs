@@ -11,7 +11,6 @@ import Control.Monad.State (evalState)
 import Network.Wai (defaultRequest)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase, (@?=))
-
 import WebGear.Middlewares.Path
 import WebGear.Trait
 import WebGear.Types
@@ -19,10 +18,10 @@ import WebGear.Types
 
 testMissingPathVar :: TestTree
 testMissingPathVar = testCase "PathVar match: missing variable" $ do
-  let req = defaultRequest { pathInfo = [] }
-  case evalState (toAttribute @(PathVar "tag" Int) req) (PathInfo []) of
-    Found _    -> assertFailure "unexpected success"
-    NotFound e -> e @?= PathVarNotFound
+  let req = linkzero $ defaultRequest { pathInfo = [] }
+  case evalState (tryLink (PathVar @"tag" @Int) req) (PathInfo []) of
+    Right _ -> assertFailure "unexpected success"
+    Left e  -> e @?= PathVarNotFound
 
 tests :: TestTree
 tests = testGroup "Trait.Path" [ testMissingPathVar ]
