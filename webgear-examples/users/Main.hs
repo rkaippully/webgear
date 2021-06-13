@@ -9,7 +9,6 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeApplications           #-}
-
 module Main where
 
 import Control.Applicative (Alternative (..))

@@ -3,7 +3,6 @@
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE TypeApplications  #-}
-
 module Main where
 
 import qualified API.Article as Article

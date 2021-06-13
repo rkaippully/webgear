@@ -87,7 +87,7 @@ tokenAuth auth handler = Kleisli $ \request -> do
 
     toJWTAttribute :: JWT.ClaimsSet -> App (Either () (Key User))
     toJWTAttribute claims = pure $
-      case view JWT.claimSub claims >>= readMaybe . unpack . view JWT.string of
+      case view JWT.claimSub claims >>= readMaybe . toString . view JWT.string of
         Nothing  -> Left ()
         Just oid -> Right $ toSqlKey oid
 

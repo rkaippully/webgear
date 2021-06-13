@@ -8,7 +8,6 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeApplications           #-}
-
 module WebGear where
 
 import Control.Applicative (Alternative (..))

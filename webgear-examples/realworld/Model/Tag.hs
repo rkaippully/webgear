@@ -2,7 +2,6 @@ module Model.Tag
   ( list
   ) where
 
-
 import Database.Esqueleto
 import Model.Common
 import Model.Entities

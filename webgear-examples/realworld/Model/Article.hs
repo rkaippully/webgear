@@ -85,7 +85,7 @@ create userId CreateArticlePayload{..} = do
 slugify :: MonadIO m => Text -> m Text
 slugify s = liftIO $ do
   num <- randomIO
-  let suffix = Text.pack $ "-" <> show (num :: Word64)
+  let suffix = "-" <> show (num :: Word64)
   pure $ (<> suffix)
        $ Text.take 255
        $ Text.filter URIEncode.isAllowed
@@ -119,8 +119,8 @@ mkRecord maybeUserId (Entity articleId Article{..}) = do
 --------------------------------------------------------------------------------
 
 getArticleBySlug :: Maybe (Key User) -> Text -> DBAction (Maybe ArticleRecord)
-getArticleBySlug maybeUserId slug = DB.getBy (UniqueSlug slug)
-  >>= traverse (mkRecord maybeUserId)
+getArticleBySlug maybeUserId slug =
+  DB.getBy (UniqueSlug slug) >>= traverse (mkRecord maybeUserId)
 
 
 --------------------------------------------------------------------------------

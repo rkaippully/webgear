@@ -1,6 +1,5 @@
 # WebGear realworld
-
-A memium.com clone (called conduit) built based on specs defined by https://github.com/gothinkster/realworld.
+A medium.com clone (called conduit) specified by https://github.com/gothinkster/realworld.
 
 Run with:
 
